@@ -123,6 +123,7 @@ long i;
 short idx;
 
 unsigned char keycode;
+unsigned char key_b_flag;
 
 int score = 0, hiscore = 5000, combo = 0;
 
@@ -199,6 +200,8 @@ void reset(void)
 
 	player_x = 30;
 	player_y = 80;
+
+	key_b_flag = False;
 
 	for(b_idx = 0; b_idx<  MAX_BULLETS; ++b_idx)
 		bullets_active[b_idx] = False;
@@ -300,8 +303,12 @@ void update(void)
 	}
 
 	// ƒ{ƒ€Žg—p
-	if((keycode & KEY_B) && (bomb_stock > 0))
-		use_bomb();
+	if((keycode & KEY_B) && (bomb_stock > 0)){
+		if(key_b_flag == False)
+			use_bomb();
+		key_b_flag = True;
+	}else
+		key_b_flag = False;
 
 	for(b_idx = 0; b_idx < MAX_BULLETS; ++b_idx){
 		if(bullets_active[b_idx] == False)
@@ -631,6 +638,7 @@ void update(void)
 			bomb_stock = min(3, bomb_stock + 1);
 			bomb_display_flag = True;
 			BombItem_active[item_idx] = False;
+			seflag = 4;
 			continue;
 		}
 		if((BombItem_x[item_idx] < -20+16) || (BombItem_timer[item_idx] <= 0))
