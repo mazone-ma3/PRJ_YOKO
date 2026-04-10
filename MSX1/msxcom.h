@@ -39,7 +39,7 @@ __endasm;
 
 inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
-	y-=2;
+	y-=1;
 	VPOKE(0x1b00 + 0 + spr_count * 4, y);
 	VPOKE(0x1b00 + 1 + spr_count * 4, x);
 	VPOKE(0x1b00 + 2 + spr_count * 4, no * 4);
@@ -77,7 +77,7 @@ unsigned char joystick(unsigned char no)
 #define msx_get_key(A) get_trigger(0)
 
 
-unsigned char *clicksw = 0xf3db;
+#define clicksw ((volatile unsigned char *)0xf3db)
 
 #define msx_set_color vdp_color
 #define msx_screen(A) {\
@@ -86,7 +86,8 @@ unsigned char *clicksw = 0xf3db;
 	vdp_set_sprite_mode(sprite_large);\
 }
 
-unsigned char *jiffy = (unsigned char *)0xfc9e, old_jiffy;
+#define jiffy ((volatile unsigned char *)0xfc9e)
+unsigned char old_jiffy;
 
 inline void msx_wait_vsync(void)
 {
