@@ -18,7 +18,7 @@ enum {
 	True = 1,
 	False = 0,
 
-	PLAYER_SPEED =  4 * DIV,
+	PLAYER_SPEED =  5 * DIV,
 	BULLET_SPEED = 8 * DIV,
 	ENEMY_SPEED  = 3 * DIV,
 
@@ -157,6 +157,7 @@ long i;
 short idx;
 
 
+unsigned char key_b_flag;
 
 unsigned long score = 0;
 unsigned long high_score = 0;
@@ -165,11 +166,12 @@ unsigned char shoot_timer = 0;
 unsigned char enemy_spawn_timer = 0;
 unsigned char game_over = 0;
 
-unsigned char all_display_flag = 1;
-unsigned char score_display_flag = 1;
-//unsigned char high_score_display_flag = 1;
-unsigned char time_display_flag = 1;
-unsigned char bomb_display_flag = 1;
+unsigned char all_display_flag = True;
+unsigned char score_display_flag = True;
+//unsigned char high_score_display_flag = True;
+unsigned char time_display_flag = True;
+unsigned char bomb_display_flag = True;
+unsigned char chain_display_flag = True;
 
 struct Star { unsigned char x, y, speed; };
 struct Star stars[40];
@@ -251,6 +253,8 @@ void define_sprites(void) {
 void reset(void) {
 	unsigned char i;
 
+	key_b_flag = False;
+
 	player_x = 40 * DIV;
 	player_y = 80 * DIV;
 	score = 0;
@@ -258,7 +262,9 @@ void reset(void) {
 	shoot_timer = 0;
 	enemy_spawn_timer = 0;
 	game_over = 0;
-	all_display_flag = 1;
+
+	all_display_flag = True;
+	chain_display_flag = False;
 
 	for (i = 0; i < MAX_BULLETS; i++) bullets_active[i] = 0;
 	for (i = 0; i < MAX_ENEMIES; i++) {
@@ -313,6 +319,24 @@ void reset(void) {
 	for(i = 0; i < 32; ++i)
 		msx_set_sprite(i, 0, 208+1, 0, 0);
 	msx_cls();
+}
+
+
+void use_bomb(void)
+{
+	if(bomb_stock <= 0) return;
+	bomb_stock -= 1;
+	bomb_display_flag = True;
+//	for(i = 0; i < 30; ++i){
+//		Particles_append(randint(20, 236), randint(20, 172));
+//	}
+	for(e_idx = 0; e_idx <  MAX_ENEMIES; ++e_idx)
+		enemies_active[e_idx] = False;
+	for(eb_idx = 0; eb_idx <  MAX_e_bullets; ++eb_idx)
+		e_bullets_active[eb_idx] = False;
+
+	score += 200;
+	score_display_flag = True;
 }
 
 void fire_aimed_bullet(unsigned short ex, unsigned short ey)
@@ -485,15 +509,16 @@ void update_enemies(void) {
 }
 
 void update_input(void) {
+	keycode = keyscan();
 	// 移動
 	// ジョイスティック + キーボード対応（簡易）
-	if (joystick(0) & JOY_LEFT)  if (player_x > PLAYER_SPEED) player_x -= PLAYER_SPEED;
-	if (joystick(0) & JOY_RIGHT) if (player_x < (width - 24) * DIV) player_x += PLAYER_SPEED;
-	if (joystick(0) & JOY_UP)	if (player_y > PLAYER_SPEED) player_y -= PLAYER_SPEED;
-	if (joystick(0) & JOY_DOWN)  if (player_y < (height - 24) * DIV) player_y += PLAYER_SPEED;
+	if (keycode & KEY_LEFT1)  if (player_x > PLAYER_SPEED) player_x -= PLAYER_SPEED;
+	if (keycode & KEY_RIGHT1) if (player_x < (width - 24) * DIV) player_x += PLAYER_SPEED;
+	if (keycode & KEY_UP1)	if (player_y > PLAYER_SPEED) player_y -= PLAYER_SPEED;
+	if (keycode & KEY_DOWN1)  if (player_y < (height - 24) * DIV) player_y += PLAYER_SPEED;
 
 	// スペース or ボタンで射撃
-	if ((joyfire(0) || msx_get_key(0x20)) && shoot_timer == 0) {  // 適当キーコード例
+	if ((keycode & KEY_A) && shoot_timer == 0) {  // 適当キーコード例
 		for (unsigned char i = 0; i < MAX_BULLETS; i++) {
 			if (!bullets_active[i]) {
 				bullets_x[i] = player_x + 16 * DIV;
@@ -519,6 +544,14 @@ void update_input(void) {
 		shoot_timer = 8;  // 連射間隔
 	}
 	if (shoot_timer > 0) shoot_timer--;
+
+	// ボム使用
+	if((keycode & KEY_B) && (bomb_stock > 0)){
+		if(key_b_flag == False)
+			use_bomb();
+		key_b_flag = True;
+	}else
+		key_b_flag = False;
 }
 
 void update_bullets(void) {
@@ -535,7 +568,7 @@ void update_bullets(void) {
 void spawn_enemy(void) {
 	// 敵出現
 	enemy_spawn_timer++;
-	if (enemy_spawn_timer > (40 - (play_time / 60))) {  // 時間で少し難易度アップ
+	if (enemy_spawn_timer > max(0, (40 - (play_time / (COUNT1S*4))))) {  // 時間で少し難易度アップ
 		rand_num = randint(0,100);
 		if(rand_num < 60) enemy_type = 0;
 		else if(rand_num < 85) enemy_type = 1;
@@ -606,8 +639,8 @@ void check_collisions(void) {
 
 								enemies_active[e] = 0;
 								score += 100;
-								score_display_flag = 1;
-//								all_display_flag = 1;
+								score_display_flag = True;
+//								all_display_flag = True;
 								kill_count += 1;
 								// 簡易サウンド（PSG）
 								msx_sound(1, 0); // 適当に音を鳴らす（後で調整）
@@ -619,7 +652,7 @@ void check_collisions(void) {
 											continue;
 										ChainItem_x[item_idx] = ex;
 										ChainItem_y[item_idx] = ey;
-										ChainItem_timer[item_idx] = 240;
+										ChainItem_timer[item_idx] = COUNT1S * 4;
 										ChainItem_active[item_idx] = True;
 //				msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
 										break;
@@ -707,25 +740,29 @@ void check_collisions(void) {
 
 		if((abs(player_x + 8 - ChainItem_x[item_idx]) < 20) && (abs(player_y + 8 - ChainItem_y[item_idx]) < 20)){
 			chain_count += 1;
-			chain_timer = 240;
+			chain_timer = COUNT1S * 4; //240;
 			score += 100 * chain_count;
 			score_display_flag = True;
 //			seflag = 4;
 			ChainItem_active[item_idx] = False;
+			chain_display_flag = True;
 			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
 			continue;
 		}
 		if((ChainItem_x[item_idx] < 2) || (ChainItem_timer[item_idx] <= 0)){
 			chain_count = 0;
 			ChainItem_active[item_idx] = False;
+			chain_display_flag = True;
 		}
 		ChainItem_x[item_idx] -= 2;
 		ChainItem_timer[item_idx] -= 1;
 	}
 	if(chain_count > 0){
 		chain_timer -= 1;
-		if(chain_timer <= 0)
+		if(chain_timer <= 0){
 			chain_count = 0;
+			chain_display_flag = True;
+		}
 	}
 
 	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
@@ -812,28 +849,45 @@ void check_collisions(void) {
 		if (!enemies_active[e]) continue;
 
 		// 自機と敵の矩形が重なっているかチェック
-		if (player_x + 4 * DIV < enemies_x[e] + 16 * DIV &&   // 自機左 < 敵右
-			player_x + 24 * DIV > enemies_x[e] &&	   // 自機右 > 敵左
-			player_y + 4 * DIV < enemies_y[e] + 8 * DIV &&   // 自機上 < 敵下
-			player_y + 14 * DIV > enemies_y[e]) {	   // 自機下 > 敵上
-
-			game_over = 1;
-			// ここに爆発エフェクトやサウンドを後で追加可能
-			break;
+		if (player_x + 4 * DIV < enemies_x[e] + 16 * DIV){   // 自機左 < 敵右
+			if(player_x + 24 * DIV > enemies_x[e]){	   // 自機右 > 敵左
+				if(player_y + 4 * DIV < enemies_y[e] + 8 * DIV){   // 自機上 < 敵下
+					if(player_y + 14 * DIV > enemies_y[e]) {	   // 自機下 > 敵上
+						if(shield_active){
+							shield_active = False;
+//							for (i = 0; i < 4; ++i)
+//								Particles_append(player_x + 8, player_y + 8);
+						}else
+							game_over = 1;
+						enemies_active[e_idx] = False;
+						break;
+					}
+				}
+			}
 		}
 	}
 }
 // ====================== 描画 ======================
+signed char add = 1;
+
 void draw_sprites(void) {
 	unsigned char i, spr_count;
+	if(add > 0)
+		spr_count = 0;
+	else
+		spr_count = 31;
 
-	msx_set_sprite(0, player_x / DIV, player_y / DIV, 0, (shield_active) ? 5 : 10);
+//	spr_count = add;
+//	if(spr_count > 0)
+//		msx_set_sprite(spr_count - 1, 0, 209+1, 0, 0);
 
-	spr_count = 1;
+	msx_set_sprite(spr_count, player_x / DIV, player_y / DIV, 0, (shield_active) ? 7 : 10);
+	spr_count += add;
+
 	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]){
 			msx_set_sprite(spr_count, bullets_x[i] / DIV, bullets_y[i] / DIV, 4, 9);
-			++spr_count;
+			spr_count += add;
 		}
 //		else
 //			msx_set_sprite(SPR_BULLETS + i, 0, 208, 0, 0);
@@ -842,7 +896,7 @@ void draw_sprites(void) {
 	for (i = 0; i < MAX_ENEMIES; i++) {
 		if (enemies_active[i]){
 			msx_set_sprite(spr_count , enemies_x[i] / DIV, enemies_y[i] / DIV, 8, 8);
-			++spr_count;
+			spr_count += add;
 		}
 //		else
 //			msx_set_sprite(SPR_ENEMIES + i, 0, 208, 0, 0);
@@ -851,7 +905,7 @@ void draw_sprites(void) {
 	for (i = 0; i < MAX_e_bullets; i++) {
 		if (e_bullets_active[i]){
 			msx_set_sprite(spr_count, e_bullets_x[i] / DIV2, e_bullets_y[i] / DIV2, 12, 8);
-			++spr_count;
+			spr_count += add;
 		}
 //		else
 //			msx_set_sprite(SPR_e_bullets + i, 0, 208, 0, 0);
@@ -862,46 +916,57 @@ void draw_sprites(void) {
 		if(Option_active[opt_idx] == False)
 			continue;
 		msx_set_sprite(spr_count ,(Option_x[opt_idx]),(Option_y[opt_idx]),16,2);
-		++spr_count;
+		spr_count += add;
 	}
 
 	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
 		if(ChainItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(ChainItem_x[item_idx]), ChainItem_y[item_idx],20,10);
-		++spr_count;
+		spr_count += add;
 	}
 
 	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
 		if(OptionItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(OptionItem_x[item_idx]), OptionItem_y[item_idx],24,5);
-		++spr_count;
+		spr_count += add;
 	}
 
 	for(item_idx = 0; item_idx < MAX_ShieldItem; ++item_idx){
 		if(ShieldItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(ShieldItem_x[item_idx]), ShieldItem_y[item_idx],28, 7);
-		++spr_count;
+		spr_count += add;
 	}
 
 	for(item_idx = 0; item_idx < MAX_BombItem; ++item_idx){
 		if(BombItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(BombItem_x[item_idx]), BombItem_y[item_idx],32,6);
-		++spr_count;
+		spr_count += add;
 	}
 
 	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
 		if(Particle_active[p_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(Particle_x[p_idx]), Particle_y[p_idx], 36, 10);
-		++spr_count;
+		spr_count += add;
 	}
 
+//	if((add > 0) && (spr_count < 32))
+//		msx_set_sprite(spr_count, 0, 208+1, 0, 0);
 
-	msx_set_sprite(spr_count, 0, 208+1, 0, 0);
+	msx_wait_vsync();
+	if(add > 0)
+		set_sprite_all(0, spr_count);
+	else
+		set_sprite_all(spr_count+1, 32);
+
+	add = -add;
+//	++add;
+//	add += 32;
+//	add %= 32;
 }
 
 
@@ -918,23 +983,23 @@ void draw_ui(void) {
 		msx_print(0, 1, "BOMB: ");
 		msx_print(16, 0, "COUNT: ");
 
-		all_display_flag = 0;		// 更新済みフラグを下ろす
-		score_display_flag = 1;
-//		high_score_display_flag = 1;
-		time_display_flag = 1;
-		bomb_display_flag = 1;
+		all_display_flag = False;		// 更新済みフラグを下ろす
+		score_display_flag = True;
+//		high_score_display_flag = True;
+		time_display_flag = True;
+		bomb_display_flag = True;
 	}
 
 	// SCORE
 	if(score_display_flag){
 		msx_print_num(7, 0, score, 6);
-		score_display_flag = 0;
+		score_display_flag = False;
 	}
 
 	// HIGH
 /*	if(high_score_display_flag){
 		msx_print_num(7, 2, high_score, 6);
-		high_score_display_flag = 0;
+		high_score_display_flag = False;
 	}
 */
 	if(bomb_display_flag){
@@ -942,15 +1007,29 @@ void draw_ui(void) {
 		bomb_display_flag = False;
 	}
 
+	if(chain_display_flag){
+		if(chain_count > 0){
+			msx_print(16, 1, "CHAIN: ");
+			msx_print_num(7+16, 1, chain_count, 3);
+		}else{
+			msx_print(16, 1, "      ");
+			msx_print(7+16, 1, "   ");
+		}
+		chain_display_flag = False;
+	}
+
 	// TIME
 	if(time_display_flag){
 		msx_print_num(7+16, 0, play_time / COUNT1S, 7);
-		time_display_flag = 0;
+		time_display_flag = False;
 	}
 
 }
 // ====================== ゲームオーバー表示 ======================
 void draw_game_over(void) {
+	if(score >= high_score)
+		high_score = score;
+
 	msx_print(11, 12, "GAME OVER");		   // 中央より少し左
 	msx_print(7, 15, "HIGH SCORE");
 	msx_print_num(7+11, 15, high_score, 7);
@@ -980,15 +1059,22 @@ void main(void) {
 	for(;;) {
 		if (game_over) {
 			draw_game_over();
-			while(msx_get_key(0x20));
-			while(!msx_get_key(0x20));
+			for(;;){
+				if(!(keyscan() & KEY_A))
+					break;
+			}
+			for(;;){
+				if((keyscan() & KEY_A))
+					break;
+			}
 			reset();
-			msx_wait_vsync();
+//			msx_wait_vsync();
+			set_sprite_all(0, 32);
 		}
 
 		play_time++;
 
-		if (play_time % COUNT1S == 0) time_display_flag = 1;
+		if (play_time % COUNT1S == 0) time_display_flag = True;
 
 		update_input();
 		update_bullets();
@@ -999,7 +1085,6 @@ void main(void) {
 
 		draw_ui();
 
-		msx_wait_vsync();
 		draw_sprites();
 	}
 }

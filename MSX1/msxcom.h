@@ -1,6 +1,8 @@
 #include <video/tms99x8.h>
 #include <msx\gfx.h>
 
+#include "inkey.h"
+
 #define DI() {\
 __asm\
 	di\
@@ -37,13 +39,58 @@ __asm
 __endasm;
 }
 
+#define jiffy ((volatile unsigned char *)0xfc9e)
+unsigned char old_jiffy;
+
+inline void msx_wait_vsync(void)
+{
+	while(((old_jiffy - *jiffy + 256) % 256) < 2);
+	old_jiffy = *jiffy;
+}
+
+unsigned char spr_x[32];
+unsigned char spr_y[32];
+unsigned char spr_no[32];
+unsigned char spr_color[32];
+
 inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
-	y-=1;
-	VPOKE(0x1b00 + 0 + spr_count * 4, y);
-	VPOKE(0x1b00 + 1 + spr_count * 4, x);
-	VPOKE(0x1b00 + 2 + spr_count * 4, no * 4);
-	VPOKE(0x1b00 + 3 + spr_count * 4, color);
+//	y-=1;
+	spr_x[spr_count] = x;
+	spr_y[spr_count] = y-1;
+	spr_no[spr_count] = no * 4;
+	spr_color[spr_count] = color;
+}
+
+unsigned char spr_page = 0;
+
+void set_sprite_all(unsigned char start, unsigned char end)
+{
+	unsigned char spr_count;
+	unsigned short spr_base;
+	if(spr_page)
+		spr_base = 0x1b00;
+	else
+		spr_base = 0x1b80;
+
+//	DI();
+	for(spr_count = 0; start < end; ++spr_count, ++start){
+		VPOKE(spr_base + 0 + spr_count * 4, spr_y[start]);
+		VPOKE(spr_base + 1 + spr_count * 4, spr_x[start]);
+		VPOKE(spr_base + 2 + spr_count * 4, spr_no[start]);
+		VPOKE(spr_base + 3 + spr_count * 4, spr_color[start]);
+	}
+	if(spr_count < 32)
+		VPOKE(spr_base + 0 + spr_count * 4, 208);
+
+	msx_wait_vsync();
+	if(spr_page)
+		set_vdp(5, 0x36);
+	else
+		set_vdp(5, 0x37);
+
+	spr_page = 1 - spr_page;
+//	EI();
 }
 
 #define msx_set_sprite VDP_put_sprite_16
@@ -86,14 +133,6 @@ unsigned char joystick(unsigned char no)
 	vdp_set_sprite_mode(sprite_large);\
 }
 
-#define jiffy ((volatile unsigned char *)0xfc9e)
-unsigned char old_jiffy;
-
-inline void msx_wait_vsync(void)
-{
-	while(((old_jiffy - *jiffy + 256) % 256) < 2);
-	old_jiffy = *jiffy;
-}
 
 // 文字列表示（左上を基準にしたタイル座標）
 void msx_print(unsigned char x, unsigned char y, char *str)
@@ -183,4 +222,134 @@ void msx_sound(unsigned char no, unsigned char dummy)
 
 	}
 	EI();
+}
+
+unsigned char get_key(unsigned char matrix) __sdcccall(1)
+{
+	outp(0xaa, ((inp(0xaa) & 0xf0) | matrix));
+	return inp(0xa9);
+/*
+__asm
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x0141	; SNSMAT(MAINROM)
+
+	ld	 hl, #2
+	add	hl, sp
+	ld	a, (hl)	; a = mode
+
+	call	#0x001c	; CALSLT
+
+	ld	l,a
+	ld	h,#0
+__endasm;
+*/
+}
+
+unsigned char get_stick1(unsigned char trigno) __sdcccall(1)
+{
+	(void)trigno;
+__asm
+;	ld	 hl, #2
+;	add	hl, sp
+	ld	l,a
+
+	push	ix
+
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x00d5	; GTSTCK(MAINROM)
+
+;	ld	a, (hl)	; a = mode
+	ld	a,l
+
+	call	#0x001c	; CALSLT
+;	ld	l,a
+;	ld	h,#0
+
+	pop	ix
+	ret
+__endasm;
+	return 0;
+}
+
+
+unsigned char get_trigger1(unsigned char trigno) __sdcccall(1)
+{
+	(void)trigno;
+__asm
+;	ld	 hl, #2
+;	add	hl, sp
+	ld	l,a
+
+	push	ix
+
+	ld	a,(#0xfcc1)	; exptbl
+	ld	d,a
+	ld	e,#0
+	push	de
+	pop	iy
+	ld ix,#0x00d8	; GTTRIG(MAINROM)
+
+;	ld	a, (hl)	; a = mode
+	ld	a,l
+
+	call	#0x001c	; CALSLT
+;	ld	l,a
+;	ld	h,#0
+
+	pop	ix
+	ret
+__endasm;
+	return 0;
+}
+
+unsigned char st0, st1, pd0, pd1, pd2, k3, k5, k7, k9, k10;
+unsigned char keycode = 0;
+
+unsigned char keyscan(void)
+{
+	DI();
+	keycode = 0;
+
+	k3 = get_key(3);
+
+	k9 = get_key(9);
+	k10 = get_key(10);
+	k5 = get_key(5);
+
+	st0 = get_stick1(0);
+	st1 = get_stick1(1);
+
+	pd0 = get_trigger1(0);
+	pd1 = get_trigger1(1);
+	pd2 = get_trigger1(3);
+
+	EI();
+
+	if((pd0) || (pd1) || !(k5 & 0x20)) /* X,SPACE */
+		keycode |= KEY_A;
+	if((pd2) || !(k3 & 0x01)) /* C */
+		keycode |= KEY_B;
+	if((st0 >= 1 && st0 <=2) || (st0 == 8) || (st1 >= 1 && st1 <=2) || (st1 ==8) || !(k10 & 0x08)) /* 8 */
+		keycode |= KEY_UP1;
+	if((st0 >= 4 && st0 <=6) || (st1 >= 4 && st1 <=6) || !(k9 & 0x20)) /* 2 */
+		keycode |= KEY_DOWN1;
+
+//	if(!(st & 0x0c)){ /* RL */
+//		keycode |= KEY_START;
+//	}else{
+	if((st0 >= 6 && st0 <=8) || (st1 >= 6 && st1 <=8) || !(k9 & 0x80)) /* 4 */
+		keycode |= KEY_LEFT1;
+	if((st0 >= 2 && st0 <=4) || (st1 >= 2 && st1 <=4) || !(k10 & 0x02)) /* 6 */
+		keycode |= KEY_RIGHT1;
+//	}
+
+	return keycode;
 }

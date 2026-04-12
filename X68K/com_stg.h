@@ -493,7 +493,7 @@ void update(void)
 											continue;
 										ChainItem_x[item_idx] = ex;
 										ChainItem_y[item_idx] = ey;
-										ChainItem_timer[item_idx] = 240;
+										ChainItem_timer[item_idx] = COUNT1S * 4;
 										ChainItem_active[item_idx] = True;
 										break;
 									}
@@ -558,7 +558,7 @@ void update(void)
 		ChainItem_timer[item_idx] -= 1;
 		if((abs(player_x + 8 - ChainItem_x[item_idx]) < 20) && (abs(player_y + 8 - ChainItem_y[item_idx]) < 20)){
 			chain_count += 1;
-			chain_timer = 240;
+			chain_timer = COUNT1S * 4;
 			score += 100 * chain_count;
 			score_display_flag = True;
 			seflag = 4;
@@ -574,9 +574,10 @@ void update(void)
 	}
 	if(chain_count > 0){
 		chain_timer -= 1;
-		if(chain_timer <= 0)
+		if(chain_timer <= 0){
 			chain_count = 0;
 			chain_display_flag = True;
+		}
 	}
 
 	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
@@ -724,7 +725,7 @@ void use_bomb(void)
 	}
 	for(e_idx = 0; e_idx <  MAX_ENEMIES; ++e_idx)
 		enemies_active[e_idx] = False;
-	for(eb_idx = 0; e_idx <  MAX_e_bullets; ++e_idx)
+	for(eb_idx = 0; eb_idx <  MAX_e_bullets; ++eb_idx)
 		e_bullets_active[eb_idx] = False;
 
 	score += 200;
