@@ -91,7 +91,7 @@ unsigned char old_jiffy;
 
 inline void msx_wait_vsync(void)
 {
-	while(*jiffy == old_jiffy);
+	while(((old_jiffy - *jiffy + 256) % 256) < 2);
 	old_jiffy = *jiffy;
 }
 

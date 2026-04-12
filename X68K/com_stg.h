@@ -131,6 +131,7 @@ unsigned char score_display_flag;
 unsigned char bomb_display_flag;
 unsigned char time_display_flag;
 unsigned char all_display_flag;
+unsigned char chain_display_flag;
 
 unsigned short rgb(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -187,6 +188,7 @@ void reset(void)
 {
 	cls();
 	all_display_flag = True;
+	chain_display_flag = False;
 	seflag = 0;
 
 	player_x = 30;
@@ -554,7 +556,6 @@ void update(void)
 			continue;
 		ChainItem_x[item_idx] -= 2;
 		ChainItem_timer[item_idx] -= 1;
-
 		if((abs(player_x + 8 - ChainItem_x[item_idx]) < 20) && (abs(player_y + 8 - ChainItem_y[item_idx]) < 20)){
 			chain_count += 1;
 			chain_timer = 240;
@@ -562,17 +563,20 @@ void update(void)
 			score_display_flag = True;
 			seflag = 4;
 			ChainItem_active[item_idx] = False;
+			chain_display_flag = True;
 			continue;
 		}
 		if((ChainItem_x[item_idx] < -20+16) || (ChainItem_timer[item_idx] <= 0)){
 			chain_count = 0;
 			ChainItem_active[item_idx] = False;
+			chain_display_flag = True;
 		}
 	}
 	if(chain_count > 0){
 		chain_timer -= 1;
 		if(chain_timer <= 0)
 			chain_count = 0;
+			chain_display_flag = True;
 	}
 
 	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
@@ -836,6 +840,17 @@ void draw(void)
 		put_numd(play_time / COUNT1S, 7);
 		put_strings(SCREEN2, 7+16, 0, str_temp, CHRPAL_NO);
 		time_display_flag = False;
+	}
+	if(chain_display_flag){
+		if(chain_count > 0){
+			put_strings(SCREEN2, 16, 1, "CHAIN", CHRPAL_NO);
+			put_numd(chain_count, 3);
+			put_strings(SCREEN2, 7+16, 1, str_temp, CHRPAL_NO);
+		}else{
+			put_strings(SCREEN2, 16, 1, "     ", CHRPAL_NO);
+			put_strings(SCREEN2, 7+16, 1, "   ", CHRPAL_NO);
+		}
+		chain_display_flag = False;
 	}
 
 	if(game_over == 1){
