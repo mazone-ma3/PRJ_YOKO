@@ -714,9 +714,9 @@ void check_collisions(void) {
 	for (eb = 0; eb < MAX_e_bullets; eb++) {
 		if (!e_bullets_active[eb]) continue;
 		if (player_x < e_bullets_x[eb] / DIV2 + 4 * DIV){
-			if(player_x + 24 * DIV > e_bullets_x[eb] / DIV2){
+			if(player_x + (16+4) * DIV > e_bullets_x[eb] / DIV2){
 				if(player_y < e_bullets_y[eb] / DIV2  + 4 * DIV){
-					if(player_y + 14 * DIV > e_bullets_y[eb] / DIV2 ){
+					if(player_y + (10+4) * DIV > e_bullets_y[eb] / DIV2 ){
 						if(shield_active){
 							shield_active = False;
 //							for(i = 0; i < 4; ++i)
