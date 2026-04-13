@@ -1,6 +1,6 @@
 This software includes code generated with the assistance of [Gemini & Grok], an AI developed by [Google & xAI].
 
-PyxelでGrokに作成させた横スクロールシューティングをレトロパソコンに移植しようとする実験。
+PyxelでGrokに作成させた横スクロールシューティングをレトロパソコンに移植しようとする実験。実機での動作は未保証です。
 
 MSX1 z88dkによる作りかけ。
 
