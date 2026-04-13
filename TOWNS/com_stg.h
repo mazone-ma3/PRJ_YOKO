@@ -157,7 +157,7 @@ void Particles_append(short x, short y)
 
 void main2(void)
 {
-	hiscore = 0;
+	hiscore = 5000;
 	reset();
 
 	for(i = 0; i < (256 * 4); ++i){
@@ -748,13 +748,6 @@ void draw(void)
 
 	// UI
 	if(all_display_flag){
-		if(score >= hiscore){
-			if((score % 10) == 0){
-				put_strings(SCREEN2, 0, 0, "HIGH: ", CHRPAL_NO);
-			}
-		}else{
-			put_strings(SCREEN2, 0, 0, "SCORE: ", CHRPAL_NO);
-		}
 		put_strings(SCREEN2, 0, 1, "BOMB: ", CHRPAL_NO);
 		put_strings(SCREEN2, 16, 0, "COUNT: ", CHRPAL_NO);
 
@@ -768,6 +761,13 @@ void draw(void)
 	if(score_display_flag){
 		put_numd(score, 7);
 		put_strings(SCREEN2, 7, 0, str_temp, CHRPAL_NO);
+		if(score >= hiscore){
+			if((score % 10) == 0){
+				put_strings(SCREEN2, 0, 0, "HIGH: ", CHRPAL_NO);
+			}
+		}else{
+			put_strings(SCREEN2, 0, 0, "SCORE:", CHRPAL_NO);
+		}
 //		score_display_flag = False;
 	}
 

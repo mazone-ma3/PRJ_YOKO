@@ -973,13 +973,6 @@ void draw_sprites(void) {
 // ====================== UI•\Ž¦ŠÖ” ======================
 void draw_ui(void) {
 	if (all_display_flag){
-		if(score >= high_score){
-			if((score % 10) == 0){
-				msx_print(0, 0, "HIGH: ");
-			}
-		}else{
-			msx_print(0, 0, "SCORE: ");
-		}
 		msx_print(0, 1, "BOMB: ");
 		msx_print(16, 0, "COUNT: ");
 
@@ -994,6 +987,13 @@ void draw_ui(void) {
 	if(score_display_flag){
 		msx_print_num(7, 0, score, 6);
 		score_display_flag = False;
+		if(score >= high_score){
+			if((score % 10) == 0){
+				msx_print(0, 0, "HIGH: ");
+			}
+		}else{
+			msx_print(0, 0, "SCORE:");
+		}
 	}
 
 	// HIGH
@@ -1053,7 +1053,7 @@ void main(void) {
 		sin_table[i]  =  sin(i * 0.12) * 55;
 	}
 
-	high_score = 0;
+	high_score = 5000;
 	reset();
 
 	for(;;) {
