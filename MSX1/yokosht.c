@@ -536,7 +536,7 @@ void update_input(void) {
 				if(bullets_active[b_idx] == True)
 					continue;
 				bullets_x[b_idx] = (Option_x[opt_idx] + 4);
-				bullets_y[b_idx] = (Option_y[opt_idx]);
+				bullets_y[b_idx] = (Option_y[opt_idx] + 8);
 				bullets_active[b_idx] = True;
 				break;
 			}
