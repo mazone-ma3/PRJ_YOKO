@@ -284,7 +284,7 @@ void update(void)
 			if(bullets_active[b_idx] == True)
 				continue;
 			bullets_x[b_idx] = (player_x + 16);
-			bullets_y[b_idx] = (player_y + 8);
+			bullets_y[b_idx] = (player_y + 6);
 			bullets_active[b_idx] = True;
 			break;
 		}
@@ -296,7 +296,7 @@ void update(void)
 				if(bullets_active[b_idx] == True)
 					continue;
 				bullets_x[b_idx] = (Option_x[opt_idx] + 4);
-				bullets_y[b_idx] = (Option_y[opt_idx] + 8);
+				bullets_y[b_idx] = (Option_y[opt_idx] + 6);
 				bullets_active[b_idx] = True;
 				break;
 			}

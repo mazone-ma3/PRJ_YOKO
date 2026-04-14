@@ -522,7 +522,7 @@ void update_input(void) {
 		for (unsigned char i = 0; i < MAX_BULLETS; i++) {
 			if (!bullets_active[i]) {
 				bullets_x[i] = player_x + 16 * DIV;
-				bullets_y[i] = player_y + 8 * DIV;
+				bullets_y[i] = player_y + 6 * DIV;
 				bullets_active[i] = 1;
 				// 簡易サウンド（PSG）
 //				msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
@@ -536,7 +536,7 @@ void update_input(void) {
 				if(bullets_active[b_idx] == True)
 					continue;
 				bullets_x[b_idx] = (Option_x[opt_idx] + 4);
-				bullets_y[b_idx] = (Option_y[opt_idx] + 8);
+				bullets_y[b_idx] = (Option_y[opt_idx] + 6);
 				bullets_active[b_idx] = True;
 				break;
 			}

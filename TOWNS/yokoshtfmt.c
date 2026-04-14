@@ -694,7 +694,7 @@ void grp_set(void){
 
 /* 31kHz出力用 */
 //	EGB_resolution(egb_work, 0, 3);			/* ペ－ジ0は640x480/16 */
-	EGB_resolution(egb_work, 0, 5);		/* ペ－ジ0は512x256/32768 */
+	EGB_resolution(egb_work, 0, 10);		/* ペ－ジ0は512x256/32768 */
 	EGB_resolution(egb_work, 1, 5);			/* ペ－ジ1は256x512/32768 */
 	EGB_displayPage(egb_work, 1, 3);		/* 上にくるペ－ジは1で両方とも表示 */
 
@@ -721,17 +721,17 @@ void grp_set(void){
 	EGB_clearScreen(egb_work);
 
 /* 横長化 bcc氏のサンプル(というかOh!誌の記事)そのまんま */
-	Write_CRTC_register( 0, 80);	/* CG */
-	Write_CRTC_register( 1, 590);
-	Write_CRTC_register( 4, 669);
-	Write_CRTC_register( 29, 3);
-	Write_CRTC_register( 9, 130);
-	Write_CRTC_register( 18, 130);
-	Write_CRTC_register( 10, 642);
+	Write_CRTC_register( 0x00, 80);	/* CG */
+	Write_CRTC_register( 0x01, 590);
+	Write_CRTC_register( 0x04, 669);
+	Write_CRTC_register( 0x1d, 3);
+	Write_CRTC_register( 0x09, 130);
+	Write_CRTC_register( 0x12, 130);
+	Write_CRTC_register( 0x0a, 642);
 
-	Write_CRTC_register( 11, 130);	/* SPRITE */
-	Write_CRTC_register( 22, 130);
-	Write_CRTC_register( 12, 642);
+	Write_CRTC_register( 0x0b, 130);	/* SPRITE */
+	Write_CRTC_register( 0x16, 130);
+	Write_CRTC_register( 0x0c, 642);
 }
 
 /* 画面を戻す(コンソ－ルからの起動対策) */
@@ -994,7 +994,7 @@ unsigned short star[5][STAR_NUM];
 short scrl, scrl_spd;
 
 
-// bcc氏のサンプル(というかOh!誌の記事)そのまんま
+// bcc氏のサンプル(というかOh!誌の記事)そのまんま→少し変更
 
 unsigned short Read_CRTC_register(int address)
 {
@@ -1020,7 +1020,7 @@ void Scroll(int direction)
 			FA0--;
 			if(FA0 <= 0)
 			{
-				FA0 = 127;
+				FA0 = 255;
 			}
 			count = 0;
 		}
@@ -1036,7 +1036,7 @@ void Scroll(int direction)
 			Write_CRTC_register( 17, FA0 );
 			Write_CRTC_register( 18, HAJ0 );
 			FA0++;
-			if(FA0 == 128)
+			if(FA0 == 256)
 			{
 				FA0 = 0;
 			}
@@ -1062,11 +1062,11 @@ void init_star(void)
 
 /* スタ－の座標系を初期化 */
 	for(i = 0;i < STAR_NUM; i++){
-		star[0][i] = ((((i + 1*0) * 256) / 64)); //STAR_NUM));
+		star[0][i] = ((((i + 1*0) * 512) / 64)); //STAR_NUM));
 		star[1][i] = rand() % (STAR_NUM * 4); //256;
 		star[2][i] = (rand() % 2) + 1;
 //		_FP_OFF(vram) = ((star[0][i] + star[1][i] * 1024) / 2);
-		vram = ((star[0][i] + star[1][i] * 256) * 2);
+		vram = ((star[0][i] + star[1][i] * 512) * 2);
 		star[3][i] = VRAM_getPixelW(vram); //*vram;
 		star[4][i] = rand() % 32767 + 1;//% 14 + 2; //fff;
 	}
@@ -1074,7 +1074,7 @@ void init_star(void)
 	i = STAR_NUM;
 	while(i--){
 //		_FP_OFF(vram) = (((star[0][i] + (256 / STAR_NUM)) % 256 + 32 + star[1][i] * 1024) / 2);
-		vram = (((star[0][i] + ((256 / STAR_NUM)) % 256) + star[1][i] * 256) * 2);
+		vram = (((star[0][i] + ((512 / STAR_NUM)) % 512) + star[1][i] * 512) * 2);
 //		*vram |= star[4][i];
 		VRAM_putPixelW(vram, VRAM_getPixelW(vram) | star[4][i]);
 	}
@@ -1105,16 +1105,16 @@ void bg_roll(void)
 	i = STAR_NUM;
 	while(i--){
 //		_FP_OFF(vram) = ((star[0][i] + star[1][i] * 1024) / 2);
-		vram = ((star[0][i] + star[1][i] * 256) * 2);
+		vram = ((star[0][i] + star[1][i] * 512) * 2);
 //		*vram = star[3][i];
 		VRAM_putPixelW(vram, star[3][i]);
-		star[0][i] -= (star[2][i] + 256);
-		star[0][i] %= 256;
+		star[0][i] -= (star[2][i] + 512);
+		star[0][i] %= 512;
 //	}
 //	i = STAR_NUM;
 //	while(i--){
 //		_FP_OFF(vram) = ((star[0][i] + star[1][i] * 1024) / 2);
-		vram = ((star[0][i] + star[1][i] * 256) * 2);
+		vram = ((star[0][i] + star[1][i] * 512) * 2);
 //		star[3][i] = *vram;
 		star[3][i] = VRAM_getPixelW(vram);
 //		*vram |= star[4][i];
