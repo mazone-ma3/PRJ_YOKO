@@ -576,24 +576,25 @@ class App:
 			if star[0] < 0: star[0] = pyxel.width
 			pyxel.pset(int(star[0]), int(star[1]), star[3])
 
-#		pyxel.tri(self.player_x + 16, self.player_y + 8,
-#				  self.player_x, self.player_y + 4,
-#				  self.player_x, self.player_y + 12, 10)
-#		s.set(i,spx[i]+16,spy[i]+16,sppat[i],sppri[i], 0)
-#		s.set(0,self.player_x+16,self.player_y+16,0,1, 0)
-		pyxel.blt(self.player_x, self.player_y, 2, 1*16, 0, 16, 16, 0)
+#		i = 1
 
-		if self.shield_active:
-			alpha = 7 if pyxel.frame_count % 8 < 4 else 12
-#			pyxel.circb(self.player_x + 8, self.player_y + 8, 13, alpha)
-			pyxel.blt(self.player_x, self.player_y, 2, 6*16, 0, 16, 16, 0)
+		for p in self.particles:
+			p.draw()
 
-		i = 1
-		for b in self.bullets:
-#			s.set(i,b[0], b[1],0,1, 0)
+		for item in self.chain_items: item.draw()
+
+		for item in self.bomb_items: item.draw()
+		for item in self.shield_items: item.draw()
+		for item in self.option_items: item.draw()
+
+		for opt in self.options:
+			opt.draw()
+
+		for eb in self.enemy_bullets:
+			pyxel.blt(eb[0] / 1024, eb[1] / 1024,  2, 0*16, 0, 16, 16, 0)
+#			s.set(i,eb[0], eb[1],0,1, 0)
 #			i = i + 1
-#			pyxel.rect(b[0], b[1], 8, 4, 9)
-			pyxel.blt(b[0], b[1],  2, 4*16, 0, 16, 16, 0)
+#			pyxel.rect(eb[0] / 1024, eb[1] / 1024, 5, 5, 8)
 
 		for e in self.enemies:
 			if e[2] == 0: col = 8
@@ -605,25 +606,26 @@ class App:
 #			pyxel.rect(e[0] + 4, int(e[1]) + 4, 8, 8, 7)
 			pyxel.blt(e[0], e[1],  2, 2*16, 0, 16, 16, 0)
 
-		for eb in self.enemy_bullets:
-			pyxel.blt(eb[0] / 1024, eb[1] / 1024,  2, 0*16, 0, 16, 16, 0)
-#			s.set(i,eb[0], eb[1],0,1, 0)
+		for b in self.bullets:
+#			s.set(i,b[0], b[1],0,1, 0)
 #			i = i + 1
-#			pyxel.rect(eb[0] / 1024, eb[1] / 1024, 5, 5, 8)
+#			pyxel.rect(b[0], b[1], 8, 4, 9)
+			pyxel.blt(b[0], b[1],  2, 4*16, 0, 16, 16, 0)
+
+		if self.shield_active:
+			alpha = 7 if pyxel.frame_count % 8 < 4 else 12
+#			pyxel.circb(self.player_x + 8, self.player_y + 8, 13, alpha)
+			pyxel.blt(self.player_x, self.player_y, 2, 6*16, 0, 16, 16, 0)
+
+#		pyxel.tri(self.player_x + 16, self.player_y + 8,
+#				  self.player_x, self.player_y + 4,
+#				  self.player_x, self.player_y + 12, 10)
+#		s.set(i,spx[i]+16,spy[i]+16,sppat[i],sppri[i], 0)
+#		s.set(0,self.player_x+16,self.player_y+16,0,1, 0)
+		pyxel.blt(self.player_x, self.player_y, 2, 1*16, 0, 16, 16, 0)
 
 #		for idx in range(i, 128, 1):
 #			s.set(idx, 0, 256, 0, 0 , 0)
-
-		for opt in self.options:
-			opt.draw()
-
-		for item in self.chain_items: item.draw()
-		for item in self.option_items: item.draw()
-		for item in self.shield_items: item.draw()
-		for item in self.bomb_items: item.draw()
-
-		for p in self.particles:
-			p.draw()
 
 		# UI
 		self.put_strings(0, 1, "BOMB: ")

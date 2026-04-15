@@ -774,13 +774,6 @@ void draw(void)
 		spr_count += 1;
 	}
 
-	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
-		if(ChainItem_active[item_idx] == False)
-			continue;
-		sprite_set(spr_count,max(ChainItem_x[item_idx], 0), ChainItem_y[item_idx],3,1, 0);
-		spr_count += 1;
-	}
-
 	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
 		if(OptionItem_active[item_idx] == False)
 			continue;
@@ -799,6 +792,13 @@ void draw(void)
 		if(BombItem_active[item_idx] == False)
 			continue;
 		sprite_set(spr_count,max(BombItem_x[item_idx], 0), BombItem_y[item_idx],9,1, 0);
+		spr_count += 1;
+	}
+
+	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
+		if(ChainItem_active[item_idx] == False)
+			continue;
+		sprite_set(spr_count,max(ChainItem_x[item_idx], 0), ChainItem_y[item_idx],3,1, 0);
 		spr_count += 1;
 	}
 
