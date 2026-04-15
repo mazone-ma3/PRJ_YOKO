@@ -127,6 +127,7 @@ class App:
 		self.high_score = self.load_high_score()
 		self.particles = []
 		self.reset()
+		self.game_over = True
 
 		self.sin_table = []
 
@@ -193,7 +194,7 @@ class App:
 		self.shoot_timer = 0
 		self.score = 0
 		self.play_time = 0		  # 経過時間（フレーム）
-		self.game_over = False
+#		self.game_over = False
 
 		self.stars = []
 		for _ in range(80):
@@ -234,6 +235,7 @@ class App:
 		if self.game_over:
 			if pyxel.btnp(pyxel.KEY_R) or pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
 				self.reset()
+				self.game_over = False
 			return
 
 		self.play_time += 1
@@ -707,3 +709,5 @@ class App:
 App()
 #x68k.curon()
 #x68k.crtmod(16)
+
+#yokosht.py By maZone(m@3) with Grok 2026.

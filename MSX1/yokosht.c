@@ -164,7 +164,7 @@ unsigned long high_score = 0;
 //unsigned int play_time = 0;
 unsigned char shoot_timer = 0;
 unsigned char enemy_spawn_timer = 0;
-unsigned char game_over = 0;
+unsigned char game_over = 1;
 
 unsigned char all_display_flag = True;
 unsigned char score_display_flag = True;
@@ -261,7 +261,7 @@ void reset(void) {
 	play_time = 0;
 	shoot_timer = 0;
 	enemy_spawn_timer = 0;
-	game_over = 0;
+//	game_over = 0;
 
 	all_display_flag = True;
 	chain_display_flag = False;
@@ -308,7 +308,7 @@ void reset(void) {
 	shoot_timer = 0;
 	score = 0;
 	play_time = 0;		  // 経過時間（フレーム）
-	game_over = 0;
+//	game_over = 0;
 
 	for (i = 0; i < 40; i++) {
 		stars[i].x = (rand() % width) * DIV;
@@ -1069,6 +1069,7 @@ void main(void) {
 			}
 			reset();
 //			msx_wait_vsync();
+			game_over = 0;
 			set_sprite_all(0, 32);
 		}
 

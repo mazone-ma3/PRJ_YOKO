@@ -99,7 +99,7 @@ unsigned short kill_count = 0;
 unsigned short shoot_timer = 0;
 
 unsigned long play_time = 0;		  // 経過時間（フレーム）
-unsigned char game_over = 0; //False;
+unsigned char game_over = 1; //False;
 
 unsigned short old_i;
 unsigned char k;
@@ -167,6 +167,12 @@ void main2(void)
 	init_star();
 
 	for(;;){
+		draw();
+
+		wait_vsync();
+		set_sprite_all();
+		bg_roll();
+
 		if(_iocs_b_sftsns() & 1)
 			break;
 		if (_iocs_bitsns(0) & 2)
@@ -176,12 +182,6 @@ void main2(void)
 			se();
 			seflag = 0;
 		}
-
-		draw();
-
-		wait_vsync();
-		set_sprite_all();
-		bg_roll();
 	}
 }
 
@@ -235,7 +235,7 @@ void reset(void)
 	shoot_timer = 0;
 	score = 0;
 	play_time = 0;		  // 経過時間（フレーム）
-	game_over = 0;
+//	game_over = 0;
 }
 
 void update(void)
@@ -250,8 +250,10 @@ void update(void)
 				break;
 
 			case 2:
-				if ((keycode & KEY_A))
+				if ((keycode & KEY_A)){
 					reset();
+					game_over = 0;
+				}
 				break;
 		}
 		return;
