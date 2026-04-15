@@ -114,7 +114,7 @@ class BombItem:
 
 class App:
 	def __init__(self):
-		pyxel.init(256, 192, title="Simple Shmup - Time-based Difficulty", fps=60)
+		pyxel.init(256, 192, title="Simple Shmup - Plus", fps=60)
 		pyxel.load("yokosht.pyxres")
 
 		# 効果音
