@@ -20,6 +20,10 @@ BMP 旧版の画像データファイル
 
 ※TOWNS版は横長画面にしてるため、実機で液晶だと縞が出ることがあります。CRTの場合は不明です。
 
+↓Pyxel版を実行
+
+https://mazone-ma3.github.io/github.io/py/yokosht_plus.html
+
 ↓WebMSXでMSX1版を実行
 
 https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX1/BIN/yokosht.rom
