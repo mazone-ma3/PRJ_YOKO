@@ -191,8 +191,9 @@ void  __attribute__((interrupt))int_fm(void)
 //	else
 //		playflag = 1;
 
+//	status = *port1;
 	/* YM2151 ステータス読み出し → タイマーフラグ自動クリア + IRQフラグもクリアされる */
-	status = *port2;	// $E90003 を読む（これだけでTimerフラグがリセットされる場合が多い）
+//	status = *port2;	// $E90003 を読む（これだけでTimerフラグがリセットされる場合が多い）
 
 	/* 念のため明示的にIRQリセット（YM2151のレジスタ$04に0x80書き込みでIRQフラグクリア） */
 //	set_fm(0x04, 0x80);	// IRQフラグ & Timerフラグを強制クリア（安全策）
@@ -201,6 +202,7 @@ void  __attribute__((interrupt))int_fm(void)
 //	nop();
 
 //	disable();
+//	set_fm(0x12, 191);
 	set_fm(0x14, 0x2a);
 	/* IERオフ */
 	asm(
