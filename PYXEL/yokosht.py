@@ -124,6 +124,18 @@ class App:
 #		pyxel.sounds[3].set("c2a1f1", tones="p", volumes="7", effects="n", speed=20)
 #		pyxel.sounds[4].set("c2c2c3c2", tones="t", volumes="7", effects="n", speed=8)
 
+		pyxel.sounds[0].mml("t196l4efga8g8a8d2.r2e8f8g8a8g8a8d1r4.>d4c2. <a+4g2 r8e8f8g8a2 r8e8f8g8a8 r8efga8g8a8d2.r2e8f8g8a8g8a8d1r4.>d4c2&c4<a+4g2fed1r2r2 >d2efe2c2<a+2>cdc+8<a8r8>e2r8d2efe2c2<a+2>cdc+8<a8r8>e2r8d2efe2c2<a+2>cdc+8<a8r8>e2r8d2efe2c2g2r8e8f8g8a8r8< l4efga8g8a8d2.r2e8f8g8a8g8a8d1r4.>d4c2. <a+4g2 r8e8f8g8a2 r8e8f8g8a8 r8efga8g8a8d2.r2e8f8g8a8g8a8d1r4.>d4c2&c4<a+4g2fed1&d4")
+
+		pyxel.sounds[1].mml("t196l8r2. dddddddd dddddddd cccccccc<aaaaaaaa a+a+a+a+a+a+a+a+ gggggggg+ aaaaa r8a+a+ aaaaaaaa> dddddddd dddddddd cccccccc cccccccc <a+a+a+a+a+a+a+a+ aaaaar8>cc dddddddd d2r2 dddddddd cccc<aaaa a+a+a+a+gggg>c+c+c+c+eeee dddd<aaaa> cccc eeee <a+a+a+a+gggg>c+c+c+c+eeee dddddddd cccc<aaaa a+a+a+a+gggg>c+c+c+c+eeee dddd<aaaa> cccc eeee <a+a+a+a+> eegg ar8 l8r4r4r4 dddddddd dddddddd cccccccc<aaaaaaaa a+a+a+a+a+a+a+a+ gggggggg+ aaaaa r8a+a+ aaaaaaaa> dddddddd dddddddd cccccccc cccccccc <a+a+a+a+a+a+a+a+ aaaaar8>cc dddddddd r4")
+
+		pyxel.sounds[2].mml("t196 l8r2. dfegfed<a> dfegfed<a>  cfegfec<g> cfegfec<g> <a+g>d<g>g<g>e<g> <a+g>d<g>g<g>e<g> ec+g<g>egfe c+<a>e<a>gfec+ dfegfed<a> dfegfed<a>  cfegfec<g> cfegfec<g> <a+g>d<g>g<g>e<g> ec+g<g>egfe dfegfed<a> dfefdfef d<a>d<a>fdfd ece<a> c<g>c<g a+fa+g a+ga+>d c+<a>c+ <g> egfe d<a>d<a>fdfd ece<a> c<g>c<g a+fa+g a+ga+>d c+<a>c+ <g> egfe d<a>d<a>fdfd ece<a> c<g>c<g a+fa+g a+ga+>d c+<a>c+ <g> egfe d<a>d<a>fdfd ece<a> c<g>c<g a+ga+g >d<a+>ef c+r8 l8r2. dfegfed<a> dfegfed<a>  cfegfec<g> cfegfec<g> <a+g>d<g>g<g>e<g> <a+g>d<g>g<g>e<g> ec+g<g>egfe c+<a>e<a>gfec+ dfegfed<a> dfegfed<a> cfegfec<g> cfegfec<g> <a+g>d<g>g<g>e<g> ec+g<g>egfe  dfegfed<a> r4")
+
+#		pyxel.play(0, 0, 0,True)
+#		pyxel.play(1, 1, 0,True)
+#		pyxel.play(2, 2, 0,True)
+
+#		pyxel.stop()
+
 		self.high_score = self.load_high_score()
 		self.particles = []
 		self.reset()
@@ -236,6 +248,9 @@ class App:
 			if pyxel.btnp(pyxel.KEY_R) or pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
 				self.reset()
 				self.game_over = False
+				pyxel.play(0, 0, 0,True)
+				pyxel.play(1, 1, 0,True)
+				pyxel.play(2, 2, 0,True)
 			return
 
 		self.play_time += 1
@@ -530,6 +545,7 @@ class App:
 						self.particles.append(Particle(self.player_x + 8, self.player_y + 8))
 				else:
 					self.game_over = True
+					pyxel.stop()
 #					pyxel.play(3, 3)
 				self.enemy_bullets.pop(eb_idx)
 				break
@@ -544,6 +560,7 @@ class App:
 						self.particles.append(Particle(self.player_x + 8, self.player_y + 8))
 				else:
 					self.game_over = True
+					pyxel.stop()
 #					pyxel.play(3, 3)
 				self.enemies.pop(e_idx)
 				break

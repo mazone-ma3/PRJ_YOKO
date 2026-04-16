@@ -173,8 +173,8 @@ void main2(void)
 		set_sprite_all();
 		bg_roll();
 
-		if(_iocs_b_sftsns() & 1)
-			break;
+//		if(_iocs_b_sftsns() & 1)
+//			break;
 		if (_iocs_bitsns(0) & 2)
 			break;
 		update();
@@ -245,14 +245,20 @@ void update(void)
 	if(game_over){
 		switch(game_over){
 			case 1:
-				if (!(keycode & KEY_A))
+				if(!playmode){
+					stop_fmdbgm();
+				}
+				if (!(keycode & KEY_A)){
 					game_over = 2;
+				}
 				break;
 
 			case 2:
 				if ((keycode & KEY_A)){
 					reset();
 					game_over = 0;
+					if(!playmode)
+						playmode = play_fmdbgm();
 				}
 				break;
 		}

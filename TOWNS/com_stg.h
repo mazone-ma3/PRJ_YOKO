@@ -155,8 +155,10 @@ void Particles_append(short x, short y)
 	}
 }
 
+
 void main2(void)
 {
+	unsigned char key;
 	hiscore = 5000;
 	reset();
 
@@ -168,7 +170,7 @@ void main2(void)
 	init_star();
 
 
-	do{
+	for(;;){
 //		k = _iocs_b_sftsns();
 //		if(k & 0x01)
 //			break;
@@ -190,7 +192,12 @@ void main2(void)
 			se();
 			seflag = 0;
 		}
-	}while(KYB_read( 1, &encode ) != 0x1b);
+		key = KYB_read( 1, &encode );
+		if(key == 0x1b)
+			break;
+//		if(encode & 0x04)
+//			break;
+	}
 }
 
 void reset(void)
@@ -253,6 +260,9 @@ void update(void)
 	if(game_over){
 		switch(game_over){
 			case 1:
+				if(playmode != ERROR){
+					stop_fmdbgm();
+				}
 				if (!(keycode & KEY_A))
 					game_over = 2;
 				break;
@@ -261,6 +271,10 @@ void update(void)
 				if ((keycode & KEY_A)){
 					reset();
 					game_over = 0;
+					if(playmode != ERROR){
+//						playmode = 
+						play_fmdbgm();
+					}
 				}
 				break;
 		}

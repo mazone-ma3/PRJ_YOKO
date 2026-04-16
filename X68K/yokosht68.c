@@ -26,6 +26,8 @@
 
 #endif
 
+#include "fmd68.h"
+
 #define CHRPAL_NO 0
 #define REVPAL_NO 1
 #define BGPAL_NO 2
@@ -78,6 +80,8 @@ char pcg_alt[PCG_MAX + 1];
 /* PCG データファイル読み込みバッファ */
 char pcg_dat[PCG_MAX * 128];
 #endif
+
+int playmode = 0;
 
 /************************************************************************/
 /*		BIT操作マクロ定義												*/
@@ -949,7 +953,7 @@ dum:	_iocs_b_super(0);		/* スーパーバイザモード 最適化防止にラベルを付ける */
 //	for(i = 0; i <  256; ++i)
 //		sin_table[i] = sin_table[i + 256] = (16 * sin(2 * M_PI * i / 256));
 
-//	load_fmdbgm("dummy.ob2");
+	playmode = load_fmdbgm("c_6.ob2");
 
 //	mcd_status = -1;
 //	if(mcd_status >= 0){
@@ -1124,6 +1128,10 @@ dum:	_iocs_b_super(0);		/* スーパーバイザモード 最適化防止にラベルを付ける */
 	main2();
 
 end:
+
+	if(!playmode){
+		stop_fmdbgm();
+	}
 
 #ifndef XSP
 //	reset_int();

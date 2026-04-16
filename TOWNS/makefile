@@ -23,7 +23,7 @@ CCFLAGS      = -O1 -msoft-float -Ic:\tgcc\include  -S
 LDFLAGS      = -N -S -L$(LIB_PATH) -lTN -lce -lme -lpc -lt
 
 # 中間ファイル
-OBJS         = $(TARGET).o VSYNC.o
+OBJS         = $(TARGET).o VSYNC.o FMDTWG.o
 
 CRT0         = $(LIB_PATH)\crt0.o
 
@@ -53,9 +53,10 @@ $(TARGET).EXP: $(TARGET).bin
 	$(GENEXP) $< $@
 
 # --- 依存関係 ---
-$(TARGET).o: $(TARGET).c com_stg.h
+$(TARGET).o: $(TARGET).c com_stg.h FMDTWG.h
 
 VSYNC.o : VSYNC.s
+FMDTWG.o: FMDTWG.c FMDTWG.h key.h keytow.h tone.h
 
 clean:
 	rm -f *.o *.bin *.EXP

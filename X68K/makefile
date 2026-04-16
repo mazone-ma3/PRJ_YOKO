@@ -1,4 +1,5 @@
-﻿# --- 設定 ---
+﻿# yokosht68.X makefile for X680x0 GCC (elf2x68k) (XSP選択式)
+# --- 設定 ---
 TARGET      = yokosht68
 CC          = m68k-xelf-gcc
 AS          = m68k-xelf-as
@@ -10,7 +11,7 @@ LDFLAGS     = -Ttext=0x6800 -s
 
 # 中間ファイル
 XSPLIBFILES =  xsp2lib.o pcm8afnc.o
-OBJS        = $(TARGET).o
+OBJS        = $(TARGET).o fmd68.o
 
 # --- ルール ---
 
@@ -32,7 +33,8 @@ xsp:  $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TARGET)_XSP.X $(OBJS) $(XSPLIBFILES) -lm
 
 # --- 依存関係 ---
-$(TARGET).o: $(TARGET).c inkey.h com_stg.h
+$(TARGET).o: $(TARGET).c inkey.h com_stg.h fmd68.h
+fmd68.o: fmd68.c fmd68.h key.h keyx68.h tone.h
 
 clean:
 	rm -f $(TARGET).o $(TARGET).X

@@ -15,6 +15,11 @@
 #include <TOWNS/segment.h>
 #include <egb.h>
 
+#include "fmdtwg.h"
+
+#define ERROR 1
+#define NOERROR 0
+
 #define _disable() asm("cli\n")
 #define _enable() asm("sti\n")
 
@@ -67,9 +72,11 @@ extern void reset_vsync_ent(void);
 
 
 /* サウンド設定 */
-char sndwork[16384];
+//char sndwork[16384];
 
 unsigned int encode;
+
+int playmode = NOERROR;
 
 /************************************************************************/
 /*		BIT操作マクロ定義												*/
@@ -1148,7 +1155,7 @@ int	main(int argc,char **argv)
 //	for(i = 0; i <  256; ++i)
 //		sin_table[i] = sin_table[i + 256] = (16 * sin(2 * M_PI * i / 256));
 
-//	load_fmdbgm("dummy.ob2");
+	playmode = load_fmdbgm("c_6.ob2");
 
 	if ((SND_load("se1.snd", &SNDBUFF[0][0])) == NULL)
 		return 1;
@@ -1232,6 +1239,9 @@ int	main(int argc,char **argv)
 
 
 end:
+	if(playmode != ERROR){
+		stop_fmdbgm();
+	}
 	reset_vsync();
 
 //	pal_allblack(BGPAL_NO);
