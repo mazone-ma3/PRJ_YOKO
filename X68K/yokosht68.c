@@ -28,6 +28,12 @@
 
 #include "fmd68.h"
 
+/* äÑÇËçûÇ› off */
+#define disable() asm volatile("ori.w	#0x0700,%sr\n")
+/* äÑÇËçûÇ› on */
+#define enable() asm volatile("andi.w	#0x0f8ff,%sr\n")
+#define nop() asm volatile("nop\n")
+
 #define CHRPAL_NO 0
 #define REVPAL_NO 1
 #define BGPAL_NO 2
@@ -672,15 +678,19 @@ void set_sprite_pattern(int num, int no) {
 void se(void)
 {
 //	seflag = 1;
+	disable();
 	_iocs_adpcmmod(0);
 	_iocs_adpcmout(&SNDBUFF[seflag - 1][0], 4 * 256 + 3, pcmsize[seflag - 1]);
+	enable();
 }
 
 void seoff(void)
 {
 	unsigned short *pp;
 
+	disable();
 	_iocs_adpcmmod(0);
+	enable();
 }
 
 /* âÊñ ê›íË */
@@ -834,11 +844,13 @@ unsigned char keyscan(void)
 	unsigned short paddata;
 	unsigned char keycode = 0;
 
+	disable();
 	k5 = _iocs_bitsns(5);
 	k6 = _iocs_bitsns(6);
 	k7 = _iocs_bitsns(7);
 	k8 = _iocs_bitsns(8);
 	k9 = _iocs_bitsns(9);
+	enable();
 
 	paddata = reg[0];
 	st = (paddata & 0x0f); // ^ 0x0f;
