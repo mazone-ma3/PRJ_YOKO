@@ -69,7 +69,7 @@ __endasm;\
 
 unsigned char spr_count = 0, tmp_spr_count = 0, old_count[2] = {0, 0};
 volatile unsigned char vsync_flag = 0;
-unsigned char h_pos = 0, hsrc_ync_line = 0;
+unsigned char h_pos = 0, hsync_line = 0;
 
 void put_my_hp_dmg(void);
 void game_put(void);
@@ -2058,7 +2058,7 @@ int	main(int argc,char **argv)
 //		write_VDP(1, 0x62); // Mode 1 IE0=1
 		write_VDP(0, 0x06); // Mode 0
 		write_VDP(8, 0x0a); // Mode 2
-		write_VDP(9, 0x88); // Mode 3
+		write_VDP(9, 0x80); // Mode 3
 
 		write_VDP(2, 0x1f); // Pattern name table base address register
 		write_VDP(5, 0xef); // Sprite attibute table base adderss register
@@ -2079,14 +2079,15 @@ int	main(int argc,char **argv)
 	}
 	set_displaypage(0);
 
-//	DI();
-//	EI();
+	DI();
 
 	// 11011111b
 	write_VDP(20, 0xff);	/* V9968Šg’£ */
 	write_VDP(6, 0x30);		/* V9968 SPMode3 SpritePatternGeneratoriTable */
 
 	write_VDP(21,0);
+	EI();
+
 	if((read_VDPstatus(1) & 0x3e) == 0x06){
 //		vdpmode = 0;
 		pal_set(1, 0, 0, 0, 0);
@@ -2108,8 +2109,10 @@ int	main(int argc,char **argv)
 		set_int();
 	else{
 		read_VDPstatus(1);
-//		set_int3();
+		set_int3();
 //		write_VDP(1, 0x62); // Mode 1 Sprite=16x16 IE0=1
+		write_VDP(0, 0x06);
+		write_VDP(1, 0x62); // Mode 1 Sprite=16x16 IE0=1 BL=1(Disp ON)
 	}
 
 	EI();
@@ -2118,6 +2121,8 @@ int	main(int argc,char **argv)
 
 //	boxfill(0, 0, 256, 212, 0, 0, 0x00);
 	boxfill(0, 256*4, 256, 212, 0, 0, 0x00);
+//	EI();
+	pal_all(CHRPAL_NO, org_pal);
 
 	main2();
 
@@ -2128,8 +2133,11 @@ int	main(int argc,char **argv)
 
 	if(!vdpmode)
 		reset_int();
-//	else
-//		reset_int2();
+	else{
+		DI();
+		write_VDP(1, 0x42); // Mode 1 Sprite=16x16 IE0=0 BL=1(Disp ON)
+		reset_int2();
+	}
 
 	if(!vdpmode){
 /*		*forclr = forclr_old;
@@ -2147,9 +2155,9 @@ int	main(int argc,char **argv)
 	*clicksw = clicksw_old;
 
 
-	VDP_readadr = read_mainrom(0x0006);
-	VDP_writeadr = read_mainrom(0x0007);
-	write_VDP(1, vdp_value[1] | 0x20); // Internal VDPIE0=1;
+//	VDP_readadr = read_mainrom(0x0006);
+//	VDP_writeadr = read_mainrom(0x0007);
+//	write_VDP(1, vdp_value[1] | 0x20); // Internal VDPIE0=1;
 
 	key_flush();
 
@@ -2158,7 +2166,7 @@ int	main(int argc,char **argv)
 
 	return 0;
 }
-/*
+
 void inthsync(void)
 {
 __asm
@@ -2178,19 +2186,20 @@ __asm
 	inc	a
 	ld	c,a
 	in a,(c)				; S#1 Read
-
+__endasm;
+/*
 	rrca
-	jr	nc,hsrc_yncend
-;	and	a,00000001b	; Hsrc_yNC_FLAG
-;	jr	z,hsrc_yncend
+	jr	nc,hsyncend
+;	and	a,00000001b	; hsync_FLAG
+;	jr	z,hsyncend
 
-	ld	hl,_hsrc_ync_line
+	ld	hl,_hsync_line
 	ld	a,(hl)
 	add	a,6
 	cp	211
-	jr	c,hsrc_yncskip1
+	jr	c,hsyncskip1
 	xor	a
-hsrc_yncskip1:
+hsyncskip1:
 	ld	(hl),a
 	ld	l,a
 	out	(c),a
@@ -2236,14 +2245,14 @@ hsrc_yncskip1:
 	inc	a
 	ld	c,a
 
-hsrc_yncloop1:
+hsyncloop1:
 	in	a,(c)
 	and	00100000b
-	jr	nz,hsrc_yncloop1
-hsrc_yncloop2:
+	jr	nz,hsyncloop1
+hsyncloop2:
 	in	a,(c)
 	and	00100000b
-	jr	z,hsrc_yncloop2
+	jr	z,hsyncloop2
 
 	ld	c,b
 
@@ -2258,9 +2267,9 @@ hsrc_yncloop2:
 
 ;	ld	a,27 | 0080h
 ;	out	(c),a
-
-
-hsrc_yncend:
+*/
+__asm
+hsyncend:
 	ld	a,(_VDP_writeadr)
 	inc	a
 	ld	c,a
@@ -2306,7 +2315,7 @@ INTWORK2:
 	DB	0,0,0,0,0
 __endasm;
 }
-*/
+
 void intvsync(void)
 {
 __asm
@@ -2384,7 +2393,7 @@ slotset:
 __endasm;
 #endif
 }
-/*
+
 void set_int3(void)
 {
 __asm
@@ -2405,7 +2414,7 @@ __asm
 	EI
 __endasm;
 }
-*/
+
 /*
 void set_int2(void)
 {
@@ -2466,7 +2475,7 @@ __asm
 __endasm;
 #endif
 }
-/*
+
 void reset_int2(void)
 {
 //#ifndef SINGLEMODE
@@ -2479,4 +2488,4 @@ __asm
 	EI
 __endasm;
 //#endif
-}*/
+}
