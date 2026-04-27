@@ -12,7 +12,7 @@ CFLAGS   = +cpm -compiler sdcc --opt-code-size --sdcccall0
 LDFLAGS = +cpm -create-app
 
 # 中間ファイル
-OBJS     = $(TARGET).o com_stg.o
+OBJS     =  com_stg.o $(TARGET).o
 
 # --- ルール ---
 

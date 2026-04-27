@@ -1,10 +1,9 @@
-/* yokoshtfmt.c By m@3 with Grok 2026. */
+/* yokoshtfmt.c By m@3 2026. */
 
 #define FMTOWNS
 
 #define SCREEN_WIDTH (256)
 #define SCREEN_HEIGHT (240)
-#define COUNT1S 60
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,39 +14,20 @@
 #include <TOWNS/segment.h>
 #include <egb.h>
 
-#include "fmdtwg.h"
+#include "yokoshtfmt.h"
 
-#define ERROR 1
-#define NOERROR 0
+extern void main2(void);
 
 #define _disable() asm("cli\n")
 #define _enable() asm("sti\n")
 
 char egb_work[1536];
 
-#define CHRPAL_NO 0
-#define REVPAL_NO 1
-#define BGPAL_NO 2
-
-#define MAX_SPRITE 227
-
-#define SHIFT_NUM	0 //3
-
-enum {
-	IMG_SIZE_X = 16,
-	SPR_OFS_X = -16,
-	SPR_OFS_Y = -16
-};
 
 #define SCREEN_MAX_Y 240
 
-#define CHR_TOP 128
-
 #define SPBACKCOLOR	0x8000	/* スプライトの未表示部分を塗りつぶす色 */
 
-#define FONTPARTS (16 * 4)
-#define TITLEPARTS 0 //(8 * 4)
-#define SPRPARTS 128
 
 /* スプライト表示デ－タをVRAMに書き込むマクロ */
 /* 座標をシフトして書き込みデ－タは随時インクリメント */
@@ -108,15 +88,6 @@ int playmode = NOERROR;
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
 
-
-/* 各キャラクタの構造体(CHR_PARA) */
-typedef struct chr_para{
-	int x,y,xx,yy,pat_num,atr,count,hp;
-} CHR_PARA;
-
-typedef struct chr_para2{
-	short x , y, pat_num, atr;
-} CHR_PARA2;
 
 CHR_PARA2 chr_data[MAX_SPRITE * 2];
 
@@ -460,8 +431,6 @@ int sprite_pattern_no[8], old_sprite_pattern_no[8], spr_x[8], spr_y[8];
 
 char chr;
 unsigned char str_temp[11];
-#define SCREEN2 0
-#define CHRPAL_NO 0
 
 volatile int spr_count;
 int total_count = 0;
@@ -550,23 +519,6 @@ void hiscore_display_clear(void)
 */
 CHR_PARA2 *pchr_data;
 
-/* スプライト位置を定義するマクロ */
-#define DEF_SP_SINGLE( NO, X, Y, PAT, PAL, ATR) {\
-	pchr_data = &chr_data[NO];\
-	pchr_data->x = (X >> SHIFT_NUM) + SPR_OFS_X; \
-	pchr_data->y = (Y >> SHIFT_NUM) + SPR_OFS_Y + 2; \
-	pchr_data->pat_num = PAT | (ATR << 10); \
-	pchr_data->atr = (PAL + 256) | 0x8000; \
-	NO++; \
-}
-
-#define sprite_set( NO, X, Y, PAT, ATR, PRO) {\
-	pchr_data = &chr_data[NO];\
-	pchr_data->x = (X >> SHIFT_NUM) + SPR_OFS_X; \
-	pchr_data->y = (Y >> SHIFT_NUM) + SPR_OFS_Y + 2; \
-	pchr_data->pat_num = PAT + CHR_TOP + FONTPARTS + TITLEPARTS;\
-	pchr_data->atr = (CHRPAL_NO + 256) | 0x8000; \
-}
 
 void spr_on(int num){
 //	SPR_display(1, num);
@@ -891,8 +843,6 @@ void pad_read(int port, int *a, int *b, int *pd){
 	*pd = (data & 0x0f) ^ 0x0f;
 }
 
-#include "inkey.h"
-
 unsigned char keyscan(void)
 {
 	unsigned char st, pd;
@@ -987,11 +937,6 @@ void put_sprite(void)
 		DEF_SP_SINGLE(spr_count, (i * 16 - SPR_OFS_X) << SHIFT_NUM, (21 * 8 - SPR_OFS_Y) << SHIFT_NUM, 	IMG_SET(8, 0),  CHRPAL_NO, 0);
 	}
 }
-
-enum{
-	width = 256,
-	height = 192
-};
 
 #define STAR_NUM	height / 4 //64
 #define SCRL_SFT 4
@@ -1135,7 +1080,7 @@ void cls(void)
 }
 
 
-#include "com_stg.h"
+//#include "com_stg.h"
 
 int	main(int argc,char **argv)
 {

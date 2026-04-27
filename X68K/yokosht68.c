@@ -1,16 +1,12 @@
-/* yokosht68.c By m@3 with Grok 2026. */
+/* yokosht68.c By m@3 2026. */
 
 #define X68K
 
-//#define XSP
-
 #define SCREEN_WIDTH (256)
 #define SCREEN_HEIGHT (256)
-#define COUNT1S 56
 
 #include <stdint.h>
 #include <stdio.h>
-#include <x68k/iocs.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -19,6 +15,10 @@
 
 #include <math.h>
 
+#include "yokosht68.h"
+
+extern void main2(void);
+
 #ifdef XSP
 
 #include "XSP2lib.H"
@@ -26,41 +26,11 @@
 
 #endif
 
-#include "fmd68.h"
-
 /* 割り込み off */
 #define disable() asm volatile("ori.w	#0x0700,%sr\n")
 /* 割り込み on */
 #define enable() asm volatile("andi.w	#0x0f8ff,%sr\n")
 #define nop() asm volatile("nop\n")
-
-#define CHRPAL_NO 0
-#define REVPAL_NO 1
-#define BGPAL_NO 2
-
-#ifdef XSP
-#define MAX_SPRITE 512
-#else
-#define MAX_SPRITE 128
-#endif
-
-#define SHIFT_NUM	0 //3
-
-enum {
-	SPR_OFS_X = -16,
-	SPR_OFS_Y = -16
-};
-
-#define PCG_SPACE (0x40 - '0')
-#define PCGPARTS (16 * 4)
-#define PCG_SPACE (0x40 - '0')
-#define SPRPARTS 128
-
-#ifdef XSP
-#define CHR_TOP 0
-#else
-#define CHR_TOP (PCGPARTS / 4)
-#endif
 
 #define SCREEN_MAX_Y 256
 
@@ -439,7 +409,6 @@ int sprite_pattern_no[8], old_sprite_pattern_no[8], spr_x[8], spr_y[8];
 
 char chr;
 unsigned char str_temp[11];
-#define SCREEN2 0
 #define CHRPAL_NO 0
 
 
@@ -525,49 +494,11 @@ int tmp_spr_count = 0;
 int old_count[2];
 unsigned char spr_page = 0; //1;
 
-/* 各キャラクタの構造体(CHR_PARA) */
-typedef struct chr_para{
-	short x,y, pat_num,atr;
-} CHR_PARA;
 
 CHR_PARA chr_data[MAX_SPRITE * 2];
 
 CHR_PARA *pchr_data;
 
-#ifndef XSP
-/* スプライト位置を定義するマクロ */
-/*#define DEF_SP_SINGLE( NO, X, Y, PAT, PAL, ATR, PRO) {\
-	pchr_data = &chr_data[NO];\
-	pchr_data->x = (X >> SHIFT_NUM) + SPR_OFS_X + 16; \
-	pchr_data->y = (Y >> SHIFT_NUM) + SPR_OFS_Y + 16; \
-	pchr_data->pat_num = PAT + (PAL << 8) + (ATR << 14); \
-	pchr_data->atr = 0x0002; \
-	NO++; \
-}*/
-#define  sprite_set( NO, X, Y, PAT, PAL, VS) {\
-	pchr_data = &chr_data[NO];\
-	pchr_data->x = (X >> SHIFT_NUM) + SPR_OFS_X + 16; \
-	pchr_data->y = (Y >> SHIFT_NUM) + SPR_OFS_Y + 16; \
-	pchr_data->pat_num = PAT + CHR_TOP; \
-	pchr_data->atr = 0x0002; \
-}
-#else
-/*#define DEF_SP_SINGLE( NO, X, Y, PAT, PAL, ATR, PRO) {\
-	pchr_data = &chr_data[NO];\
-	pchr_data->x = (X >> SHIFT_NUM) + SPR_OFS_X + 16; \
-	pchr_data->y = (Y >> SHIFT_NUM) + SPR_OFS_Y + 16; \
-	pchr_data->pat_num = PAT & 0x3fff; \
-	pchr_data->atr = (PAL << 8) | (ATR << 14) | 0x20 | PRO | (PAT & 0xc000);\
-	NO++; \
-}*/
-#define  sprite_set( NO, X, Y, PAT, PAL, VS) {\
-	pchr_data = &chr_data[NO];\
-	pchr_data->x = (X >> SHIFT_NUM) + SPR_OFS_X + 16; \
-	pchr_data->y = (Y >> SHIFT_NUM) + SPR_OFS_Y + 16; \
-	pchr_data->pat_num = PAT & 0x3fff; \
-	pchr_data->atr = 0x0020 | (PAT & 0xc000); \
-}
-#endif
 
 // スプライトポインタ設定
 void set_sprite(int num, int posx, int posy) {
@@ -756,12 +687,6 @@ void spr_set(void){
 }
 
 
-
-enum{
-	width = 256,
-	height = 192
-};
-
 #define STAR_NUM	height / 4 //64
 #define SCRL_SFT 4
 #define SCRL_MIN 16
@@ -834,8 +759,6 @@ void bg_roll(void)
 			*vram |= star[4][i];
 		}
 }
-
-#include "inkey.h"
 
 unsigned char keyscan(void)
 {
@@ -930,7 +853,7 @@ void cls(void)
 //	crtc = (short *)0xe80000;
 //	crtcr20 = (short *)0xe80028;
 
-#include "com_stg.h"
+//#include "com_stg.h"
 
 int	main(int argc,char **argv)
 {

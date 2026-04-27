@@ -11,7 +11,7 @@ LDFLAGS     = -Ttext=0x6800 -s
 
 # 中間ファイル
 XSPLIBFILES =  xsp2lib.o pcm8afnc.o
-OBJS        = $(TARGET).o fmd68.o
+OBJS        = $(TARGET).o fmd68.o com_stg.o
 
 # --- ルール ---
 
@@ -33,8 +33,9 @@ xsp:  $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TARGET)_XSP.X $(OBJS) $(XSPLIBFILES) -lm
 
 # --- 依存関係 ---
-$(TARGET).o: $(TARGET).c inkey.h com_stg.h fmd68.h
+$(TARGET).o: $(TARGET).c inkey.h $(TARGET).h fmd68.h
 fmd68.o: fmd68.c fmd68.h key.h keyx68.h tone.h
+com_stg.o: com_stg.c $(TARGET).h
 
 clean:
 	rm -f $(TARGET).o $(TARGET).X

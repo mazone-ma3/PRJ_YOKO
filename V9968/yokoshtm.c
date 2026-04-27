@@ -1,4 +1,4 @@
-/* YOKOSHT ゲ－ム本体 for V9968 */
+/* yokoshtm.c for V9968  By m@3 2026. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1454,7 +1454,7 @@ void init_star(void)
 /* スタ－の座標系を初期化 */
 	for(i = 0;i < STAR_NUM; i++){
 		star[0][i] = (i + 1) * (128 / STAR_NUM) + 7;
-		star[1][i] = rand() % (212-16) + 16;
+		star[1][i] = rand() % (height-16) + 16;
 		star[2][i] = (rand() % 2) + 1;
 
 		/* VRAMのアドレスを算出 */
@@ -2092,8 +2092,9 @@ int	main(int argc,char **argv)
 //		vdpmode = 0;
 		pal_set(1, 0, 0, 0, 0);
 		for(i = 1; i < MAXCOLOR; i++)
-//		pal_set(pal_no, i, color[i][0]/2, color[i][1]/2, color[i][2]/2);
+//			pal_set(pal_no, i, color[i][0]/2, color[i][1]/2, color[i][2]/2);
 			pal_set(1, i, 31, 0, 0);
+		pal_all(CHRPAL_NO, org_pal);
 	}
 
 	spr_on();
@@ -2122,7 +2123,6 @@ int	main(int argc,char **argv)
 //	boxfill(0, 0, 256, 212, 0, 0, 0x00);
 	boxfill(0, 256*4, 256, 212, 0, 0, 0x00);
 //	EI();
-	pal_all(CHRPAL_NO, org_pal);
 
 	main2();
 
