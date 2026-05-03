@@ -1,6 +1,6 @@
 #include <msx.h>
 #include "msxcom.h"
-#include <math.h>
+//#include <math.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -116,7 +116,8 @@ unsigned char BombItem_y[MAX_BombItem];
 short BombItem_timer[MAX_BombItem];
 unsigned char BombItem_active[MAX_BombItem];
 
-short sin_table[256 * 4];
+//short sin_table[256 * 4];
+extern const short sin_table[256 * 4];
 
 unsigned char b_idx, eb_idx, opt_idx, item_idx, e_idx, p_idx;
 
@@ -1049,9 +1050,9 @@ void main(void) {
 
 	define_sprites();
 
-	for(i = 0; i < (256*4); ++i){
+/*	for(i = 0; i < (256*4); ++i){
 		sin_table[i]  =  sin(i * 0.12) * 55;
-	}
+	}*/
 
 	high_score = 5000;
 	reset();
