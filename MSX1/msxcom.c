@@ -1,4 +1,5 @@
 #include "msxcom.h"
+//#include <time.h>
 
 unsigned char *pdata;
 unsigned char *padr;
@@ -251,12 +252,16 @@ void msx_print_num(unsigned char x, unsigned char y, int number, unsigned char d
 	msx_print(x, y, str_temp);
 }
 
+unsigned char randdata;
+
 void msx_cls(void) {
     // msxcom.h で実装してもらう想定
     // 例: VDPをクリアするか、SCREEN 1ならテキスト領域をスペースで埋める
 
-	unsigned char i,j,k;
-
+	unsigned char j; //i,j,k,l;
+	int a;
+	unsigned short adr;
+/*
 __asm
 	push	hl
 	push	iy
@@ -283,18 +288,49 @@ __asm
 	pop	ix
 	pop	iy
 	pop	hl
-__endasm;
-
+__endasm;*/
+/*
 	for(j = 0; j < 32; ++j)
 		for(i = 0; i < 8; ++i)
 			VPOKE(0, i+j*8);
+*/
+	a = rand();
+	srand(1);
+	adr = 0x1800 + 2 * 32;
 
-	for(j = 2; j < 192/8; ++j){
-		k = rand() % 32;
-		for(i = 0; i < 32; ++i)
-			VPOKE((i+k) % 32, 0x1800 + i + j * 32);
+	DI();
+	write_vram_adr(0, adr);
+	EI();
+
+//	for(j = 2; j < 192/8; ++j){
+	j = 192/8-2;
+	while(j--){
+		randdata = rand() % 32;
+//		l = k+32;
+//		for(i = k; i < l; ++i){
+//			write_vram_data(data);
+//			VPOKE(i % 32, adr++);
+__asm
+	push	bc
+	push	af
+	ld	b,32
+	ld	a,(_VDP_writeadr)
+	ld	c,a
+	ld	a,(_randdata)
+clsloop:
+	out	(c),a
+	inc	a
+	cp	32
+	jr	nz,clsloop2
+	xor	a
+clsloop2:
+	djnz	clsloop
+	pop	af
+	pop	bc
+__endasm;
+//		}
 	}
-
+	srand(a);
 }
 
 

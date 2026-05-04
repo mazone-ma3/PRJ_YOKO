@@ -1937,40 +1937,51 @@ void main(void) {
 /*	for(i = 0; i < (256*4); ++i){
 		sin_table[i]  =  sin(i * 0.12) * 55;
 	}*/
+	for(j = 0; j < 32; ++j)
+		for(i = 0; i < 8; ++i)
+			VPOKE(0, i+j*8);
 
 	high_score = 5000;
 	reset();
 
 	for(;;) {
-		if (game_over) {
+		if (game_over == 1) {
 			draw_game_over();
-			for(;;){
-				if(!(keyscan() & KEY_A))
-					break;
+//			for(;;){
+			if(!(keyscan() & KEY_A)){
+				game_over = 2;
+//					break;
 			}
-			for(;;){
-				if((keyscan() & KEY_A))
-					break;
-			}
-			reset();
+			msx_wait_vsync();
+		}else if(game_over == 2){
+//			for(;;){
+			if((keyscan() & KEY_A)){
+//					break;
+//			}
+				reset();
 //			msx_wait_vsync();
-			game_over = 0;
-			set_sprite_all(0, 32);
+				game_over = 0;
+//				set_sprite_all(0, 32);
+			}
+//			else{
+				msx_wait_vsync();
+//			}
+		}else{
+			play_time++;
+
+			if (play_time % COUNT1S == 0) time_display_flag = True;
+
+			update_input();
+			update_bullets();
+			spawn_enemy();
+			update_enemies();
+			update_e_bullets();
+			check_collisions();
+
+			draw_ui();
+
+			draw_sprites();
 		}
-
-		play_time++;
-
-		if (play_time % COUNT1S == 0) time_display_flag = True;
-
-		update_input();
-		update_bullets();
-		spawn_enemy();
-		update_enemies();
-		update_e_bullets();
-		check_collisions();
-
-		draw_ui();
-		draw_sprites();
 		draw_bg();
 	}
 }
