@@ -24,47 +24,193 @@ unsigned char old_jiffy;
 
 inline void msx_wait_vsync(void)
 {
-	while(((old_jiffy - *jiffy + 256) % 256) < 2);
+//	while(((old_jiffy - *jiffy + 256) % 256) < 1);
 //	old_jiffy = *jiffy;
-//	while(old_jiffy == *jiffy);
+	while(old_jiffy == *jiffy);
 	old_jiffy = *jiffy;
 }
 
-unsigned char spr_x[32];
+/*unsigned char spr_x[32];
 unsigned char spr_y[32];
 unsigned char spr_no[32];
 unsigned char spr_color[32];
+*/
+typedef struct {
+	unsigned char y, x, no, color;
+}SPR;
+
+SPR spr_chr[32];
+
 
 inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
 //	y-=1;
-	spr_x[spr_count] = x;
+/*	spr_x[spr_count] = x;
 	spr_y[spr_count] = y-1;
 	spr_no[spr_count] = no * 4;
 	spr_color[spr_count] = color;
+*/
+	spr_chr[spr_count].x = x;
+	spr_chr[spr_count].y = y-1;
+	spr_chr[spr_count].no = no * 4;
+	spr_chr[spr_count].color = color;
+}
+
+
+
+unsigned char VDP_writeadr;
+
+void write_vram_adr(unsigned char highadr, int lowadr) __sdcccall(1)
+{
+__asm
+	push	de
+__endasm;
+//	MSX1(TMS9918)では不要
+//	write_VDP(14, (((highadr  << 2) & 0x04) | (lowadr >> 14) & 0x03));
+__asm
+	pop	de
+	ld	a,(_VDP_writeadr)
+	inc	a
+	ld	c,a
+	out	(c),e
+	ld	a,d
+	and	a,0x3f
+	set	6,a
+	out	(c),a
+__endasm;
+//	outp(VDP_writeport(VDP_WRITECONTROL), (lowadr & 0xff));
+//	outp(VDP_writeport(VDP_WRITECONTROL), 0x40 | ((lowadr >> 8) & 0x3f));
+}
+
+void write_vram_data(unsigned char data) __sdcccall(1)
+{
+__asm
+//	outp(VDP_writeport(VDP_WRITEDATA), data);
+	ld	b,a
+	ld	a,(_VDP_writeadr)
+	ld	c,a
+	out	(c),b
+__endasm;
+}
+
+void VPOKE(unsigned char data, unsigned short lowadr) __sdcccall(1)
+{
+//	return;
+	DI();
+	write_vram_adr(0, lowadr);
+	write_vram_data(data);
+	EI();
+/*	DI();
+__asm
+	push	af
+;	ld	a,d
+	call	0x004d
+	pop	af
+__endasm;*/
+	EI();
 }
 
 unsigned char spr_page = 0;
+unsigned char spr_count2 = 0;
+//unsigned short spr_base;
+unsigned char end2;
 
 void set_sprite_all(unsigned char start, unsigned char end) __sdcccall(1)
 {
-	unsigned char spr_count;
-	unsigned short spr_base;
-	if(spr_page)
+/*	if(spr_page)
 		spr_base = 0x1b00;
 	else
 		spr_base = 0x1b80;
-
+*/
 //	DI();
-	for(spr_count = 0; start < end; ++spr_count, ++start){
+/*	for(spr_count = 0; start < end; ++spr_count, ++start){
 		VPOKE(spr_base + 0 + spr_count * 4, spr_y[start]);
 		VPOKE(spr_base + 1 + spr_count * 4, spr_x[start]);
 		VPOKE(spr_base + 2 + spr_count * 4, spr_no[start]);
 		VPOKE(spr_base + 3 + spr_count * 4, spr_color[start]);
-	}
-	if(spr_count < 32)
-		VPOKE(spr_base + 0 + spr_count * 4, 208);
+	}*/
+__asm
 
+	ld	c,a
+	ld	b,0
+
+	ld	a,l
+	ld	(_end2),a
+
+	ld	a,(_spr_page)
+	or	a
+	jr	z,sprskip1
+	ld	de,0x1b00	;(_sprbase)
+	jr	sprskip2
+sprskip1:
+	ld	de,0x1b80
+sprskip2:
+
+	xor	a
+	ld	(_spr_count2),a
+
+	ld	hl,_spr_chr
+	add	hl,bc
+	add	hl,bc
+	add	hl,bc
+	add	hl,bc
+
+	ld	b,c
+
+	di
+	xor	a
+	call	_write_vram_adr
+	ei
+
+	ld	a,(_VDP_writeadr)
+	ld	c,a
+
+sprloop:
+
+	ld	a,(hl)
+	out	(c),a
+	inc	hl
+
+	ld	a,(hl)
+	out	(c),a
+	inc	hl
+
+	ld	a,(hl)
+	out	(c),a
+	inc	hl
+
+	ld	a,(hl)
+	out	(c),a
+	inc	hl
+
+	ld	a,(_spr_count2)
+	inc	a
+	ld	(_spr_count2),a
+
+
+	inc	b
+	ld	a,b
+	ex	hl,de
+	ld	hl,_end2
+	cp	(hl)
+	ex	hl,de
+
+	jr	nz,sprloop
+
+	ld	a,(_spr_count2)
+	cp	32
+	jr	nc,sprend
+
+	ld	a,208
+	out	(c),a
+
+sprend:
+__endasm;
+
+
+/*	if(spr_count < 32)
+		VPOKE(208, spr_base + 0 + spr_count * 4);
+*/
 	msx_wait_vsync();
 //	msx_wait_vsync();
 	if(spr_page)
@@ -85,7 +231,7 @@ void msx_print(unsigned char x, unsigned char y, char *str)
 	while((chr = *(str++)) != '\0'){
 		if((chr < 0x30)) //|| (chr > 0x5f))
 			chr = 0x20;
-		VPOKE(vramadr++, chr);
+		VPOKE(chr, vramadr++);
 	}
 }
 
@@ -108,6 +254,9 @@ void msx_print_num(unsigned char x, unsigned char y, int number, unsigned char d
 void msx_cls(void) {
     // msxcom.h で実装してもらう想定
     // 例: VDPをクリアするか、SCREEN 1ならテキスト領域をスペースで埋める
+
+	unsigned char i,j,k;
+
 __asm
 	push	hl
 	push	iy
@@ -135,11 +284,22 @@ __asm
 	pop	iy
 	pop	hl
 __endasm;
+
+	for(j = 0; j < 32; ++j)
+		for(i = 0; i < 8; ++i)
+			VPOKE(0, i+j*8);
+
+	for(j = 2; j < 192/8; ++j){
+		k = rand() % 32;
+		for(i = 0; i < 32; ++i)
+			VPOKE((i+k) % 32, 0x1800 + i + j * 32);
+	}
+
 }
 
 
  // 適当に音を鳴らす（後で調整）
-void msx_sound(unsigned char no, unsigned char dummy)
+void msx_sound(unsigned char no, unsigned char dummy) __sdcccall(1)
 {
 	DI();
 	if(no == 1){

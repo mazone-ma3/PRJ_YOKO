@@ -20,12 +20,15 @@ __asm\
 __endasm;\
 }
 
+extern unsigned char VDP_writeadr;
+
 #define msx_set_sprite_pattern(A,B) VDP_set_sprite_16(A,B)
 
 extern unsigned char *pdata;
 extern unsigned char *padr;
 
-#define VPOKE vpoke
+//#define VPOKE vpoke
+void VPOKE(unsigned char data, unsigned short lowadr) __sdcccall(1);
 
 void VDP_set_sprite_16(unsigned char chr, unsigned char *data);
 
@@ -66,7 +69,7 @@ void msx_cls(void);
 
 #define msx_initpsg()
 
-void msx_sound(unsigned char no, unsigned char dummy);
+void msx_sound(unsigned char no, unsigned char dummy) __sdcccall(1);
 
 unsigned char get_key(unsigned char matrix) __sdcccall(1);
 
