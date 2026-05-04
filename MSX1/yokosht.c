@@ -10,32 +10,29 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 
 // ゲーム定数
-enum {
-	DIV = 1,
-	DIV2 = 256,
-	COUNT1S = 30,
+#define True 1
+#define False 0
 
-	True = 1,
-	False = 0,
+#define DIV 256
+#define COUNT1S 30
 
-	PLAYER_SPEED =  5 * DIV,
-	BULLET_SPEED = 8 * DIV,
-	ENEMY_SPEED  = 3 * DIV,
+#define PLAYER_SPEED 5
+#define BULLET_SPEED 8
+#define ENEMY_SPEED 3
 
-	MAX_BULLETS =  6,
-	MAX_ENEMIES =  8,
-	MAX_e_bullets =  6,
+#define MAX_BULLETS 6
+#define MAX_ENEMIES 8
+#define MAX_e_bullets 6
 
-	MAX_Particle =  1,
-	MAX_Option =  2,
-	MAX_ChainItem =  4,
-	MAX_OptionItem =  1,
-	MAX_ShieldItem =  2,
-	MAX_BombItem =  2,
+#define MAX_Particle 1
+#define MAX_Option 2
+#define MAX_ChainItem 4
+#define MAX_OptionItem 1
+#define MAX_ShieldItem 2
+#define MAX_BombItem 2
 
-	width =  256,
-	height =  192
-};
+#define width 256
+#define height 192
 
 // スプライト番号
 /*#define SPR_PLAYER   0
@@ -45,8 +42,8 @@ enum {
 
 
 // グローバル変数
-unsigned char player_x = 40 * DIV;
-unsigned char player_y = 80 * DIV;
+unsigned char player_x = 40 ;
+unsigned char player_y = 80 ;
 
 //struct Bullet  { unsigned short x, y, active; };
 /*struct Enemy {
@@ -134,7 +131,7 @@ unsigned short kill_count = 0;
 unsigned long play_time = 0;		  // 経過時間（フレーム）
 //unsigned char game_over = 0; //False;
 
-unsigned short old_i;
+//unsigned short old_i;
 unsigned char k;
 unsigned char enemy_type;
 unsigned char rand_num;
@@ -149,12 +146,13 @@ short ph_x,ph_y,ph_w,ph_h;
 short enemy_bullet_speed;
 
 short shoot_interval;
-short dist;
+//short dist;
 short speed;
 short base_speed;
 short direction_factor;
 short offset;
-long i;
+//long i;
+unsigned char i;
 short idx;
 
 
@@ -252,12 +250,10 @@ void define_sprites(void) {
 
 // ====================== 初期化 ======================
 void reset(void) {
-	unsigned char i;
-
 	key_b_flag = False;
 
-	player_x = 40 * DIV;
-	player_y = 80 * DIV;
+	player_x = 40 ;
+	player_y = 80 ;
 	score = 0;
 	play_time = 0;
 	shoot_timer = 0;
@@ -267,13 +263,30 @@ void reset(void) {
 	all_display_flag = True;
 	chain_display_flag = False;
 
-	for (i = 0; i < MAX_BULLETS; i++) bullets_active[i] = 0;
 	for (i = 0; i < MAX_ENEMIES; i++) {
 		enemies_active[i] = 0;
 		enemies_hp[i] = 1;
 		enemies_shoot_timer[i] = 0;
 	}
-	for (i = 0; i < MAX_e_bullets; i++) e_bullets_active[i] = 0;
+
+//	for (i = 0; i < MAX_BULLETS; i++) bullets_active[i] = False;
+
+__asm
+	push	bc
+	push	hl
+	ld	b,#MAX_BULLETS
+	ld	hl, _bullets_active
+	xor	a	;ld	a,#False
+resetloop1:
+	ld	(hl),a
+	inc	hl
+	djnz	resetloop1
+
+	pop	hl
+	pop	bc
+__endasm;
+
+	for (i = 0; i < MAX_e_bullets; i++) e_bullets_active[i] = False;
 
 
 	for(p_idx =  0; p_idx < MAX_Particle; ++p_idx)
@@ -312,8 +325,8 @@ void reset(void) {
 //	game_over = 0;
 
 	for (i = 0; i < 40; i++) {
-		stars[i].x = (rand() % width) * DIV;
-		stars[i].y = (rand() % height) * DIV;
+		stars[i].x = (rand() % width) ;
+		stars[i].y = (rand() % height) ;
 		stars[i].speed = 1 + (rand() % 3);
 	}
 
@@ -340,16 +353,16 @@ void use_bomb(void)
 	score_display_flag = True;
 }
 
-void fire_aimed_bullet(unsigned short ex, unsigned short ey)
-{
-	unsigned char i;
-	long deltax, deltay;
-	unsigned short dist;
-	signed short dx = 0;
-	signed short dy = 0;
+long deltax, deltay;
+unsigned short dist;
+signed short dx = 0;
+signed short dy = 0;
+unsigned char j;
 
-	deltax = (long)player_x * DIV + 12 * DIV - (long)ex * DIV;
-	deltay = (long)player_y * DIV + 8 * DIV  - (long)ey * DIV;
+void fire_aimed_bullet(unsigned char ex, unsigned char ey) __sdcccall(1)
+{
+	deltax = (long)player_x  + 12  - (long)ex ;
+	deltay = (long)player_y  + 8   - (long)ey ;
 
 	// 距離近似（横・縦方向を少し強調して斜めばかりを減らす）
 //	dist = (unsigned short)(abs(deltax) * 1 + abs(deltay));   // 横方向を重視
@@ -364,31 +377,31 @@ void fire_aimed_bullet(unsigned short ex, unsigned short ey)
 
 	// 符号を完全に分離して計算
 //	if (deltax > 0) {
-		dx = (signed short)((deltax * 5 * DIV2) / dist);
+		dx = (signed short)((deltax * 5 * DIV) / dist);
 //	} else if (deltax < 0) {
-//		dx = -(signed short)(((-deltax) * 5 * DIV) / dist);
+//		dx = -(signed short)(((-deltax) * 5 ) / dist);
 //	}
 
 //	if (deltay > 0) {
-		dy = (signed short)((deltay * 5 * DIV2) / dist);
+		dy = (signed short)((deltay * 5 * DIV) / dist);
 //	} else if (deltay < 0) {
-//		dy = -(signed short)(((-deltay) * 5 * DIV) / dist);
+//		dy = -(signed short)(((-deltay) * 5 ) / dist);
 //	}
 
 	// 最大速度を4に制限（前回の希望通り）
-	if (dx > 4 * DIV2) dx = 4 * DIV2;
-	if (dx < -4 * DIV2) dx = -4 * DIV2;
-	if (dy > 4 * DIV2) dy = 4 * DIV2;
-	if (dy < -4 * DIV2) dy = -4 * DIV2;
+	if (dx > 4 * DIV) dx = 4 * DIV;
+	if (dx < -4 * DIV) dx = -4 * DIV;
+	if (dy > 4 * DIV) dy = 4 * DIV;
+	if (dy < -4 * DIV) dy = -4 * DIV;
 
 	// 発射
-	for (i = 0; i < MAX_e_bullets; i++) {
-		if (!e_bullets_active[i]) {
-			e_bullets_x[i] = ex * DIV2 + 8 * DIV2;
-			e_bullets_y[i] = ey * DIV2  + 8 * DIV2;
-			e_bullets_dx[i] = dx;
-			e_bullets_dy[i] = dy;
-			e_bullets_active[i] = 1;
+	for (j = 0; j < MAX_e_bullets; j++) {
+		if (!e_bullets_active[j]) {
+			e_bullets_x[j] = ex * DIV + 8 * DIV;
+			e_bullets_y[j] = ey * DIV  + 8 * DIV;
+			e_bullets_dx[j] = dx;
+			e_bullets_dy[j] = dy;
+			e_bullets_active[j] = True;
 			break;
 		}
 	}
@@ -402,8 +415,8 @@ void fire_aimed_bullet2(unsigned short ex, unsigned short ey)
 	unsigned char dir = 0;
 
 	// プレイヤーの中心（+12, +8）と敵の座標の差分
-	dx_raw = (long)player_x * DIV2 + 12 * DIV2 - (long)ex * DIV2;
-	dy_raw = (long)player_y * DIV2 + 8 *DIV2 - (long)ey * DIV2;
+	dx_raw = (long)player_x * DIV + 12 * DIV - (long)ex * DIV;
+	dy_raw = (long)player_y * DIV + 8 *DIV - (long)ey * DIV;
 
 	// 絶対値を計算（ここを確実に通す）
 	adx = (dx_raw < 0) ? -dx_raw : dx_raw;
@@ -429,20 +442,20 @@ void fire_aimed_bullet2(unsigned short ex, unsigned short ey)
 
 	// --- 以下、弾の発射処理（変更なし） ---
 static const signed short speeds[8][2] = {
-	{  5 * DIV2,  0 * DIV2 }, // 右
-	{  4 * DIV2,  3 * DIV2 }, // 右下
-	{  0 * DIV2,  5 * DIV2 }, // 下
-	{ -4 * DIV2,  3 * DIV2 }, // 左下 (斜めを強調)
-	{ -5 * DIV2,  0 * DIV2 }, // 左
-	{ -4 * DIV2, -3 * DIV2 }, // 左上 (斜めを強調)
-	{  0 * DIV2, -5 * DIV2 }, // 上
-	{  4 * DIV2, -3 * DIV2 }  // 右上
+	{  5 * DIV,  0 * DIV }, // 右
+	{  4 * DIV,  3 * DIV }, // 右下
+	{  0 * DIV,  5 * DIV }, // 下
+	{ -4 * DIV,  3 * DIV }, // 左下 (斜めを強調)
+	{ -5 * DIV,  0 * DIV }, // 左
+	{ -4 * DIV, -3 * DIV }, // 左上 (斜めを強調)
+	{  0 * DIV, -5 * DIV }, // 上
+	{  4 * DIV, -3 * DIV }  // 右上
 };
 
 	for (i = 0; i < MAX_e_bullets; i++) {
 		if (!e_bullets_active[i]) {
-			e_bullets_x[i] = ex + 8 * DIV2;
-			e_bullets_y[i] = ey + 8 * DIV2;
+			e_bullets_x[i] = ex + 8 * DIV;
+			e_bullets_y[i] = ey + 8 * DIV;
 			e_bullets_dx[i] = speeds[dir][0];
 			e_bullets_dy[i] = speeds[dir][1];
 			e_bullets_active[i] = 1;
@@ -450,21 +463,219 @@ static const signed short speeds[8][2] = {
 		}
 	}
 }*/
+
+unsigned char base_interval = 50;   // デフォルト
 // ====================== update_enemies ======================
 void update_enemies(void) {
-	unsigned char i;
-	unsigned char base_interval = 50;   // デフォルト
-
 	if (play_time < 120)		base_interval = 55;
 	else if (play_time < 360)   base_interval = 47;
 	else if (play_time < 720)   base_interval = 40;
 	else						base_interval = 35;
 
+
+
+__asm
+	push	bc
+	push	hl
+	push	de
+
+	ld	c,#MAX_ENEMIES
+	ld	b,0
+	ld	hl,_enemies_active+MAX_ENEMIES-1
+enemiesloop:
+	ld	a,(hl)
+	or	a
+	jp	z,enemiesskip1
+
+	push	hl
+
+	ld	hl,_enemies_x-1
+	add	hl,bc
+	ld	d,h
+	ld	e,l
+	ld	a,#(ENEMY_SPEED + 8)
+	cp	(hl)
+
+	jr	c,enemiesskip2				; a < 0
+
+enemiesoff:
+	pop	hl
+	ld	(hl),#False
+	jp	enemiesskip1
+
+
+enemiesskip2:
+	ld	hl,_enemies_count-1
+	add	hl,bc
+	inc	(hl)
+
+	ld	hl,_enemies_type-1
+	add	hl,bc
+	ld	a,(hl)
+	or	a
+	jr	nz,enemiestype1
+
+;	normal
+
+	ld	h,d
+	ld	l,e
+	ld	a,(hl)
+	add	a,#-ENEMY_SPEED
+	ld	(hl),a
+
+	jr	enemiesskip3
+
+
+enemiestype1:
+	cp	1
+	jr	nz,enemiestype2
+
+;	herizako
+
+	ld	hl,_enemies_count-1
+	add	hl,bc
+	ld	a,(hl)
+	cp	24
+	jr	nc,enemiestype1_1
+
+	ld	h,d
+	ld	l,e
+	ld	a,(hl)
+	add	a,#-ENEMY_SPEED*2
+	ld	(hl),a
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	a,(_player_y)
+	add	a,8
+	sub	e
+
+	sra	a
+	sra	a
+	sra	a
+	ld	e,a
+
+	ld	a,(hl)
+	add	a,e
+	ld	(hl),a
+
+	jr	enemiesskip3
+
+enemiestype1_1:
+	cp	40
+	jr	nc,enemiestype1_2
+
+	jr	enemiesskip3
+
+enemiestype1_2:
+	ld	h,d
+	ld	l,e
+	ld	a,(hl)
+	cp	#(width-ENEMY_SPEED*4)
+	jr	nc,enemiesoff
+
+	add	a,#ENEMY_SPEED*4
+	ld	(hl),a
+
+	jr	enemiesskip3
+
+enemiestype2:
+	cp	2
+	jr	nz,enemiestype3
+
+;	sin curve
+;	x
+
+	ld	h,d
+	ld	l,e
+	ld	a,(hl)
+	add	a,-2
+	ld	(hl),a
+
+;	y
+
+	ld	hl,_enemies_count-1
+	add	hl,bc
+	ld	a,(hl)
+	add	a,a
+	ld	e,a
+	ld	d,0
+
+	ld	hl,_sin_table
+	add	hl,de
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_enemies_count2-1
+	add	hl,bc
+	ld	a,(hl)
+	add	a,e
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	(hl),a
+
+;	jr	enemiesskip3
+
+enemiestype3:
+
+enemiesskip3:
+	ld	hl,_enemies_shoot_timer-1
+	add	hl,bc
+	inc	(hl)
+	ld	a,(hl)
+	cp	5
+	jr	z,enemiesskip6
+
+enemiesskip4:
+	ld	a,(_base_interval)
+	cp	(hl)
+	jr	nc,enemiesskip5
+
+	ld	a,5
+	ld	(hl),a
+
+enemiesskip6:
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_enemies_x-1
+	add	hl,bc
+	ld	a,(hl)
+
+	ld	l,e
+
+	push	bc
+	call	_fire_aimed_bullet
+	pop	bc
+
+enemiesskip5:
+	pop	hl
+
+enemiesskip1:
+	dec	hl
+	dec	c
+	jp	nz,enemiesloop
+
+	pop	de
+	pop	hl
+	pop	bc
+
+__endasm;
+
+
+/*
 	for (i = 0; i < MAX_ENEMIES; i++) {
 		if (!enemies_active[i]) continue;
 
-		if ((enemies_x[i] <= (ENEMY_SPEED + 8 * DIV))) {
-			enemies_active[i] = 0;
+		if ((enemies_x[i] <= (ENEMY_SPEED + 8 ))) {
+			enemies_active[i] = False;
 			continue;
 		}
 		enemies_count[i] += 1;
@@ -480,7 +691,7 @@ void update_enemies(void) {
 				enemies_x[i] -= 0;
 			else{							// 3段階：右へ全力逃走
 				if(enemies_x[i] >= (width - ENEMY_SPEED * 4)) {
-					enemies_active[i] = 0;
+					enemies_active[i] = False;
 					continue;
 				}
 				enemies_x[i] += ENEMY_SPEED*4;
@@ -492,9 +703,12 @@ void update_enemies(void) {
 			enemies_y[i] = enemies_count2[i] + sin_table[enemies_count[i]];
 		}
 
+*/
 
+/*	for (i = 0; i < MAX_ENEMIES; i++) {
+		if (!enemies_active[i]) continue;
 
-		enemies_shoot_timer[i]++;
+//		enemies_shoot_timer[i]++;
 
 		if (enemies_shoot_timer[i] == 5) {
 			fire_aimed_bullet(enemies_x[i], enemies_y[i]);
@@ -507,6 +721,7 @@ void update_enemies(void) {
 			enemies_shoot_timer[i] = 5;
 		}
 	}
+*/
 }
 
 void update_input(void) {
@@ -514,17 +729,17 @@ void update_input(void) {
 	// 移動
 	// ジョイスティック + キーボード対応（簡易）
 	if (keycode & KEY_LEFT1)  if (player_x > PLAYER_SPEED) player_x -= PLAYER_SPEED;
-	if (keycode & KEY_RIGHT1) if (player_x < (width - 24) * DIV) player_x += PLAYER_SPEED;
+	if (keycode & KEY_RIGHT1) if (player_x < (width - 24) ) player_x += PLAYER_SPEED;
 	if (keycode & KEY_UP1)	if (player_y > PLAYER_SPEED) player_y -= PLAYER_SPEED;
-	if (keycode & KEY_DOWN1)  if (player_y < (height - 24) * DIV) player_y += PLAYER_SPEED;
+	if (keycode & KEY_DOWN1)  if (player_y < (height - 24) ) player_y += PLAYER_SPEED;
 
 	// スペース or ボタンで射撃
 	if ((keycode & KEY_A) && shoot_timer == 0) {  // 適当キーコード例
-		for (unsigned char i = 0; i < MAX_BULLETS; i++) {
+		for (i = 0; i < MAX_BULLETS; i++) {
 			if (!bullets_active[i]) {
-				bullets_x[i] = player_x + 16 * DIV;
-				bullets_y[i] = player_y + 6 * DIV;
-				bullets_active[i] = 1;
+				bullets_x[i] = player_x + 16 ;
+				bullets_y[i] = player_y + 6 ;
+				bullets_active[i] = True;
 				// 簡易サウンド（PSG）
 //				msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
 				break;
@@ -557,13 +772,58 @@ void update_input(void) {
 
 void update_bullets(void) {
 	// 射撃
-	for (unsigned char i = 0; i < MAX_BULLETS; i++) {
+/*	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]) {
-			if (bullets_x[i] >= (width * DIV - BULLET_SPEED)) bullets_active[i] = 0;
+			if (bullets_x[i] >= (width  - BULLET_SPEED)) bullets_active[i] = False;
 			else
 				bullets_x[i] += BULLET_SPEED;
 		}
-	}
+	}*/
+__asm
+	push	bc
+	push	hl
+	push	de
+
+;	ld	b,#MAX_BULLETS
+	ld	c,#MAX_BULLETS
+	ld	b,0
+	ld	hl,_bullets_active+MAX_BULLETS-1
+bulletsloop:
+	ld	a,(hl)
+	or	a
+	jr	z,bulletsskip1
+;	push	bc
+	push	hl
+;	ld	c,b
+;	ld	b,0
+	ld	hl,_bullets_x-1
+	add	hl,bc
+	ld	a,(hl)
+	cp	#(width - BULLET_SPEED)
+	jr	c,bulletskip2				; a < 0
+	pop	hl
+	ld	(hl),#False
+	jr	bulletskip3
+
+bulletskip2:
+	ld	e,#BULLET_SPEED
+	add	a,e
+	ld	(hl),a
+	pop	hl
+
+bulletskip3:
+;	pop	bc
+bulletsskip1:
+	dec	hl
+;	djnz	bulletsloop
+	dec	c
+	jr	nz,bulletsloop
+
+	pop	de
+	pop	hl
+	pop	bc
+
+__endasm;
 }
 
 void spawn_enemy(void) {
@@ -577,11 +837,11 @@ void spawn_enemy(void) {
 		if(enemy_type == 0) hp = 1; else hp = 3;
 		base_y = randint(30, height - 40);
 
-		for (unsigned char i = 0; i < MAX_ENEMIES; i++) {
+		for (i = 0; i < MAX_ENEMIES; i++) {
 			if (!enemies_active[i]) {
-				enemies_x[i] = (width-1) * DIV;
-				enemies_y[i] = (30 + (rand() % (height - 60))) * DIV;
-				enemies_active[i] = 1;
+				enemies_x[i] = (width-1) ;
+				enemies_y[i] = (30 + (rand() % (height - 60))) ;
+				enemies_active[i] = True;
 				enemies_hp[i] = hp;
 				enemies_shoot_timer[i] = 0;		  // タイマーリセット
 
@@ -601,23 +861,24 @@ void spawn_enemy(void) {
 
 void update_e_bullets(void) {
 	// 敵弾更新
-	unsigned char i;
-
-	for (i = 0; i < MAX_e_bullets; i++) {
+//	for (i = 0; i < MAX_e_bullets; i++) {
+	i = MAX_e_bullets-1;
+	do{
 		if (!e_bullets_active[i]) continue;
 
 		// 加算前に判定（オーバーフローする前に非アクティブ化）
-		if ( (short)(e_bullets_x[i] / DIV2) > (width - 1) - (short)(e_bullets_dx[i] / DIV2) ||	  // 右に出る予定
-			(short)(e_bullets_x[i] / DIV2) < - (short)(e_bullets_dx[i] / DIV2) ||				// 左に出る予定
-			(short)(e_bullets_y[i] / DIV2) > (height) - (short)(e_bullets_dy[i] / DIV2) ||	  // 下に出る予定
-			(short)(e_bullets_y[i] / DIV2) < - (short)(e_bullets_dy[i] / DIV2) ) {				// 上に出る予定
-			e_bullets_active[i] = 0;
+		if ( (short)(e_bullets_x[i] / DIV) > (width - 1) - (short)(e_bullets_dx[i] / DIV) ||	  // 右に出る予定
+			(short)(e_bullets_x[i] / DIV) < - (short)(e_bullets_dx[i] / DIV) ||				// 左に出る予定
+			(short)(e_bullets_y[i] / DIV) > (height) - (short)(e_bullets_dy[i] / DIV) ||	  // 下に出る予定
+			(short)(e_bullets_y[i] / DIV) < - (short)(e_bullets_dy[i] / DIV) ) {				// 上に出る予定
+			e_bullets_active[i] = False;
 		} else {
 			e_bullets_x[i] += e_bullets_dx[i];
 			e_bullets_y[i] += e_bullets_dy[i];
 		}
-	}
+	}while(i--);
 }
+
 void check_collisions(void) {
 	unsigned char b, e, eb;
 
@@ -627,18 +888,18 @@ void check_collisions(void) {
 		for (e = 0; e < MAX_ENEMIES; e++) {
 			if (!enemies_active[e]) continue;
 
-			if (bullets_x[b] < (enemies_x[e] + 20 * DIV)){
-				if((bullets_x[b] + 8 * DIV) > enemies_x[e]){
-					if(bullets_y[b] < (enemies_y[e] + 16 * DIV)){
-						if((bullets_y[b] + 6 * DIV) > enemies_y[e]){
-							bullets_active[b] = 0;
+			if (bullets_x[b] < (enemies_x[e] + 20 )){
+				if((bullets_x[b] + 8 ) > enemies_x[e]){
+					if(bullets_y[b] < (enemies_y[e] + 16 )){
+						if((bullets_y[b] + 6 ) > enemies_y[e]){
+							bullets_active[b] = False;
 							if (--enemies_hp[e] == 0) {
 								ex = enemies_x[e];
 								ey = enemies_y[e];
 //								for(i = 0; i < 4; ++i)
 //									Particles_append(ex, ey);
 
-								enemies_active[e] = 0;
+								enemies_active[e] = False;
 								score += 100;
 								score_display_flag = True;
 //								all_display_flag = True;
@@ -714,10 +975,10 @@ void check_collisions(void) {
 	// 敵弾 vs 自機（既存のまま）
 	for (eb = 0; eb < MAX_e_bullets; eb++) {
 		if (!e_bullets_active[eb]) continue;
-		if (player_x < e_bullets_x[eb] / DIV2 + 4 * DIV){
-			if(player_x + (16+4) * DIV > e_bullets_x[eb] / DIV2){
-				if(player_y < e_bullets_y[eb] / DIV2  + 4 * DIV){
-					if(player_y + (10+4) * DIV > e_bullets_y[eb] / DIV2 ){
+		if (player_x < e_bullets_x[eb] / DIV + 4 ){
+			if(player_x + (16+4)  > e_bullets_x[eb] / DIV){
+				if(player_y < e_bullets_y[eb] / DIV  + 4 ){
+					if(player_y + (10+4)  > e_bullets_y[eb] / DIV ){
 						if(shield_active){
 							shield_active = False;
 //							for(i = 0; i < 4; ++i)
@@ -725,7 +986,7 @@ void check_collisions(void) {
 						}else
 							game_over = 1;
 
-						e_bullets_active[eb] = 0;
+						e_bullets_active[eb] = False;
 					}
 				}
 			}
@@ -850,10 +1111,10 @@ void check_collisions(void) {
 		if (!enemies_active[e]) continue;
 
 		// 自機と敵の矩形が重なっているかチェック
-		if (player_x + 4 * DIV < enemies_x[e] + 16 * DIV){   // 自機左 < 敵右
-			if(player_x + 24 * DIV > enemies_x[e]){	   // 自機右 > 敵左
-				if(player_y + 4 * DIV < enemies_y[e] + 8 * DIV){   // 自機上 < 敵下
-					if(player_y + 14 * DIV > enemies_y[e]) {	   // 自機下 > 敵上
+		if (player_x + 4  < enemies_x[e] + 16 ){   // 自機左 < 敵右
+			if(player_x + 24  > enemies_x[e]){	   // 自機右 > 敵左
+				if(player_y + 4  < enemies_y[e] + 8 ){   // 自機上 < 敵下
+					if(player_y + 14  > enemies_y[e]) {	   // 自機下 > 敵上
 						if(shield_active){
 							shield_active = False;
 //							for (i = 0; i < 4; ++i)
@@ -870,9 +1131,9 @@ void check_collisions(void) {
 }
 // ====================== 描画 ======================
 signed char add = 1;
+unsigned char spr_count;
 
 void draw_sprites(void) {
-	unsigned char i, spr_count;
 	if(add > 0)
 		spr_count = 0;
 	else
@@ -882,12 +1143,12 @@ void draw_sprites(void) {
 //	if(spr_count > 0)
 //		msx_set_sprite(spr_count - 1, 0, 209+1, 0, 0);
 
-	msx_set_sprite(spr_count, player_x / DIV, player_y / DIV, 0, (shield_active) ? 7 : 10);
+	msx_set_sprite(spr_count, player_x , player_y , 0, (shield_active) ? 7 : 10);
 	spr_count += add;
 
 	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]){
-			msx_set_sprite(spr_count, bullets_x[i] / DIV, bullets_y[i] / DIV, 4, 9);
+			msx_set_sprite(spr_count, bullets_x[i] , bullets_y[i] , 4, 9);
 			spr_count += add;
 		}
 //		else
@@ -896,7 +1157,7 @@ void draw_sprites(void) {
 
 	for (i = 0; i < MAX_ENEMIES; i++) {
 		if (enemies_active[i]){
-			msx_set_sprite(spr_count , enemies_x[i] / DIV, enemies_y[i] / DIV, 8, 8);
+			msx_set_sprite(spr_count , enemies_x[i] , enemies_y[i] , 8, 8);
 			spr_count += add;
 		}
 //		else
@@ -905,7 +1166,7 @@ void draw_sprites(void) {
 
 	for (i = 0; i < MAX_e_bullets; i++) {
 		if (e_bullets_active[i]){
-			msx_set_sprite(spr_count, e_bullets_x[i] / DIV2, e_bullets_y[i] / DIV2, 12, 8);
+			msx_set_sprite(spr_count, e_bullets_x[i] / DIV, e_bullets_y[i] / DIV, 12, 8);
 			spr_count += add;
 		}
 //		else

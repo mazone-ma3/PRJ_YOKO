@@ -6,6 +6,8 @@
 
 #include "inkey.h"
 
+//#define __sdcccall(a)
+
 #define DI() {\
 __asm\
 	di\
@@ -41,7 +43,7 @@ inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned
 
 extern unsigned char spr_page;
 
-void set_sprite_all(unsigned char start, unsigned char end);
+void set_sprite_all(unsigned char start, unsigned char end) __sdcccall(1);
 
 #define msx_set_sprite VDP_put_sprite_16
 

@@ -24,7 +24,9 @@ unsigned char old_jiffy;
 
 inline void msx_wait_vsync(void)
 {
-	while(((old_jiffy - *jiffy + 256) % 256) < 1);
+	while(((old_jiffy - *jiffy + 256) % 256) < 2);
+//	old_jiffy = *jiffy;
+//	while(old_jiffy == *jiffy);
 	old_jiffy = *jiffy;
 }
 
@@ -44,7 +46,7 @@ inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned
 
 unsigned char spr_page = 0;
 
-void set_sprite_all(unsigned char start, unsigned char end)
+void set_sprite_all(unsigned char start, unsigned char end) __sdcccall(1)
 {
 	unsigned char spr_count;
 	unsigned short spr_base;
@@ -64,6 +66,7 @@ void set_sprite_all(unsigned char start, unsigned char end)
 		VPOKE(spr_base + 0 + spr_count * 4, 208);
 
 	msx_wait_vsync();
+//	msx_wait_vsync();
 	if(spr_page)
 		set_vdp(5, 0x36);
 	else
