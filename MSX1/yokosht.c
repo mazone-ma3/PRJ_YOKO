@@ -1926,6 +1926,8 @@ void draw_bg(void)
 
 // ====================== main ======================
 void main(void) {
+	bgmmode = checkbgm();
+
 	VDP_writeadr = *((unsigned char *)0x0007);//read_mainrom(0x0007);
 
 	msx_set_color(15, 1, 0);
@@ -1944,8 +1946,9 @@ void main(void) {
 	high_score = 5000;
 	reset();
 
-	for(;;) {
+	do {
 		if (game_over == 1) {
+			stopbgm();
 			draw_game_over();
 //			for(;;){
 			if(!(keyscan() & KEY_A)){
@@ -1962,6 +1965,7 @@ void main(void) {
 //			msx_wait_vsync();
 				game_over = 0;
 //				set_sprite_all(0, 32);
+				playbgm();
 			}
 //			else{
 				msx_wait_vsync();
@@ -1983,5 +1987,6 @@ void main(void) {
 			draw_sprites();
 		}
 		draw_bg();
-	}
+	}while((get_key(7) & 0x04));
+	stopbgm();
 }

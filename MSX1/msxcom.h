@@ -20,6 +20,9 @@ __asm\
 __endasm;\
 }
 
+#define NOERROR		0
+#define ERROR		-1
+
 extern unsigned char VDP_writeadr;
 
 #define msx_set_sprite_pattern(A,B) VDP_set_sprite_16(A,B)
@@ -81,5 +84,11 @@ extern unsigned char keycode;
 
 unsigned char keyscan(void);
 
+extern unsigned char bgmmode;
+
+char checkbgm(void) __sdcccall(1);
+void play_bgm(unsigned char mode) __sdcccall(1);
+void playbgm(void) __sdcccall(1);
+void stopbgm(void) __sdcccall(1);
 
 #endif

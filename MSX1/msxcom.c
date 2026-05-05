@@ -1,5 +1,7 @@
 #include "msxcom.h"
 //#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 unsigned char *pdata;
 unsigned char *padr;
@@ -487,4 +489,131 @@ unsigned char keyscan(void)
 //	}
 
 	return keycode;
+}
+
+volatile FILE *stream[2];
+
+/* MSX BLOADデータをファイルからメモリに読み込む */
+short msxload(char *loadfil, unsigned short offset)
+{
+	unsigned short size;
+	unsigned char *address;
+	unsigned char buffer[2];
+
+	if ((stream[0] = fopen( loadfil, "rb")) == NULL) {
+//		printf("Can\'t open file %s.", loadfil);
+		return ERROR;
+	}
+
+	fread( buffer, 1, 1, stream[0]);
+	fread( buffer, 1, 2, stream[0]);
+	address = (unsigned short *)(buffer[0] + buffer[1] * 256);
+	fread( buffer, 1, 2, stream[0]);
+	size = (buffer[0] + buffer[1] * 256) - (unsigned short)address;
+	fread( buffer, 1, 2, stream[0]);
+	address -= offset;
+	printf("Load file %s. Address %x Size %x End %x\n", loadfil, address, size, (unsigned short)address + size);
+
+	fread( address , 1, size, stream[0]);
+	fclose(stream[0]);
+	return NOERROR;
+}
+unsigned char bgmmode = 0;
+
+char checkbgm(void) __sdcccall(1)
+{
+__asm
+	ld	hl,_checkbgm
+	ld	a,0x80
+	cp	h
+	jr	c,bgmerr1
+
+	ld	hl,#0xbc00
+	ld	a,(hl)
+	cp	#0xc3
+	jr	nz,bgmon
+	inc	hl
+	ld	a,(hl)
+	cp	#0x0d
+	jr	nz,bgmon
+	inc	hl
+	ld	a,(hl)
+	cp	#0xbc
+	jr	nz,bgmon
+	ld	a,1
+	ret
+
+bgmerr1:
+	ld	hl,#0xdc00
+	ld	a,(hl)
+	cp	#0x2a
+	jr	nz,bgmerr2
+	inc	hl
+	ld	a,(hl)
+	cp	#0xf8
+	jr	nz,bgmerr2
+	inc	hl
+	ld	a,(hl)
+	cp	#0xf7
+	jr	nz,bgmerr2
+	ld	a,2
+	ret
+bgmerr2:
+	xor	a
+	ret
+
+bgmon:
+__endasm;
+	if(msxload("psgtone.dat", 0x2000*1) == ERROR)
+		return 0;
+
+	if(msxload("C_6_2.PDT", 0x2000*1) == ERROR)
+		return 0;
+
+	if(msxload("PSGMSXD.MSX", 0) == ERROR)
+		return 0;
+
+	return 1;
+
+__asm
+__endasm;
+	return 0;
+}
+
+void play_bgm(unsigned char mode) __sdcccall(1)
+{
+__asm
+	ld	(#0xf7f8),a
+	call	#0xdc00
+__endasm;
+}
+
+void playbgm(void) __sdcccall(1)
+{
+//	unsigned char a;
+//	a = checkbgm();
+	if(!bgmmode)
+		return;
+	if(bgmmode == 1){
+__asm
+	call #0xbc00
+__endasm;
+	}else if(bgmmode == 2){
+		play_bgm(0);
+	}
+}
+
+void stopbgm(void) __sdcccall(1)
+{
+//	unsigned char a;
+//	a = checkbgm();
+	if(!bgmmode)
+		return;
+	if(bgmmode == 1){
+__asm
+	call #0xbc03
+__endasm;
+	}else if(bgmmode == 2){
+		play_bgm(-1);
+	}
 }
