@@ -549,7 +549,7 @@ enemiestype1:
 	ld	h,d
 	ld	l,e
 	ld	a,(hl)
-	add	a,#-ENEMY_SPEED*2
+	add	a,#-6 ;ENEMY_SPEED*2
 	ld	(hl),a
 
 	ld	hl,_enemies_y-1
@@ -582,10 +582,10 @@ enemiestype1_2:
 	ld	h,d
 	ld	l,e
 	ld	a,(hl)
-	cp	#(width-ENEMY_SPEED*4)
+	cp	#(width-6) ;ENEMY_SPEED*4)
 	jr	nc,enemiesoff
 
-	add	a,#ENEMY_SPEED*4
+	add	a,#6 ;ENEMY_SPEED*4
 	ld	(hl),a
 
 	jr	enemiesskip3
@@ -693,16 +693,16 @@ __endasm;
 		else if(enemies_type[i] == 1){	  // ヘリザコ - 勢いよく突っ込む
 //			dist_x = enemies_x[i] - player_x;
 			if(enemies_count[i] < 24){	// 1段階：超急接近
-				enemies_x[i] -= ENEMY_SPEED*2;
+				enemies_x[i] -= 6 //ENEMY_SPEED*2;
 				enemies_y[i] += ((player_y + 8 - enemies_y[i]) / 8);
 			}else if(enemies_count[i] < 49)	// 2段階：短くホバリング
 				enemies_x[i] -= 0;
 			else{							// 3段階：右へ全力逃走
-				if(enemies_x[i] >= (width - ENEMY_SPEED * 4)) {
+				if(enemies_x[i] >= (width - 6)) { //ENEMY_SPEED * 4)) {
 					enemies_active[i] = False;
 					continue;
 				}
-				enemies_x[i] += ENEMY_SPEED*4;
+				enemies_x[i] += 6 //ENEMY_SPEED*4;
 			}
 		}
 
