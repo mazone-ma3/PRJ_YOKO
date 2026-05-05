@@ -2,7 +2,7 @@ This software includes code generated with the assistance of [Gemini & Grok], an
 
 PyxelでGrokに作成させた横スクロールシューティングをレトロパソコンに移植しようとする実験。実機での動作は未保証です。
 
-MSX1 z88dkによる作りかけ。
+MSX1 z88dkによる作りかけ。→部分アセンブラ化しました。(2026/5/5)
 
 X68K_MPY　Pyxel版を整数化してmicroPythonにテスト移植した物。(MPUノーウェイト推奨)
 
