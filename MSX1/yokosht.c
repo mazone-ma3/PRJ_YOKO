@@ -24,7 +24,7 @@ unsigned char randint(unsigned char min, unsigned char max) __sdcccall(1)
 #define BULLET_SPEED 6
 #define ENEMY_SPEED 2
 
-#define MAX_BULLETS 6
+#define MAX_BULLETS 8
 #define MAX_ENEMIES 8
 #define MAX_e_bullets 6
 
@@ -1835,7 +1835,7 @@ void draw_ui(void) {
 
 	// SCORE
 	if(score_display_flag){
-		msx_print_num_l(7, 0, score, 6);
+		msx_print_num_l(7, 0, score, 7);
 		score_display_flag = False;
 		if(score >= high_score){
 			if((score % 10) == 0){
