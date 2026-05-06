@@ -66,7 +66,9 @@ void msx_print(unsigned char x, unsigned char y, char *str);
 
 extern char str_temp[9];
 
-void msx_print_num(unsigned char x, unsigned char y, int number, unsigned char digits);
+void msx_print_num(unsigned char x, unsigned char y, unsigned short number, unsigned char digits);
+
+void msx_print_num_l(unsigned char x, unsigned char y, unsigned long number, unsigned char digits);
 
 void msx_cls(void);
 

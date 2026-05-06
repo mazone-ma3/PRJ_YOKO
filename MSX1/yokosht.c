@@ -1835,7 +1835,7 @@ void draw_ui(void) {
 
 	// SCORE
 	if(score_display_flag){
-		msx_print_num(7, 0, score, 6);
+		msx_print_num_l(7, 0, score, 6);
 		score_display_flag = False;
 		if(score >= high_score){
 			if((score % 10) == 0){
@@ -1848,7 +1848,7 @@ void draw_ui(void) {
 
 	// HIGH
 /*	if(high_score_display_flag){
-		msx_print_num(7, 2, high_score, 6);
+		msx_print_num_l(7, 2, high_score, 6);
 		high_score_display_flag = False;
 	}
 */
@@ -1882,7 +1882,7 @@ void draw_game_over(void) {
 
 	msx_print(11, 12, "GAME OVER");		   // ’†‰›‚æ‚è­‚µ¶
 	msx_print(7, 15, "HIGH SCORE");
-	msx_print_num(7+11, 15, high_score, 7);
+	msx_print_num_l(7+11, 15, high_score, 7);
 
 /*	if (score > high_score) {
 		high_score = score;

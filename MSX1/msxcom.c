@@ -247,7 +247,20 @@ void msx_print(unsigned char x, unsigned char y, char *str)
 char str_temp[9];
 
 // 数字表示（左上を基準にしたタイル座標、桁数指定）
-void msx_print_num(unsigned char x, unsigned char y, int number, unsigned char digits)
+void msx_print_num(unsigned char x, unsigned char y, unsigned short number, unsigned char digits)
+{
+	unsigned char i = digits;
+
+	while(i--){
+		str_temp[i] = number % 10 + 0x30;
+		number /= 10;
+	}
+	str_temp[digits] = '\0';
+
+	msx_print(x, y, str_temp);
+}
+
+void msx_print_num_l(unsigned char x, unsigned char y, unsigned long number, unsigned char digits)
 {
 	unsigned char i = digits;
 
