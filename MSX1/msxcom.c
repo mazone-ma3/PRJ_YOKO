@@ -1,4 +1,10 @@
 #include "msxcom.h"
+#inclulde "mode.h"
+
+#ifndef DEBUG2
+#include "PSGMSXD.H"
+#endif
+
 //#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -520,6 +526,8 @@ short msxload(char *loadfil, unsigned short offset)
 }
 unsigned char bgmmode = 0;
 
+#ifdef DEBUG2
+
 char checkbgm(void) __sdcccall(1)
 {
 __asm
@@ -617,3 +625,6 @@ __endasm;
 		play_bgm(-1);
 	}
 }
+
+
+#endif

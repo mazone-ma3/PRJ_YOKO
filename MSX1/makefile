@@ -9,7 +9,7 @@ LDFLAGS  = +msx -create-app -lmsxbios
 #-lmath32 
 
 # 中間ファイル
-OBJS     = $(TARGET).o msxcom.o sin_table.o
+OBJS     = $(TARGET).o msxcom.o sin_table.o PSGMSXD.o
 
 # --- ルール ---
 
@@ -18,6 +18,9 @@ all: $(TARGET).rom
 # 1. パターンルール（.c から .o を作成）
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
+
+%.o: %.asm
+	z80asm -b $<
 
 # 2. ROM生成ルール
 $(TARGET).rom: $(OBJS)
@@ -34,8 +37,9 @@ bin: $(OBJS)
 $(TARGET).o: $(TARGET).c inkey.h msxcom.h
 # common.h
 
-msxcom.o: msxcom.c msxcom.h
+msxcom.o: msxcom.c msxcom.h PSGMSXD.H
 sin_table.o: sin_table.c
+PSGMSXD.o: PSGMSXD.asm PSGTONE.INC C_6_2.INC
 
 clean:
 	rm -f *.o *.rom *.map *.com *.bin *.map *.ihx *.cas
