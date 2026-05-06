@@ -881,7 +881,7 @@ void addscore(unsigned char add) __sdcccall(1)
 void update_e_bullets(void) {
 	// ìGíeçXêV
 //	for (i = 0; i < MAX_e_bullets; i++) {
-	i = MAX_e_bullets-1;
+/*	i = MAX_e_bullets-1;
 	do{
 		if (!e_bullets_active[i]) continue;
 
@@ -895,7 +895,161 @@ void update_e_bullets(void) {
 			e_bullets_x[i] += e_bullets_dx[i];
 			e_bullets_y[i] += e_bullets_dy[i];
 		}
-	}while(i--);
+	}while(i--);*/
+
+
+__asm
+	push	bc
+	push	hl
+	push	de
+
+	ld	c,#MAX_e_bullets
+	ld	b,0
+	ld	hl,_e_bullets_active+MAX_e_bullets-1
+e_bullets2loop:
+	ld	a,(hl)
+	or	a
+	jp	z,e_bullets2skip1
+
+	push	hl
+
+;	jr	e_bullets2skip3
+
+//	x
+
+	ld	hl,_e_bullets_x-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_e_bullets_dx-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+
+	cp	128
+	jr	nc,e_bullets2skip_x				; dx < 0
+
+	add	a,e
+	jr	c,e_bullets2skip5
+	jr	e_bullets2skip_x2				; a > 256
+
+e_bullets2skip_x:
+
+	add	a,e
+	jr	nc,e_bullets2skip5				; a < 0
+
+
+e_bullets2skip_x2:
+
+//	y
+
+	ld	hl,_e_bullets_y-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_e_bullets_dy-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+
+	cp	128
+	jr	nc,e_bullets2skip_y				; dy < 0
+
+	add	a,e
+	cp	#height
+	jr	nc,e_bullets2skip5				; a >=192
+
+	jr	e_bullets2skip3
+
+e_bullets2skip_y:
+
+	add	a,e
+	jr	nc,e_bullets2skip5				; a < 0
+
+
+e_bullets2skip3:
+//			e_bullets_x[i] += e_bullets_dx[i];
+
+	push	bc
+	ld	hl,_e_bullets_x-2
+	add	hl,bc
+	add	hl,bc
+	ex	hl,de
+	ld	hl,(de)
+
+	push	de
+	push	hl
+
+	ld	hl,_e_bullets_dx-2
+	add	hl,bc
+	add	hl,bc
+	ex	hl,de
+	ld	hl,(de)
+
+	pop	bc
+	pop	de
+
+	add	hl,bc
+	pop	bc
+
+	ld	(de),hl
+
+
+//			e_bullets_y[i] += e_bullets_dy[i];
+
+	push	bc
+	ld	hl,_e_bullets_y-2
+	add	hl,bc
+	add	hl,bc
+	ex	hl,de
+	ld	hl,(de)
+
+	push	de
+	push	hl
+
+	ld	hl,_e_bullets_dy-2
+	add	hl,bc
+	add	hl,bc
+	ex	hl,de
+	ld	hl,(de)
+
+	pop	bc
+	pop	de
+
+	add	hl,bc
+	pop	bc
+
+	ld	(de),hl
+
+	jr	e_bullets2skip4
+
+e_bullets2skip5:
+
+//			e_bullets_active[i] = False;
+	pop	hl
+;	ld	hl,_e_bullets_active
+;	add	hl,bc
+	ld	a,#False
+	ld	(hl),a
+	jr	e_bullets2skip1
+
+e_bullets2skip4:
+	pop	hl
+e_bullets2skip1:
+
+	dec	hl
+	dec	c
+	jp	nz,e_bullets2loop
+
+	pop	de
+	pop	hl
+	pop	bc
+
+__endasm;
 }
 
 unsigned char b; //, e, eb;
