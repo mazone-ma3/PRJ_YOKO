@@ -28,8 +28,6 @@ https://mazone-ma3.github.io/github.io/py/yokosht_plus.html
 
 ↓WebMSXでMSX1版を実行
 
-https://webmsx.org/?MACHINE=MSX1J&disk=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX1/BIN/yokosht.dsk
-
 https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX1/BIN/yokosht.rom
 
 ↓元のPyxel版のコード
