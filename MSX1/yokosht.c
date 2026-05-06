@@ -2105,12 +2105,15 @@ void main(void) {
 			stopbgm();
 			draw_game_over();
 //			for(;;){
+			game_over = 2;
+		}
+		if(game_over == 2){
 			if(!(keyscan() & KEY_A)){
-				game_over = 2;
+				game_over = 3;
 //					break;
 			}
 			msx_wait_vsync();
-		}else if(game_over == 2){
+		}else if(game_over == 3){
 //			for(;;){
 			if((keyscan() & KEY_A)){
 //					break;
