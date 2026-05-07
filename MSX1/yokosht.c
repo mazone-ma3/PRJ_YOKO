@@ -2395,10 +2395,10 @@ void draw_sprites(void) {
 //	msx_wait_vsync();
 	if(add > 0){
 		set_sprite_all(0, spr_count);
-		if(spr_count > max_spr_count){
+/*		if(spr_count > max_spr_count){
 			max_spr_count = spr_count;
 			msx_print_num(7, 2, max_spr_count, 2);
-		}
+		}*/
 	}else
 		set_sprite_all(spr_count+1, 32);
 
