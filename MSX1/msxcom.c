@@ -53,16 +53,18 @@ SPR spr_chr[32];
 
 inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
+	if(spr_count < 32){
 //	y-=1;
-/*	spr_x[spr_count] = x;
-	spr_y[spr_count] = y-1;
-	spr_no[spr_count] = no * 4;
-	spr_color[spr_count] = color;
+/*		spr_x[spr_count] = x;
+		spr_y[spr_count] = y-1;
+		spr_no[spr_count] = no * 4;
+		spr_color[spr_count] = color;
 */
-	spr_chr[spr_count].x = x;
-	spr_chr[spr_count].y = y-1;
-	spr_chr[spr_count].no = no * 4;
-	spr_chr[spr_count].color = color;
+		spr_chr[spr_count].x = x;
+		spr_chr[spr_count].y = y-1;
+		spr_chr[spr_count].no = no * 4;
+		spr_chr[spr_count].color = color;
+	}
 }
 
 
@@ -231,24 +233,47 @@ __endasm;
 //	EI();
 }
 
+char *chr;
+
 // 文字列表示（左上を基準にしたタイル座標）
 void msx_print(unsigned char x, unsigned char y, char *str)
 {
-	char chr;
+//	char chr;
 	unsigned short vramadr = 0x1800 + x + y * 32;
+
+	chr = str;
 
 	DI();
 	write_vram_adr(0, vramadr);
 	EI();
 
-	while((chr = *(str++)) != '\0'){
-		if((chr < 0x30)) //|| (chr > 0x5f))
-			chr = 0x20;
+/*	while(*chr != '\0'){
+		if((*chr < 0x30)) //|| (chr > 0x5f))
+			*chr = 0x20;
 //		VPOKE(chr, vramadr++);
 		DI();
-		write_vram_data(chr);
+		write_vram_data(*chr);
 		EI();
-	}
+		chr++;
+	}*/
+
+__asm
+	ld	a,(_VDP_writeadr)
+	ld	c,a
+	ld	hl,(_chr)
+msx_printloop:
+	ld	a,(hl)
+	or	a
+	jr	z,msx_printend
+	cp	0x30
+	jr	nc,msx_printskip
+	ld	a,0x20
+msx_printskip:
+	out	(c),a
+	inc	hl
+	jr	msx_printloop
+msx_printend:
+__endasm;
 }
 
 char str_temp[9];

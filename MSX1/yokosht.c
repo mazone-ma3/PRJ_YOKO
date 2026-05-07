@@ -28,7 +28,7 @@ unsigned char randint(unsigned char min, unsigned char max) __sdcccall(1)
 #define MAX_ENEMIES 8
 #define MAX_e_bullets 6
 
-#define MAX_Particle 1
+#define MAX_Particle 6
 #define MAX_Option 2
 #define MAX_ChainItem 4
 #define MAX_OptionItem 1
@@ -84,12 +84,12 @@ signed short e_bullets_dx[MAX_e_bullets];
 signed short e_bullets_dy[MAX_e_bullets];
 unsigned char e_bullets_active[MAX_e_bullets];
 
-unsigned short Particle_x[MAX_Particle];
-short Particle_y[MAX_Particle];
-short Particle_vx[MAX_Particle];
-short Particle_vy[MAX_Particle];
-short Particle_life[MAX_Particle];
-short Particle_color[MAX_Particle];
+unsigned char Particle_x[MAX_Particle];
+unsigned char Particle_y[MAX_Particle];
+signed char Particle_vx[MAX_Particle];
+signed char Particle_vy[MAX_Particle];
+unsigned char  Particle_life[MAX_Particle];
+//short Particle_color[MAX_Particle];
 unsigned char Particle_active[MAX_Particle];
 
 short Option_offset_y[MAX_Option];
@@ -448,15 +448,31 @@ __endasm;
 	msx_cls();
 }
 
+unsigned char p_idx;
+
+void Particles_append(unsigned char x, unsigned char y) __sdcccall(1)
+{
+	for (p_idx = 0; p_idx < MAX_Particle; ++p_idx){
+		if(Particle_active[p_idx] == True)
+			continue;
+		Particle_x[p_idx] = x;
+		Particle_vx[p_idx] = randint(0,9)-4;
+		Particle_y[p_idx] = y;
+		Particle_vy[p_idx] = randint(0,9)-4;
+		Particle_life[p_idx] = 35 + randint(0, 20);
+		Particle_active[p_idx] = True;
+		break;
+	}
+}
 
 void use_bomb(void)
 {
 	if(bomb_stock <= 0) return;
 	bomb_stock -= 1;
 	bomb_display_flag = True;
-//	for(i = 0; i < 30; ++i){
-//		Particles_append(randint(20, 236), randint(20, 172));
-//	}
+	for(i = 0; i < MAX_Particle; ++i){
+		Particles_append(randint(20, 236), randint(20, 172));
+	}
 	for(e_idx = 0; e_idx <  MAX_ENEMIES; ++e_idx)
 		enemies_active[e_idx] = False;
 	for(eb_idx = 0; eb_idx <  MAX_e_bullets; ++eb_idx)
@@ -1280,6 +1296,35 @@ bullets2loop:
 
 
 ;	Particle
+	ld	e,#3
+collisionloop3:
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	a,(hl)
+	add	a,#8
+	jr	c,collisionloopskip
+	ld	d,a
+
+	ld	hl,_enemies_x-1
+	add	hl,bc
+	ld	a,(hl)
+	add	a,#8
+	jr	c,collisionloopskip
+	ld	l,d
+
+	push	bc
+	push	de
+	call	_Particles_append
+	pop	de
+	pop	bc
+collisionloopskip:
+	dec	e
+	jr	nz,collisionloop3
+
+
+
+
 
 	ld	hl,_enemies_active-1
 	add	hl,bc
@@ -1488,7 +1533,36 @@ BombItemEnd:
 	jr	bulletsskip5
 
 bulletsskip4:
+
 ;	Particle
+	ld	e,#3
+bulletsloop3:
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	a,(hl)
+;	add	a,#8
+;	jr	c,bulletsloopskip
+	ld	d,a
+
+	ld	hl,_enemies_x-1
+	add	hl,bc
+	ld	a,(hl)
+;	add	a,#8
+;	jr	c,bulletsloopskip
+
+	ld	l,d
+
+	push	bc
+	push	de
+	call	_Particles_append
+	pop	de
+	pop	bc
+bulletsloopskip:
+	dec	e
+	jr	nz,bulletsloop3
+
+
 
 bulletsskip5:
 	pop	hl
@@ -1674,18 +1748,29 @@ e_bulletsloop:
 	ld	a,#False
 	ld	(_shield_active),a
 
-;	ld	b,#4
-;e_bulletsloop2:
-;	ld	a,(_player_y)
-;	add	a,#8
-;	ld	l,a
 
-;	ld	a,(_player_x)
-;	add	a,#8
+;	Particle
+	ld	e,#3
+e_bulletsloop3:
 
-;	call	_Particles_append
+	ld	a,(_player_y)
+	add	a,#8
+	jr	c,e_bulletsloopskip
+	ld	l,a
 
-;	djnz	e_bulletsloop2
+	ld	a,(_player_x)
+	add	a,#8
+	jr	c,e_bulletsloopskip
+
+	push	bc
+	push	de
+	call	_Particles_append
+	pop	de
+	pop	bc
+e_bulletsloopskip:
+	dec	e
+	jr	nz,e_bulletsloop3
+
 
 	jr	e_bulletsskip3
 
@@ -1918,18 +2003,28 @@ enemies2loop:
 	ld	a,#False
 	ld	(_shield_active),a
 
-;	ld	b,#4
-;enemies2loop2:
-;	ld	a,(_player_y)
-;	add	a,#8
-;	ld	l,a
 
-;	ld	a,(_player_x)
-;	add	a,#8
+;	Particle
+	ld	e,#3
+enemies2loop3:
+	ld	a,(_player_y)
+	add	a,#8
+	jr	c,enemiesloopskip
+	ld	l,a
 
-;	call	_Particles_append
+	ld	a,(_player_x)
+	add	a,#8
+	jr	c,enemiesloopskip
 
-;	djnz	enemies2loop2
+	push	bc
+	push	de
+	call	_Particles_append
+	pop	de
+	pop	bc
+enemiesloopskip:
+	dec	e
+	jr	nz,enemies2loop3
+
 
 	jr	enemies2skip3
 
@@ -1980,9 +2075,157 @@ __endasm;
 	}
 */
 }
+
+void udpate_Particle(void)
+{
+	// パーティクル更新
+/*	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
+		if(Particle_active[p_idx] == False)
+			continue;
+
+		Particle_x[p_idx] += Particle_vx[p_idx];
+		Particle_y[p_idx] += Particle_vy[p_idx];
+		Particle_life[p_idx] -= 1;
+
+		if(Particle_life[p_idx] <= 0)
+			Particle_active[p_idx] = False;
+	}*/
+
+__asm
+	push	bc
+	push	hl
+	push	de
+
+	ld	c,#MAX_Particle
+	ld	b,0
+	ld	hl,_Particle_active+MAX_Particle-1
+Particleloop:
+	ld	a,(hl)
+	or	a
+	jp	z,Particleskip1
+
+	push	hl
+
+;	jr	Particleskip3
+
+	ld	hl,_Particle_life-1
+	add	hl,bc
+	dec	(hl)
+;	ld	a,(hl)
+;	or	a
+	jr	z,Particleskip5
+
+;//	x
+
+	ld	hl,_Particle_x-1
+	add	hl,bc
+	ld	a,(hl)
+
+;	cp	#254
+;	jr	nc,Particleskip5
+
+	ld	e,a
+
+	ld	hl,_Particle_vx-1
+	add	hl,bc
+	ld	a,(hl)
+
+	cp	128
+	jr	nc,Particleskip_x				; vx < 0
+
+	add	a,e
+	jr	c,Particleskip5
+
+	jr	Particleskip_x2					; a > 256
+
+Particleskip_x:
+
+	add	a,e
+	jr	nc,Particleskip5				; a < 0
+
+
+Particleskip_x2:
+
+;//	y
+
+	ld	hl,_Particle_y-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_Particle_vy-1
+	add	hl,bc
+	ld	a,(hl)
+
+	cp	128
+	jr	nc,Particleskip_y				; vy < 0
+
+	add	a,e
+	cp	#height
+	jr	nc,Particleskip5				; a >=192
+
+	jr	Particleskip3
+
+Particleskip_y:
+
+	add	a,e
+	jr	nc,Particleskip5				; a < 0
+
+
+Particleskip3:
+	ld	hl,_Particle_vx-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_Particle_x-1
+	add	hl,bc
+	ld	a,(hl)
+	add	a,e
+
+	ld	(hl),a
+
+
+	ld	hl,_Particle_vy-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+
+	ld	hl,_Particle_y-1
+	add	hl,bc
+	ld	a,(hl)
+	add	a,e
+
+	ld	(hl),a
+	jr	Particleskip4
+
+Particleskip5:
+
+	pop	hl
+;	ld	hl,_Particle_active
+;	add	hl,bc
+	ld	a,#False
+	ld	(hl),a
+	jr	Particleskip1
+
+Particleskip4:
+	pop	hl
+Particleskip1:
+
+	dec	hl
+	dec	c
+	jp	nz,Particleloop
+
+	pop	de
+	pop	hl
+	pop	bc
+__endasm;
+}
+
 // ====================== 描画 ======================
 signed char add = 1;
 unsigned char spr_count;
+unsigned char max_spr_count = 0;
 
 void draw_sprites(void) {
 	if(add > 0){
@@ -2150,9 +2393,13 @@ void draw_sprites(void) {
 //		msx_set_sprite(spr_count, 0, 208+1, 0, 0);
 
 //	msx_wait_vsync();
-	if(add > 0)
+	if(add > 0){
 		set_sprite_all(0, spr_count);
-	else
+		if(spr_count > max_spr_count){
+			max_spr_count = spr_count;
+			msx_print_num(7, 2, max_spr_count, 2);
+		}
+	}else
 		set_sprite_all(spr_count+1, 32);
 
 	add = -add;
@@ -2331,6 +2578,7 @@ void main(void) {
 			update_enemies();
 			update_e_bullets();
 			check_collisions();
+			udpate_Particle();
 
 			draw_ui();
 
