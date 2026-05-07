@@ -237,10 +237,17 @@ void msx_print(unsigned char x, unsigned char y, char *str)
 	char chr;
 	unsigned short vramadr = 0x1800 + x + y * 32;
 
+	DI();
+	write_vram_adr(0, vramadr);
+	EI();
+
 	while((chr = *(str++)) != '\0'){
 		if((chr < 0x30)) //|| (chr > 0x5f))
 			chr = 0x20;
-		VPOKE(chr, vramadr++);
+//		VPOKE(chr, vramadr++);
+		DI();
+		write_vram_data(chr);
+		EI();
 	}
 }
 
@@ -409,6 +416,20 @@ unsigned char get_stick1(unsigned char trigno) __sdcccall(1)
 {
 	(void)trigno;
 __asm
+	push	ix
+
+	call	#0x00d5	; GTSTCK(MAINROM)
+
+	pop	ix
+	ret
+__endasm;
+	return 0;
+}
+/*
+unsigned char get_stick1(unsigned char trigno) __sdcccall(1)
+{
+	(void)trigno;
+__asm
 ;	ld	 hl, #2
 ;	add	hl, sp
 	ld	l,a
@@ -434,8 +455,22 @@ __asm
 __endasm;
 	return 0;
 }
+*/
 
+unsigned char get_trigger1(unsigned char trigno) __sdcccall(1)
+{
+	(void)trigno;
+__asm
+	push	ix
 
+	call	#0x00d8	; GTTRIG(MAINROM)
+
+	pop	ix
+	ret
+__endasm;
+	return 0;
+}
+/*
 unsigned char get_trigger1(unsigned char trigno) __sdcccall(1)
 {
 	(void)trigno;
@@ -464,7 +499,7 @@ __asm
 	ret
 __endasm;
 	return 0;
-}
+}*/
 
 unsigned char st0, st1, pd0, pd1, pd2, k3, k5, k7, k9, k10;
 unsigned char keycode = 0;

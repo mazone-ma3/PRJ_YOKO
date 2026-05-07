@@ -1985,24 +1985,18 @@ signed char add = 1;
 unsigned char spr_count;
 
 void draw_sprites(void) {
-	if(add > 0)
+	if(add > 0){
 		spr_count = 0;
-	else
-		spr_count = 31;
-
-//	spr_count = add;
-//	if(spr_count > 0)
-//		msx_set_sprite(spr_count - 1, 0, 209+1, 0, 0);
 
 	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
-	spr_count += add;
+	spr_count++;
 	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
-	spr_count += add;
+	spr_count++;
 
 	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]){
 			msx_set_sprite(spr_count, bullets_x[i] , bullets_y[i] , 4, 9);
-			spr_count += add;
+			spr_count++;
 		}
 //		else
 //			msx_set_sprite(SPR_BULLETS + i, 0, 208, 0, 0);
@@ -2011,7 +2005,7 @@ void draw_sprites(void) {
 	for (i = 0; i < MAX_ENEMIES; i++) {
 		if (enemies_active[i]){
 			msx_set_sprite(spr_count , enemies_x[i] , enemies_y[i] , 8, 8);
-			spr_count += add;
+			spr_count++;
 		}
 //		else
 //			msx_set_sprite(SPR_ENEMIES + i, 0, 208, 0, 0);
@@ -2020,7 +2014,7 @@ void draw_sprites(void) {
 	for (i = 0; i < MAX_e_bullets; i++) {
 		if (e_bullets_active[i]){
 			msx_set_sprite(spr_count, e_bullets_x[i] / DIV, e_bullets_y[i] / DIV, 12, 8);
-			spr_count += add;
+			spr_count++;
 		}
 //		else
 //			msx_set_sprite(SPR_e_bullets + i, 0, 208, 0, 0);
@@ -2031,43 +2025,126 @@ void draw_sprites(void) {
 		if(Option_active[opt_idx] == False)
 			continue;
 		msx_set_sprite(spr_count ,(Option_x[opt_idx]),(Option_y[opt_idx]),16,2);
-		spr_count += add;
+		spr_count++;
 	}
 
 	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
 		if(ChainItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(ChainItem_x[item_idx]), ChainItem_y[item_idx],20,10);
-		spr_count += add;
+		spr_count++;
 	}
 
 	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
 		if(OptionItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(OptionItem_x[item_idx]), OptionItem_y[item_idx],24,5);
-		spr_count += add;
+		spr_count++;
 	}
 
 	for(item_idx = 0; item_idx < MAX_ShieldItem; ++item_idx){
 		if(ShieldItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(ShieldItem_x[item_idx]), ShieldItem_y[item_idx],28, 7);
-		spr_count += add;
+		spr_count++;
 	}
 
 	for(item_idx = 0; item_idx < MAX_BombItem; ++item_idx){
 		if(BombItem_active[item_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(BombItem_x[item_idx]), BombItem_y[item_idx],32,6);
-		spr_count += add;
+		spr_count++;
 	}
 
 	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
 		if(Particle_active[p_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(Particle_x[p_idx]), Particle_y[p_idx], 36, 10);
-		spr_count += add;
+		spr_count++;
 	}
+	}else{
+		spr_count = 31;
+
+	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
+	spr_count--;
+	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
+	spr_count--;
+
+	for (i = 0; i < MAX_BULLETS; i++) {
+		if (bullets_active[i]){
+			msx_set_sprite(spr_count, bullets_x[i] , bullets_y[i] , 4, 9);
+			spr_count--;
+		}
+//		else
+//			msx_set_sprite(SPR_BULLETS + i, 0, 208, 0, 0);
+	}
+
+	for (i = 0; i < MAX_ENEMIES; i++) {
+		if (enemies_active[i]){
+			msx_set_sprite(spr_count , enemies_x[i] , enemies_y[i] , 8, 8);
+			spr_count--;
+		}
+//		else
+//			msx_set_sprite(SPR_ENEMIES + i, 0, 208, 0, 0);
+	}
+
+	for (i = 0; i < MAX_e_bullets; i++) {
+		if (e_bullets_active[i]){
+			msx_set_sprite(spr_count, e_bullets_x[i] / DIV, e_bullets_y[i] / DIV, 12, 8);
+			spr_count--;
+		}
+//		else
+//			msx_set_sprite(SPR_e_bullets + i, 0, 208, 0, 0);
+	}
+
+
+	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
+		if(Option_active[opt_idx] == False)
+			continue;
+		msx_set_sprite(spr_count ,(Option_x[opt_idx]),(Option_y[opt_idx]),16,2);
+		spr_count--;
+	}
+
+	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
+		if(ChainItem_active[item_idx] == False)
+			continue;
+		msx_set_sprite(spr_count,(ChainItem_x[item_idx]), ChainItem_y[item_idx],20,10);
+		spr_count--;
+	}
+
+	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
+		if(OptionItem_active[item_idx] == False)
+			continue;
+		msx_set_sprite(spr_count,(OptionItem_x[item_idx]), OptionItem_y[item_idx],24,5);
+		spr_count--;
+	}
+
+	for(item_idx = 0; item_idx < MAX_ShieldItem; ++item_idx){
+		if(ShieldItem_active[item_idx] == False)
+			continue;
+		msx_set_sprite(spr_count,(ShieldItem_x[item_idx]), ShieldItem_y[item_idx],28, 7);
+		spr_count--;
+	}
+
+	for(item_idx = 0; item_idx < MAX_BombItem; ++item_idx){
+		if(BombItem_active[item_idx] == False)
+			continue;
+		msx_set_sprite(spr_count,(BombItem_x[item_idx]), BombItem_y[item_idx],32,6);
+		spr_count--;
+	}
+
+	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
+		if(Particle_active[p_idx] == False)
+			continue;
+		msx_set_sprite(spr_count,(Particle_x[p_idx]), Particle_y[p_idx], 36, 10);
+		spr_count--;
+	}
+	}
+//	spr_count = add;
+//	if(spr_count > 0)
+//		msx_set_sprite(spr_count - 1, 0, 209+1, 0, 0);
+
+
 
 //	if((add > 0) && (spr_count < 32))
 //		msx_set_sprite(spr_count, 0, 208+1, 0, 0);

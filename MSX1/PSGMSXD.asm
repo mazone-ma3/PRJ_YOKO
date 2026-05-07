@@ -46,7 +46,7 @@ extern _PARA3
 
 ;	ASEG
 
-;WRTPSG	EQU	0093H		; ＰＳＧに出力するBIOSルーチン
+WRTPSG	EQU	0093H		; ＰＳＧに出力するBIOSルーチン
 ;PSGDATA	EQU	(0DB3EH-02000H)		; ＰＳＧ音階出力値格納番地
 
 _PSGDATA EQU _PSGTONE+7
@@ -633,7 +633,7 @@ PUTENV:	ADD	A,-16		; エンベローブのパターン番号を得る
 ;	ＰＳＧ出力
 ;-------------------------------------------
 
-WRTPSG:
+WRTPSG2:
 	PUSH	IX
 	PUSH	HL
 	PUSH	BC
