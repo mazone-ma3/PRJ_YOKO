@@ -2212,7 +2212,11 @@ void main(void) {
 	high_score = 5000;
 	reset();
 
+#ifdef DEBUG
 	do {
+#else
+	for(;;){
+#endif
 		if (game_over == 1) {
 			stopbgm();
 			draw_game_over();
@@ -2256,6 +2260,10 @@ void main(void) {
 			draw_sprites();
 		}
 		draw_bg();
+#ifdef DEBUG
 	}while((get_key(7) & 0x04));
+#else
+	}
+#endif
 	stopbgm();
 }
