@@ -146,6 +146,13 @@ class App:
 		for i in range(0, 256, 1):
 			self.sin_table.append(int(math.sin(i * 0.12) * 55))
 
+		self.stars = []
+		for _ in range(80):
+			self.stars.append([random.randint(0, pyxel.width),
+								random.randint(0, pyxel.height),
+								random.uniform(0.8, 1.8),
+								random.randint(2,16)])
+
 		pyxel.run(self.update, self.draw)
 
 #		t = 0
@@ -207,13 +214,6 @@ class App:
 		self.score = 0
 		self.play_time = 0		  # 経過時間（フレーム）
 #		self.game_over = False
-
-		self.stars = []
-		for _ in range(80):
-			self.stars.append([random.randint(0, pyxel.width),
-								random.randint(0, pyxel.height),
-								random.uniform(0.8, 1.8),
-								random.randint(2,16)])
 
 	# 文字列表示
 	def put_strings(self, x, y, str):
