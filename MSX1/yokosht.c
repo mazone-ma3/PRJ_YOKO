@@ -176,8 +176,11 @@ unsigned char time_display_flag = True;
 unsigned char bomb_display_flag = True;
 unsigned char chain_display_flag = True;
 
-struct Star { unsigned char x, y, speed; };
-struct Star stars[40];
+//struct Star { unsigned char x, y, speed; };
+//struct Star stars[40];
+
+
+unsigned char bullets_mode = 0;
 
 const unsigned char fontdata[] = {
 	0x78,0x84,0x84,0x84,0x84,0x84,0x78,0x00,
@@ -363,6 +366,7 @@ void define_sprites(void) {
 
 // ====================== 初期化 ======================
 void reset(void) {
+	bullets_mode = 0;
 	key_b_flag = False;
 
 	player_x = 40 ;
@@ -437,12 +441,12 @@ __endasm;
 	play_time = 0;		  // 経過時間（フレーム）
 //	game_over = 0;
 
-	for (i = 0; i < 40; i++) {
+/*	for (i = 0; i < 40; i++) {
 		stars[i].x = (rand() % width) ;
 		stars[i].y = (rand() % height) ;
 		stars[i].speed = 1 + (rand() % 3);
 	}
-
+*/
 	for(i = 0; i < 32; ++i)
 		msx_set_sprite(i, 0, 208+1, 0, 0);
 	msx_cls();
@@ -878,7 +882,13 @@ void update_input(void) {
 				break;
 			}
 		}
-		for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
+
+		opt_idx = bullets_mode;
+		for(j = 0; j < MAX_Option; ++j){
+			++opt_idx;
+			if(opt_idx >= MAX_Option)
+				opt_idx = 0;
+//		for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
 			if(Option_active[opt_idx] == False)
 				continue;
 			for(b_idx = 0; b_idx < MAX_BULLETS; ++b_idx){
@@ -889,6 +899,10 @@ void update_input(void) {
 				bullets_active[b_idx] = True;
 				break;
 			}
+		}
+		++bullets_mode;
+		if(bullets_mode >= MAX_Option){
+			bullets_mode = 0;
 		}
 		shoot_timer = 8;  // 連射間隔
 	}
@@ -1395,9 +1409,7 @@ ChainItemEnd:
 	ld	a,(_option_cooldown)
 	or	a
 	jr	nz,OptionItemEnd2
-	ld	a,10
-	ld	(_option_cooldown),a
-
+;
 	ld	d,0
 	ld	e,#MAX_OptionItem
 OptionItemloop:
@@ -1424,12 +1436,15 @@ OptionItemloop:
 	ld	de,#300
 	ld	(hl),de
 
+	ld	a,10
+	ld	(_option_cooldown),a
 	jr	OptionItemEnd
 
 OptionItemSkip:
 	dec	e
 	jr	nz,OptionItemloop
 
+	jr	OptionItemEnd
 OptionItemEnd2:
 	dec	a
 	ld	(_option_cooldown),a
@@ -2021,12 +2036,17 @@ void check_items(void) {
 			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
 			continue;
 		}
-		if((OptionItem_x[item_idx] < (-16+16 + 1)) || (OptionItem_timer[item_idx] <= 0)){
+		else if((OptionItem_x[item_idx] < 1) || (OptionItem_timer[item_idx] <= 0)){
 			OptionItem_active[item_idx] = False;
+//			msx_print_num(7, 3, OptionItem_x[0], 3);
+//			msx_print_num(7, 4, OptionItem_timer[0], 3);
+//			msx_print(7, 5, "LOST");
 			continue;
 		}
 		OptionItem_x[item_idx] -= 1;
 		OptionItem_timer[item_idx] -= 1;
+//		msx_print_num(7, 3, OptionItem_x[0], 3);
+//		msx_print(7, 5, "    ");
 	}
 
 
@@ -2041,7 +2061,7 @@ void check_items(void) {
 			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
 			continue;
 		}
-		if((ShieldItem_x[item_idx] < (-16+16 + 2)) || (ShieldItem_timer[item_idx] <= 0)){
+		if((ShieldItem_x[item_idx] < (2)) || (ShieldItem_timer[item_idx] <= 0)){
 			ShieldItem_active[item_idx] = False;
 			continue;
 		}
@@ -2061,7 +2081,7 @@ void check_items(void) {
 			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
 			continue;
 		}
-		if((BombItem_x[item_idx] < (-16+16 + 2)) || (BombItem_timer[item_idx] <= 0)){
+		if((BombItem_x[item_idx] < (2)) || (BombItem_timer[item_idx] <= 0)){
 			BombItem_active[item_idx] = False;
 			continue;
 		}
@@ -2435,6 +2455,7 @@ void draw_ui(void) {
 		}else{
 			msx_print(0, 0, "SCORE:");
 		}
+//		msx_print_num(7, 2, option_cooldown, 2);
 	}
 
 	// HIGH
