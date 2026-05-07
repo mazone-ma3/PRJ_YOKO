@@ -1819,118 +1819,6 @@ __endasm;
 	}
 */
 
-
-	// アイテム処理
-	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
-		if(ChainItem_active[item_idx]  == False)
-			continue;
-
-		if((abs(player_x + 8 - ChainItem_x[item_idx]) < 20) && (abs(player_y + 8 - ChainItem_y[item_idx]) < 20)){
-			chain_count += 1;
-			chain_timer = COUNT1S * 4; //240;
-			score += 100 * chain_count;
-			score_display_flag = True;
-//			seflag = 4;
-			ChainItem_active[item_idx] = False;
-			chain_display_flag = True;
-			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
-			continue;
-		}
-		if((ChainItem_x[item_idx] < 2) || (ChainItem_timer[item_idx] <= 0)){
-			chain_count = 0;
-			ChainItem_active[item_idx] = False;
-			chain_display_flag = True;
-		}
-		ChainItem_x[item_idx] -= 2;
-		ChainItem_timer[item_idx] -= 1;
-	}
-	if(chain_count > 0){
-		chain_timer -= 1;
-		if(chain_timer <= 0){
-			chain_count = 0;
-			chain_display_flag = True;
-		}
-	}
-
-	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
-		if(OptionItem_active[item_idx] == False)
-			continue;
-
-		if((abs(player_x + 8 - OptionItem_x[item_idx]) < 22) && (abs(player_y + 8 - OptionItem_y[item_idx]) < 22)){
-			for(opt_idx = 0; opt_idx <  MAX_Option; ++opt_idx){
-				if(Option_active[opt_idx] == True)
-					continue;
-				if(opt_idx == 0)
-					offset = 25;
-				else
-					offset = -25;
-				Option_offset_y[opt_idx] = offset;
-				Option_x[opt_idx] = 0;
-				Option_y[opt_idx] = 0;
-				Option_active[opt_idx] = True;
-				break;
-			}
-
-			OptionItem_active[item_idx] = False;
-//			seflag = 4;
-			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
-			continue;
-		}
-		if((OptionItem_x[item_idx] < (-16+16 + 1)) || (OptionItem_timer[item_idx] <= 0)){
-			OptionItem_active[item_idx] = False;
-			continue;
-		}
-		OptionItem_x[item_idx] -= 1;
-		OptionItem_timer[item_idx] -= 1;
-	}
-
-
-	for(item_idx =0; item_idx < MAX_ShieldItem; ++item_idx){
-		if(ShieldItem_active[item_idx] == False)
-			continue;
-
-		if((abs(player_x + 8 - ShieldItem_x[item_idx]) < 22) && (abs(player_y + 8 - ShieldItem_y[item_idx]) < 22)){
-			shield_active = True;
-			ShieldItem_active[item_idx] = False;
-//			seflag = 4;
-			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
-			continue;
-		}
-		if((ShieldItem_x[item_idx] < (-16+16 + 2)) || (ShieldItem_timer[item_idx] <= 0)){
-			ShieldItem_active[item_idx] = False;
-			continue;
-		}
-		ShieldItem_x[item_idx] -= 2;
-		ShieldItem_timer[item_idx] -= 1;
-
-	}
-	for(item_idx = 0; item_idx < MAX_BombItem; ++item_idx){
-		if(BombItem_active[item_idx] == False)
-			continue;
-
-		if((abs(player_x + 8 - BombItem_x[item_idx]) < 22) && (abs(player_y + 8 - BombItem_y[item_idx]) < 22)){
-			bomb_stock = min(3, bomb_stock + 1);
-			bomb_display_flag = True;
-			BombItem_active[item_idx] = False;
-//			seflag = 4;
-			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
-			continue;
-		}
-		if((BombItem_x[item_idx] < (-16+16 + 2)) || (BombItem_timer[item_idx] <= 0)){
-			BombItem_active[item_idx] = False;
-			continue;
-		}
-		BombItem_x[item_idx] -= 2;
-		BombItem_timer[item_idx] -= 1;
-	}
-
-
-	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
-		Option_x[opt_idx] += (((player_x + 8) - Option_x[opt_idx]) / 4);
-		Option_y[opt_idx] += (((player_y + Option_offset_y[opt_idx]) - Option_y[opt_idx]) / 4);
-	}
-
-
 	// 自機 vs 敵機 当たり判定
 __asm
 	push	bc
@@ -2074,6 +1962,118 @@ __endasm;
 		}
 	}
 */
+}
+
+void check_items(void) {
+	// アイテム処理
+	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
+		if(ChainItem_active[item_idx]  == False)
+			continue;
+
+		if((abs(player_x + 8 - ChainItem_x[item_idx]) < 20) && (abs(player_y + 8 - ChainItem_y[item_idx]) < 20)){
+			chain_count += 1;
+			chain_timer = COUNT1S * 4; //240;
+			score += 100 * chain_count;
+			score_display_flag = True;
+//			seflag = 4;
+			ChainItem_active[item_idx] = False;
+			chain_display_flag = True;
+			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
+			continue;
+		}
+		if((ChainItem_x[item_idx] < 2) || (ChainItem_timer[item_idx] <= 0)){
+			chain_count = 0;
+			ChainItem_active[item_idx] = False;
+			chain_display_flag = True;
+		}
+		ChainItem_x[item_idx] -= 2;
+		ChainItem_timer[item_idx] -= 1;
+	}
+	if(chain_count > 0){
+		chain_timer -= 1;
+		if(chain_timer <= 0){
+			chain_count = 0;
+			chain_display_flag = True;
+		}
+	}
+
+	for(item_idx = 0; item_idx < MAX_OptionItem; ++item_idx){
+		if(OptionItem_active[item_idx] == False)
+			continue;
+
+		if((abs(player_x + 8 - OptionItem_x[item_idx]) < 22) && (abs(player_y + 8 - OptionItem_y[item_idx]) < 22)){
+			for(opt_idx = 0; opt_idx <  MAX_Option; ++opt_idx){
+				if(Option_active[opt_idx] == True)
+					continue;
+				if(opt_idx == 0)
+					offset = 25;
+				else
+					offset = -25;
+				Option_offset_y[opt_idx] = offset;
+				Option_x[opt_idx] = 0;
+				Option_y[opt_idx] = 0;
+				Option_active[opt_idx] = True;
+				break;
+			}
+
+			OptionItem_active[item_idx] = False;
+//			seflag = 4;
+			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
+			continue;
+		}
+		if((OptionItem_x[item_idx] < (-16+16 + 1)) || (OptionItem_timer[item_idx] <= 0)){
+			OptionItem_active[item_idx] = False;
+			continue;
+		}
+		OptionItem_x[item_idx] -= 1;
+		OptionItem_timer[item_idx] -= 1;
+	}
+
+
+	for(item_idx =0; item_idx < MAX_ShieldItem; ++item_idx){
+		if(ShieldItem_active[item_idx] == False)
+			continue;
+
+		if((abs(player_x + 8 - ShieldItem_x[item_idx]) < 22) && (abs(player_y + 8 - ShieldItem_y[item_idx]) < 22)){
+			shield_active = True;
+			ShieldItem_active[item_idx] = False;
+//			seflag = 4;
+			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
+			continue;
+		}
+		if((ShieldItem_x[item_idx] < (-16+16 + 2)) || (ShieldItem_timer[item_idx] <= 0)){
+			ShieldItem_active[item_idx] = False;
+			continue;
+		}
+		ShieldItem_x[item_idx] -= 2;
+		ShieldItem_timer[item_idx] -= 1;
+
+	}
+	for(item_idx = 0; item_idx < MAX_BombItem; ++item_idx){
+		if(BombItem_active[item_idx] == False)
+			continue;
+
+		if((abs(player_x + 8 - BombItem_x[item_idx]) < 22) && (abs(player_y + 8 - BombItem_y[item_idx]) < 22)){
+			bomb_stock = min(3, bomb_stock + 1);
+			bomb_display_flag = True;
+			BombItem_active[item_idx] = False;
+//			seflag = 4;
+			msx_sound(0, 0x00); // 適当に音を鳴らす（後で調整）
+			continue;
+		}
+		if((BombItem_x[item_idx] < (-16+16 + 2)) || (BombItem_timer[item_idx] <= 0)){
+			BombItem_active[item_idx] = False;
+			continue;
+		}
+		BombItem_x[item_idx] -= 2;
+		BombItem_timer[item_idx] -= 1;
+	}
+
+
+	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
+		Option_x[opt_idx] += (((player_x + 8) - Option_x[opt_idx]) / 4);
+		Option_y[opt_idx] += (((player_y + Option_offset_y[opt_idx]) - Option_y[opt_idx]) / 4);
+	}
 }
 
 void udpate_Particle(void)
@@ -2551,6 +2551,7 @@ void main(void) {
 			spawn_enemy();
 			update_enemies();
 			update_e_bullets();
+			check_items();
 			check_collisions();
 			udpate_Particle();
 		}
