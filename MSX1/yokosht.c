@@ -2490,6 +2490,7 @@ __endasm;
 	}*/
 __asm
 	ld	a,(_spr_count)
+
 	ld	l,a
 	ld	h,0
 
@@ -2507,6 +2508,13 @@ sprite_Particle_loop:
 	ld	a,(hl)
 	or	a
 	jr	z,sprite_Particle_skip
+
+	ld	a,(_spr_count)
+	cp	32
+	jr	nc,sprite_Particle_end
+	inc	a
+	ld	(_spr_count),a
+
 	push	hl
 
 	ld	hl,_Particle_y-1
@@ -2530,15 +2538,14 @@ sprite_Particle_loop:
 	ld	(de),a
 	inc	de
 
-	ld	a,(_spr_count)
-	inc	a
-	ld	(_spr_count),a
 
 	pop	hl
 sprite_Particle_skip:
 	dec	hl
 	dec	c
 	jr	nz,sprite_Particle_loop
+
+sprite_Particle_end:
 
 __endasm;
 
@@ -2767,6 +2774,7 @@ __endasm;
 	}*/
 __asm
 	ld	a,(_spr_count)
+
 	inc	a
 	ld	l,a
 	ld	h,0
@@ -2786,6 +2794,13 @@ sprite_Particle_loop2:
 	ld	a,(hl)
 	or	a
 	jr	z,sprite_Particle_skip2
+
+	ld	a,(_spr_count)
+	cp	32
+	jr	nc,sprite_Particle_end2
+	dec	a
+	ld	(_spr_count),a
+
 	push	hl
 
 	ld	a,10
@@ -2809,15 +2824,13 @@ sprite_Particle_loop2:
 	ld	(de),a
 	dec	de
 
-	ld	a,(_spr_count)
-	dec	a
-	ld	(_spr_count),a
-
 	pop	hl
 sprite_Particle_skip2:
 	dec	hl
 	dec	c
 	jr	nz,sprite_Particle_loop2
+
+sprite_Particle_end2:
 
 __endasm;
 
