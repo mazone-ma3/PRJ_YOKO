@@ -33,3 +33,7 @@ https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_YO
 ↓元のPyxel版のコード
 
 https://github.com/mazone-ma3/py/blob/main/yokosht.py
+
+↓元のPyxel版を実行
+
+https://mazone-ma3.github.io/github.io/py/yokosht.html
