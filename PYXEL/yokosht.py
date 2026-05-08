@@ -361,7 +361,7 @@ class App:
 			# 難易度計算（時間経過）
 			difficulty = int(min(1, self.play_time / 10800))
 #			enemy_bullet_speed = 2.4 + difficulty * 1.2
-			enemy_bullet_speed = 4 + difficulty
+			enemy_bullet_speed = 2 + difficulty
 			shoot_interval = int(82 - difficulty * 36)
 
 			# 射撃

@@ -1407,7 +1407,7 @@ ChainItemEnd:
 
 
 	ld	a,(_option_cooldown)
-	or	a
+	dec	a
 	jr	nz,OptionItemEnd2
 ;
 	ld	d,0
@@ -1446,7 +1446,6 @@ OptionItemSkip:
 
 	jr	OptionItemEnd
 OptionItemEnd2:
-	dec	a
 	ld	(_option_cooldown),a
 
 OptionItemEnd:
