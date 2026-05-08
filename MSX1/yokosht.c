@@ -456,7 +456,7 @@ unsigned char p_idx;
 
 void Particles_append(unsigned char x, unsigned char y) __sdcccall(1)
 {
-	for (p_idx = 0; p_idx < MAX_Particle; ++p_idx){
+/*	for (p_idx = 0; p_idx < MAX_Particle; ++p_idx){
 		if(Particle_active[p_idx] == True)
 			continue;
 		Particle_x[p_idx] = x;
@@ -467,6 +467,81 @@ void Particles_append(unsigned char x, unsigned char y) __sdcccall(1)
 		Particle_active[p_idx] = True;
 		break;
 	}
+*/
+__asm
+	push	bc
+	push	hl
+	push	de
+
+	ex	de,hl
+	ld	d,a
+
+	ld	c,#MAX_Particle
+	ld	b,0
+	ld	hl,_Particle_active+MAX_Particle-1
+ParticleAppendloop:
+	ld	a,(hl)
+	or	a
+	jr	nz,ParticleAppendskip1
+
+	ld	hl,_Particle_x-1
+	add	hl,bc
+	ld	a,d
+	ld	(hl),a
+
+	ld	hl,_Particle_y-1
+	add	hl,bc
+	ld	a,e
+	ld	(hl),a
+
+	push	bc
+	xor	a
+	ld	l,9
+	call	_randint
+	pop	bc
+	add	a,#-4
+	ld	hl,_Particle_vx-1
+	add	hl,bc
+	ld	(hl),a
+
+	push	bc
+	xor	a
+	ld	l,9
+	call	_randint
+	pop	bc
+	add	a,#-4
+	ld	hl,_Particle_vy-1
+	add	hl,bc
+	ld	(hl),a
+
+	push	bc
+	xor	a
+	ld	l,20
+	call	_randint
+	pop	bc
+	ld	hl,_Particle_life-1
+	add	hl,bc
+	add	a,35
+	ld	(hl),a
+
+	ld	hl,_Particle_active-1
+	add	hl,bc
+	ld	a,#True
+	ld	(hl),a
+
+	jr	ParticleAppendEnd
+
+ParticleAppendskip1:
+	dec	hl
+	dec	c
+	jr	nz,ParticleAppendloop
+
+ParticleAppendEnd:
+	pop	de
+	pop	hl
+	pop	bc
+
+__endasm;
 }
 
 void use_bomb(void)
@@ -1118,7 +1193,7 @@ e_bullets2skip3:
 	ld	hl,_e_bullets_x-2
 	add	hl,bc
 	add	hl,bc
-	ex	hl,de
+	ex	de,hl
 	ld	hl,(de)
 
 	push	de
@@ -1127,7 +1202,7 @@ e_bullets2skip3:
 	ld	hl,_e_bullets_dx-2
 	add	hl,bc
 	add	hl,bc
-	ex	hl,de
+	ex	de,hl
 	ld	hl,(de)
 
 	pop	bc
@@ -1145,7 +1220,7 @@ e_bullets2skip3:
 	ld	hl,_e_bullets_y-2
 	add	hl,bc
 	add	hl,bc
-	ex	hl,de
+	ex	de,hl
 	ld	hl,(de)
 
 	push	de
@@ -1154,7 +1229,7 @@ e_bullets2skip3:
 	ld	hl,_e_bullets_dy-2
 	add	hl,bc
 	add	hl,bc
-	ex	hl,de
+	ex	de,hl
 	ld	hl,(de)
 
 	pop	bc
@@ -2274,7 +2349,7 @@ __asm
 
 	ld	de,_spr_chr
 	add	hl,de
-	ex	hl,de
+	ex	de,hl
 
 	ld	b,0
 	ld	c,#MAX_BULLETS
@@ -2337,7 +2412,7 @@ __asm
 
 ;	ld	de,_spr_chr
 ;	add	hl,de
-;	ex	hl,de
+;	ex	de,hl
 
 	ld	b,0
 	ld	c,#MAX_ENEMIES
@@ -2400,7 +2475,7 @@ __asm
 
 ;	ld	de,_spr_chr
 ;	add	hl,de
-;	ex	hl,de
+;	ex	de,hl
 
 	ld	b,0
 	ld	c,#MAX_e_bullets
@@ -2499,7 +2574,7 @@ __asm
 
 	ld	de,_spr_chr
 	add	hl,de
-	ex	hl,de
+	ex	de,hl
 
 	ld	b,0
 	ld	c,#MAX_Particle
@@ -2577,7 +2652,7 @@ __asm
 
 	ld	de,_spr_chr
 	add	hl,de
-	ex	hl,de
+	ex	de,hl
 	dec	de
 
 	ld	b,0
@@ -2784,7 +2859,7 @@ __asm
 
 	ld	de,_spr_chr
 	add	hl,de
-	ex	hl,de
+	ex	de,hl
 	dec	de
 
 	ld	b,0
