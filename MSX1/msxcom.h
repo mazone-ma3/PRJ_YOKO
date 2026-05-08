@@ -5,6 +5,7 @@
 #include <msx\gfx.h>
 
 #include "inkey.h"
+#include "mode.h"
 
 //#define __sdcccall(a)
 

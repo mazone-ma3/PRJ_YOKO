@@ -1,5 +1,4 @@
 #include "msxcom.h"
-#inclulde "mode.h"
 
 #ifndef DEBUG2
 #include "PSGMSXD.H"
