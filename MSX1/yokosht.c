@@ -378,7 +378,7 @@ void reset(void) {
 //	game_over = 0;
 
 	all_display_flag = True;
-	chain_display_flag = False;
+	chain_display_flag = True;
 
 	for (i = 0; i < MAX_ENEMIES; i++) {
 		enemies_active[i] = 0;
@@ -975,13 +975,14 @@ __endasm;
 
 void spawn_enemy(void) {
 	// 敵出現
+	unsigned short k;
 	enemy_spawn_timer++;
 //	if (enemy_spawn_timer > max(0, (40 - (play_time / (COUNT1S*4))))) {  // 時間で少し難易度アップ
-	i = score / 250;
-	if(i > 50)
+	k = score / 250;
+	if(k > 50)
 		i = 0;
 	else
-		i = 50-i;
+		i = 50-k;
 	if(enemy_spawn_timer > max(18, i)){
 		rand_num = randint(0,100);
 		if(rand_num < 60) enemy_type = 0;
