@@ -123,6 +123,8 @@ unsigned char spr_count2 = 0;
 //unsigned short spr_base;
 unsigned char end2;
 
+unsigned char spr_flag = 0;
+
 void set_sprite_all(unsigned char start, unsigned char end) __sdcccall(1)
 {
 /*	if(spr_page)
@@ -219,14 +221,19 @@ __endasm;
 /*	if(spr_count < 32)
 		VPOKE(208, spr_base + 0 + spr_count * 4);
 */
-	msx_wait_vsync();
 //	msx_wait_vsync();
-	if(spr_page)
+//	msx_wait_vsync();
+
+/*	if(spr_page)
 		set_vdp(5, 0x36);
 	else
 		set_vdp(5, 0x37);
-
+*/
+	DI();
+	spr_flag = 1;
 	spr_page = 1 - spr_page;
+	EI();
+	msx_wait_vsync();
 //	EI();
 }
 
@@ -698,3 +705,93 @@ __endasm;
 
 
 #endif
+
+unsigned char INTWORK[5] = {0,0,0,0,0};
+unsigned char vdps0;
+
+void intvsync(void)
+{
+__asm
+;intvsync:
+	ld	(_vdps0),a
+	push	af
+;	push	ix
+__endasm;
+
+	if(spr_flag == 1){
+		spr_flag = 0;
+//		set_spr_atr_adr(spr_next); 
+//		write_VDP(11, ((spr_next << 1) & 0x02));
+
+//		if(spr_page)
+//			set_vdp(5, 0x36);
+//		else
+//			set_vdp(5, 0x37);
+
+
+__asm
+	ld	a,(_VDP_writeadr)
+	inc	a
+	ld	c,a
+	ld	a,(_spr_page)
+	or	a
+	jr	nz,intvsyncskip
+	ld	a,36h
+	jr	intvsyncend
+intvsyncskip:
+	ld	a,37h
+intvsyncend:
+	out	(c),a
+	ld	a,5 | 0x80
+	out	(c),a
+__endasm;
+
+/*
+	ld	a,(_spr_next)
+	add	a,a
+	and	a,#0x02
+	out	(c),a
+	ld	a,11 | 0x80
+	out	(c),a
+__endasm;*/
+	}
+__asm
+;	pop	ix
+	pop	af
+	jp	_INTWORK
+__endasm;
+}
+
+void set_int(void)
+{
+__asm
+	DI
+	LD	IY,-609
+	PUSH	IY
+	POP	HL
+	LD	DE,_INTWORK
+	LD	BC,5
+	LDIR
+	LD	HL,_intvsync
+	LD	(IY+1),L
+	LD	(IY+2),H
+	LD	(IY+0),#0C3H
+	EI
+__endasm;
+}
+
+void reset_int(void)
+{
+__asm
+	DI
+	LD	HL,_INTWORK
+	LD	A,(HL)
+	OR	A
+	JR	Z,reset_intend
+	LD	DE,-609
+	LD	BC,5
+	LDIR
+reset_intend:
+	EI
+__endasm;
+}

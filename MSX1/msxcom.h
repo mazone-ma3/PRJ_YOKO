@@ -101,3 +101,7 @@ void playbgm(void) __sdcccall(1);
 void stopbgm(void) __sdcccall(1);
 
 #endif
+
+void set_int(void);
+void reset_int(void);
+

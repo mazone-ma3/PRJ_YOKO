@@ -1,0 +1,4 @@
+10 CLEAR 0,&H83BF
+20 SCREEN 1,0,0
+30 BLOAD "yokosht.msx",R
+
