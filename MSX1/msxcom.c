@@ -44,14 +44,11 @@ unsigned char spr_y[32];
 unsigned char spr_no[32];
 unsigned char spr_color[32];
 */
-typedef struct {
-	unsigned char y, x, no, color;
-}SPR;
 
 SPR spr_chr[32];
 
 
-inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
+inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
 	if(spr_count < 32){
 //	y-=1;

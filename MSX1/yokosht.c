@@ -2256,32 +2256,195 @@ void draw_sprites(void) {
 	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
 	spr_count++;
 
-	for (i = 0; i < MAX_BULLETS; i++) {
+/*	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]){
 			msx_set_sprite(spr_count, bullets_x[i] , bullets_y[i] , 4, 9);
 			spr_count++;
 		}
 //		else
 //			msx_set_sprite(SPR_BULLETS + i, 0, 208, 0, 0);
-	}
+	}*/
+__asm
+	ld	a,(_spr_count)
+	ld	l,a
+	ld	h,0
 
-	for (i = 0; i < MAX_ENEMIES; i++) {
+	add	hl,hl
+	add	hl,hl
+
+	ld	de,_spr_chr
+	add	hl,de
+	ex	hl,de
+
+	ld	b,0
+	ld	c,#MAX_BULLETS
+	ld	hl,_bullets_active+MAX_BULLETS-1
+sprite_bullets_loop:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_bullets_skip
+	push	hl
+
+	ld	hl,_bullets_y-1
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	inc	de
+
+	ld	hl,_bullets_x-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	inc	de
+
+	ld	a,4*4
+	ld	(de),a
+	inc	de
+
+	ld	a,9
+	ld	(de),a
+	inc	de
+
+	ld	a,(_spr_count)
+	inc	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_bullets_skip:
+	dec	hl
+	dec	c
+	jr	nz,sprite_bullets_loop
+
+__endasm;
+
+/*	for (i = 0; i < MAX_ENEMIES; i++) {
 		if (enemies_active[i]){
 			msx_set_sprite(spr_count , enemies_x[i] , enemies_y[i] , 8, 8);
 			spr_count++;
 		}
 //		else
 //			msx_set_sprite(SPR_ENEMIES + i, 0, 208, 0, 0);
-	}
+	}*/
 
-	for (i = 0; i < MAX_e_bullets; i++) {
+__asm
+;	ld	a,(_spr_count)
+;	ld	l,a
+;	ld	h,0
+
+;	add	hl,hl
+;	add	hl,hl
+
+;	ld	de,_spr_chr
+;	add	hl,de
+;	ex	hl,de
+
+	ld	b,0
+	ld	c,#MAX_ENEMIES
+	ld	hl,_enemies_active+MAX_ENEMIES-1
+sprite_enemies_loop:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_enemies_skip
+	push	hl
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	inc	de
+
+	ld	hl,_enemies_x-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	inc	de
+
+	ld	a,8*4
+	ld	(de),a
+	inc	de
+
+	ld	a,8
+	ld	(de),a
+	inc	de
+
+	ld	a,(_spr_count)
+	inc	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_enemies_skip:
+	dec	hl
+	dec	c
+	jr	nz,sprite_enemies_loop
+
+__endasm;
+
+
+/*	for (i = 0; i < MAX_e_bullets; i++) {
 		if (e_bullets_active[i]){
 			msx_set_sprite(spr_count, e_bullets_x[i] / DIV, e_bullets_y[i] / DIV, 12, 8);
 			spr_count++;
 		}
 //		else
 //			msx_set_sprite(SPR_e_bullets + i, 0, 208, 0, 0);
-	}
+	}*/
+__asm
+;	ld	a,(_spr_count)
+;	ld	l,a
+;	ld	h,0
+
+;	add	hl,hl
+;	add	hl,hl
+
+;	ld	de,_spr_chr
+;	add	hl,de
+;	ex	hl,de
+
+	ld	b,0
+	ld	c,#MAX_e_bullets
+	ld	hl,_e_bullets_active+MAX_e_bullets-1
+sprite_e_bullets_loop:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_e_bullets_skip
+	push	hl
+
+	ld	hl,_e_bullets_y-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	inc	de
+
+	ld	hl,_e_bullets_x-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	inc	de
+
+	ld	a,12*4
+	ld	(de),a
+	inc	de
+
+	ld	a,8
+	ld	(de),a
+	inc	de
+
+	ld	a,(_spr_count)
+	inc	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_e_bullets_skip:
+	dec	hl
+	dec	c
+	jr	nz,sprite_e_bullets_loop
+
+__endasm;
 
 
 	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
@@ -2319,12 +2482,67 @@ void draw_sprites(void) {
 		spr_count++;
 	}
 
-	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
+/*	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
 		if(Particle_active[p_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(Particle_x[p_idx]), Particle_y[p_idx], 36, 10);
 		spr_count++;
-	}
+	}*/
+__asm
+	ld	a,(_spr_count)
+	ld	l,a
+	ld	h,0
+
+	add	hl,hl
+	add	hl,hl
+
+	ld	de,_spr_chr
+	add	hl,de
+	ex	hl,de
+
+	ld	b,0
+	ld	c,#MAX_Particle
+	ld	hl,_Particle_active+MAX_Particle-1
+sprite_Particle_loop:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_Particle_skip
+	push	hl
+
+	ld	hl,_Particle_y-1
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	inc	de
+
+	ld	hl,_Particle_x-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	inc	de
+
+	ld	a,36*4
+	ld	(de),a
+	inc	de
+
+	ld	a,10
+	ld	(de),a
+	inc	de
+
+	ld	a,(_spr_count)
+	inc	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_Particle_skip:
+	dec	hl
+	dec	c
+	jr	nz,sprite_Particle_loop
+
+__endasm;
+
+
 	}else{
 		spr_count = 31;
 
@@ -2333,32 +2551,177 @@ void draw_sprites(void) {
 	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
 	spr_count--;
 
-	for (i = 0; i < MAX_BULLETS; i++) {
+/*	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]){
 			msx_set_sprite(spr_count, bullets_x[i] , bullets_y[i] , 4, 9);
 			spr_count--;
 		}
 //		else
 //			msx_set_sprite(SPR_BULLETS + i, 0, 208, 0, 0);
-	}
+	}*/
+__asm
+	ld	a,(_spr_count)
+	inc	a
+	ld	l,a
+	ld	h,0
 
-	for (i = 0; i < MAX_ENEMIES; i++) {
+	add	hl,hl
+	add	hl,hl
+
+	ld	de,_spr_chr
+	add	hl,de
+	ex	hl,de
+	dec	de
+
+	ld	b,0
+	ld	c,#MAX_BULLETS
+	ld	hl,_bullets_active+MAX_BULLETS-1
+sprite_bullets_loop2:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_bullets_skip2
+	push	hl
+
+	ld	a,9
+	ld	(de),a
+	dec	de
+
+	ld	a,4*4
+	ld	(de),a
+	dec	de
+
+	ld	hl,_bullets_x-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	dec	de
+
+	ld	hl,_bullets_y-1
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_bullets_skip2:
+	dec	hl
+	dec	c
+	jr	nz,sprite_bullets_loop2
+
+__endasm;
+
+/*	for (i = 0; i < MAX_ENEMIES; i++) {
 		if (enemies_active[i]){
 			msx_set_sprite(spr_count , enemies_x[i] , enemies_y[i] , 8, 8);
 			spr_count--;
 		}
 //		else
 //			msx_set_sprite(SPR_ENEMIES + i, 0, 208, 0, 0);
-	}
+	}*/
 
-	for (i = 0; i < MAX_e_bullets; i++) {
+__asm
+	ld	b,0
+	ld	c,#MAX_ENEMIES
+	ld	hl,_enemies_active+MAX_ENEMIES-1
+sprite_enemies_loop2:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_enemies_skip2
+	push	hl
+
+	ld	a,8
+	ld	(de),a
+	dec	de
+
+	ld	a,8*4
+	ld	(de),a
+	dec	de
+
+	ld	hl,_enemies_x-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	dec	de
+
+	ld	hl,_enemies_y-1
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_enemies_skip2:
+	dec	hl
+	dec	c
+	jr	nz,sprite_enemies_loop2
+
+__endasm;
+
+
+/*	for (i = 0; i < MAX_e_bullets; i++) {
 		if (e_bullets_active[i]){
 			msx_set_sprite(spr_count, e_bullets_x[i] / DIV, e_bullets_y[i] / DIV, 12, 8);
 			spr_count--;
 		}
 //		else
 //			msx_set_sprite(SPR_e_bullets + i, 0, 208, 0, 0);
-	}
+	}*/
+
+__asm
+	ld	b,0
+	ld	c,#MAX_e_bullets
+	ld	hl,_e_bullets_active+MAX_e_bullets-1
+sprite_e_bullets_loop2:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_e_bullets_skip2
+	push	hl
+
+	ld	a,8
+	ld	(de),a
+	dec	de
+
+	ld	a,12*4
+	ld	(de),a
+	dec	de
+
+	ld	hl,_e_bullets_x-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	dec	de
+
+	ld	hl,_e_bullets_y-1
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_e_bullets_skip2:
+	dec	hl
+	dec	c
+	jr	nz,sprite_e_bullets_loop2
+
+__endasm;
+
 
 
 	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
@@ -2396,13 +2759,71 @@ void draw_sprites(void) {
 		spr_count--;
 	}
 
-	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
+/*	for(p_idx = 0; p_idx < MAX_Particle; ++p_idx){
 		if(Particle_active[p_idx] == False)
 			continue;
 		msx_set_sprite(spr_count,(Particle_x[p_idx]), Particle_y[p_idx], 36, 10);
 		spr_count--;
+	}*/
+__asm
+	ld	a,(_spr_count)
+	inc	a
+	ld	l,a
+	ld	h,0
+
+	add	hl,hl
+	add	hl,hl
+
+	ld	de,_spr_chr
+	add	hl,de
+	ex	hl,de
+	dec	de
+
+	ld	b,0
+	ld	c,#MAX_Particle
+	ld	hl,_Particle_active+MAX_Particle-1
+sprite_Particle_loop2:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_Particle_skip2
+	push	hl
+
+	ld	a,10
+	ld	(de),a
+	dec	de
+
+	ld	a,36*4
+	ld	(de),a
+	dec	de
+
+	ld	hl,_Particle_x-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	dec	de
+
+	ld	hl,_Particle_y-1
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
+	pop	hl
+sprite_Particle_skip2:
+	dec	hl
+	dec	c
+	jr	nz,sprite_Particle_loop2
+
+__endasm;
+
+
 	}
-	}
+
 //	spr_count = add;
 //	if(spr_count > 0)
 //		msx_set_sprite(spr_count - 1, 0, 209+1, 0, 0);

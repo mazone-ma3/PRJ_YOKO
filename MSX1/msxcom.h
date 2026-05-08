@@ -23,6 +23,13 @@ __endasm;\
 #define NOERROR		0
 #define ERROR		-1
 
+typedef struct {
+	unsigned char y, x, no, color;
+}SPR;
+
+extern SPR spr_chr[32];
+
+
 extern unsigned char VDP_writeadr;
 
 #define msx_set_sprite_pattern(A,B) VDP_set_sprite_16(A,B)
@@ -45,13 +52,13 @@ extern unsigned char spr_y[32];
 extern unsigned char spr_no[32];
 extern unsigned char spr_color[32];
 
-inline void VDP_put_sprite_16(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
+//#define msx_set_sprite VDP_put_sprite_16
+inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
 
 extern unsigned char spr_page;
 
 void set_sprite_all(unsigned char start, unsigned char end) __sdcccall(1);
 
-#define msx_set_sprite VDP_put_sprite_16
 
 #define clicksw ((volatile unsigned char *)0xf3db)
 
