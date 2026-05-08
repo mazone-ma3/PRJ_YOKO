@@ -789,7 +789,11 @@ __asm
 	JR	Z,reset_intend
 	LD	DE,-609
 	LD	BC,5
+	PUSH	HL
 	LDIR
+	POP	HL
+	XOR	A
+	LD	(HL),A
 reset_intend:
 	EI
 __endasm;

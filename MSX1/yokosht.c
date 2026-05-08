@@ -3128,5 +3128,6 @@ void main(void) {
 #else
 	}
 #endif
+	reset_int();
 	stopbgm();
 }
