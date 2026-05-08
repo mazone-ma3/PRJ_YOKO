@@ -37,3 +37,5 @@ https://github.com/mazone-ma3/py/blob/main/yokosht.py
 ↓元のPyxel版を実行
 
 https://mazone-ma3.github.io/github.io/py/yokosht.html
+
+YouTubeの方に各機種版の動画を上げてあります。
