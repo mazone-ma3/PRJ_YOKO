@@ -295,14 +295,40 @@ void msx_print_num(unsigned char x, unsigned char y, unsigned short number, unsi
 	msx_print(x, y, str_temp);
 }
 
+const unsigned long pow10[7] = {
+	1L,			// 1Œ…–Ú
+	10L,
+	100L,
+	1000L,
+	10000L,
+	100000L,	// 6Œ…–Ú
+	1000000L,	// 7Œ…–Ú
+};
+
 void msx_print_num_l(unsigned char x, unsigned char y, unsigned long number, unsigned char digits)
 {
 	unsigned char i = digits;
+	unsigned long p;
+	unsigned char digit, j = 0;
 
-	while(i--){
+/*	while(i--){
 		str_temp[i] = number % 10 + 0x30;
 		number /= 10;
+	}*/
+
+//	for (int i = 0; i < 7; i++) {
+	while(i--){
+		digit = 0;
+
+		p = pow10[i];
+
+		while (number >= p) {	// ˆø‚«Zƒ‹[ƒv
+			number -= p;
+			digit++;
+		}
+		str_temp[j++] = digit + 0x30;
 	}
+
 	str_temp[digits] = '\0';
 
 	msx_print(x, y, str_temp);

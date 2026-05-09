@@ -2995,7 +2995,7 @@ void draw_ui(void) {
 
 	// TIME
 	if(time_display_flag){
-		msx_print_num(7+16, 0, play_time / COUNT1S, 7);
+		msx_print_num_l(7+16, 0, play_time / COUNT1S, 7);
 		time_display_flag = False;
 	}
 
