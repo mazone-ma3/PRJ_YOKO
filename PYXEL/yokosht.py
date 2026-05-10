@@ -151,7 +151,7 @@ class App:
 			self.stars.append([random.randint(0, pyxel.width),
 								random.randint(0, pyxel.height),
 								random.uniform(0.8, 1.8),
-								random.randint(2,16)])
+								random.randint(2,15)])
 
 		pyxel.run(self.update, self.draw)
 
@@ -243,6 +243,8 @@ class App:
 		self.str_temp = l.decode("UTF-8")
 		self.put_strings(x, y, self.str_temp)
 
+
+	# メイン処理
 	def update(self):
 		if self.game_over:
 			if pyxel.btnp(pyxel.KEY_R) or pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
