@@ -1199,117 +1199,56 @@ unsigned char keyscan(void)
 
 #define STAR_NUM	192/24-1						/* スタ－の数 */
 
-unsigned char star[5][STAR_NUM];		/* スタ－管理用 */
+unsigned short star_baseadr[STAR_NUM];
+unsigned char star_offset[STAR_NUM];
+unsigned char star_speed[STAR_NUM];
+unsigned char star_color[STAR_NUM];
 
 void init_star(void)
 {
-//	int i;
 	unsigned char i;
 /* スタ－の座標系を初期化 */
 	for(i = 0;i < STAR_NUM; i++){
-		star[1][i] = 24 * (i + 1) + 7;
-		star[0][i] = rand() % 128;
-		star[2][i] = (rand() % 2) + 1;
+		star_baseadr[i] = (24 * (i + 1) + 7) * 128;
+		star_offset[i] = rand() % 128;
+		star_speed[i] = (rand() % 2) + 1;
 
-		/* VRAMのアドレスを算出 */
-		read_vram_adr(0, star[0][i] + (star[1][i] * 128));
-		star[3][i] = read_vram_data();	/* 元の色を記憶する */
-
-		star[4][i] = rand() % 14 + 2;
-	}
-/* スタ－の表示(固定表示) */
-//	i = STAR_NUM;
-//	while(i--){
-//		vram = (unsigned short *)0xc00000 + (star[0][i] + ((256 / STAR_NUM) / 2) + 
-//			(star[1][i] * 256)) * 2;
-//		*vram |= star[4][i];
-//	}
-}
-
-void refresh_star(void)
-{
-	unsigned char i,k;
-	for(i = 0;i < STAR_NUM; i++){
-		/* VRAMのアドレスを算出 */
-		read_vram_adr(0, star[0][i] + (star[1][i] * 128));
-		k = read_vram_data();	/* 元の色を記憶する */
-		if(k != star[4][i])
-			star[3][i] = k;
+		star_color[i] = rand() % 14 + 2;
 	}
 }
 
 void draw_bg(void)
 {
 	unsigned char i;
-//	register unsigned short *scroll = (unsigned short *)0xe8001a;	/* */
-
-/* スクロ－ルレジスタ制御 */
-
-//		scrl += 512 - (scrl_spd >> SCRL_SFT);
-//		scrl %= 512;
-//		*scroll = scrl;
 
 /* スクロ－ルするスタ－の計算 */
 
 	if(total_count & 1)
 		return;
-		i = STAR_NUM;
-		while(i--){
-			if(!star[3][i]){
-				__asm
-					DI
-				__endasm;
-				write_vram_adr(0, star[0][i] + (star[1][i] * 128));
-				write_vram_data(0); //star[3][i]);
-				__asm
-					EI
-				__endasm;
-			}
-			star[0][i] -= (star[2][i]); // + 212);
-			star[0][i] %= 128;
-//			if(star[0][i] >= 256)
-//				star[0][i] = 0;
-//			star[1][i] %= 256;
-//		}
-//		i = STAR_NUM;
-//		while(i--){
-//			vram = (unsigned short *)0xc00000 + (star[0][i] + (star[1][i] * 512)) ;
-			__asm
-				DI
-			__endasm;
-//			read_vram_adr(0, star[0][i] + (star[1][i] * 128));
-//			star[3][i] = read_vram_data();	/* 元の色を記憶する */
-//			if(!star[3][i]){
-				write_vram_adr(0, star[0][i] + (star[1][i] * 128));
-//				star[3][i] = *vram;
-//				*vram |= star[4][i];
-				write_vram_data(star[4][i]);
-//			}
-			__asm
-				EI
-			__endasm;
-		}
+	i = STAR_NUM;
+	while(i--){
+		DI();
+		write_vram_adr(0, star_baseadr[i] + star_offset[i]);
+		write_vram_data(0);
+		EI();
+		star_offset[i] -= star_speed[i];
+		star_offset[i] %= 128;
+		DI();
+		write_vram_adr(0, star_baseadr[i] + star_offset[i]);
+		write_vram_data(star_color[i]);
+		EI();
+	}
 }
 
-void clr_sp(void) //unsigned char num) __sdcccall(1)
+void clr_sp(void)
 {
 __asm
-;	or	a,a
-;	ret	z
-;	push	bc
-;	ld	b,a
 	ld	a,(_VDP_writeadr)
 	ld	c,a
 clrloop:
 	ld	a,216 ;0xd4
 	out	(c),a
 
-;	xor	a, a
-;	out	(c),a
-;	out	(c),a
-;	out	(c),a
-;	djnz	clrloop
-;	pop	bc
 __endasm;
 }
 
@@ -1319,64 +1258,24 @@ unsigned char palskip_flag = 0;
 inline void set_spr(void)
 {
 __asm
-;	push	af
-;	push	bc
-;	push	de
-;	push	hl
-
-;	ld	hl, (_pchr_data)
 	ld	hl,_spr_chr ;chr_data
-;	ld	de,2
 
 	ld	a,(_VDP_writeadr)
 	ld	c,a
 	ld	a,(_tmp_spr_count)
 	or	a
 	jr	z,sprend
-;	ld	b,a
 	ld	d,a
 	xor	a,a
 sprloop2:
-	ld	a,(hl)
-	cp	217
-	jr	z,sprskip
-;	out	(c),a
-;	inc	hl
 	outi
-;	ld	a,(hl)
-;	out	(c),a
-;	inc	hl
 	outi
-;	inc	hl		;(*)
-;	ld	a,(hl)
-;	out	(c),a
 	outi
-;	xor	a,a
-;	out	(c),a
 	outi
-;	inc	hl
-;	add	hl,de
 
-	jr	sprskip2
-sprskip:
-	out	(c),a
-	xor	a
-	out	(c),a
-	out	(c),a
-	out	(c),a
-	inc	hl
-	inc	hl
-	inc	hl
-	inc	hl
-sprskip2:
 	dec	d
 	jr	nz,sprloop2
-;	djnz	sprloop2
 sprend:
-;	pop	hl
-;	pop	de
-;	pop	bc
-;	pop	af
 __endasm;
 }
 
@@ -1386,49 +1285,13 @@ void set_sprite_all(unsigned char start, unsigned char end)
 	unsigned char i, j;
 
 	tmp_spr_count = end;
-//	spr_page ^= 0x01;
-
-//	tmp_spr_count = spr_count[spr_page];
-
-/* スプライト表示 */
-//	spr_count = 2;
 
 /* 表示数ぶん書き込む */
 	if(tmp_spr_count > MAX_SPRITE){
-/*		if(total_count & 1){
-			for(i = tmp_spr_count - MAX_SPRITE, j = 0; j < MAX_SPRITE; i++, j++){
-				chr_data2[j] = chr_data[i][spr_page];
-			}
-			for(i = 0; i < MAX_SPRITE; i++){
-				chr_data[i][spr_page] = chr_data2[i];
-			}
-		}*/
 		tmp_spr_count = MAX_SPRITE;
 	}
-/*	if(tmp_spr_count < MAX_SPRITE){
-		clr_sp();
-	}*/
-
-/*	for(i = 0; i < tmp_spr_count; i++){
-		CHR_PARA4 *pold_data = &old_data[spr_page][i];
-		pchr_data = &chr_data[i];
-		if((pold_data->pat_num != pchr_data->pat_num) || (pold_data->atr != pchr_data->atr) || (pold_data->pal != pchr_data->pal)){
-			color_flag[i] = 1;
-			pold_data->pat_num = pchr_data->pat_num;
-			pold_data->atr = pchr_data->atr;
-			pold_data->pal = pchr_data->pal;
-		}
-	}
-*/
-
-//	goto spr_end;
 
 	/* 色情報の処理 */
-//	wait_vsync();
-//	DI();
-
-//	write_vram_adr(spr_page, 0x7600);
-
 //	pold_data = &old_data[spr_page][0];
 //	pchr_data = &chr_data[0];
 
@@ -1457,9 +1320,6 @@ __asm
 	add	hl,hl
 	add	hl,hl
 	add	hl,hl
-;	add	hl,hl
-;	add	hl,hl
-;	add	hl,hl
 	ld	bc,_old_data
 	add	hl,bc
 	ex	de,hl
@@ -1508,17 +1368,10 @@ palloop:
 	rlca
 	rlca
 	and	3
-;	srl	a	; 14-9=6 shift
-;	srl	a
-;	srl	a
-;	srl	a
-;	srl	a
-;	srl	a
 	ld	b,a		; A15,A14
 	ld	a,(_spr_page)	;high A16
 	sla	a
 	sla	a
-;	sla	a
 	or	b
 	ld	e,a
 
@@ -1555,34 +1408,15 @@ palskip2:
 
 ;					patr = (unsigned char *)&spr_col[pat_num/4][0];
 
-;	ld	a,(_pat_num)
-
-;	ld	hl,(_patr)
-
-;	ld	l,c
-;	ld	hl,0
-;	add	hl,hl
-;	add	hl,hl
-;	ld	de,_spr_chr+3
-;	add	hl,de
-
-
 	ld	a,(_pat_num)	; x4
 
-;	srl	a
-;	srl	a
 	ld	l,a
 	ld	h,0
-;	add	hl,hl
-;	add	hl,hl
-;	add	hl,hl
 	add	hl,hl			; 4x4 = x16
 	add	hl,hl
 	ld	de,_spr_col
 	add	hl,de
 
-;	ld	b,16
-;	otir
 	outi
 	outi
 	outi
@@ -1637,8 +1471,43 @@ __endasm;
 	}
 */
 	DI();
-	write_vram_adr(spr_page, 0x7600);
+//	write_vram_adr(spr_page, 0x7600);
 
+__asm
+	ld	hl,7600h
+	ld	a,h
+	rlca
+	rlca
+	and	3
+	ld	b,a		; A15,A14
+	ld	a,(_spr_page)	;high A16
+	sla	a
+	sla	a
+	or	b
+	ld	e,a
+
+	ld	a,(_VDP_writeadr)
+	inc	a
+	ld	c,a
+	ld	a,e
+
+	di
+	out	(c),a
+	ld	a,14
+	set 7,a
+	out	(c),a
+
+	ld	de,7600h
+;	ld	a,(_VDP_writeadr)
+;	inc	a
+;	ld	c,a
+	out	(c),e
+	ld	a,d
+	and	a,0x3f
+	set	6,a
+	out	(c),a
+	ei
+__endasm;
 	set_spr();
 
 
