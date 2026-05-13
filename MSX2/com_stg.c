@@ -2333,10 +2333,10 @@ void draw_sprites(void) {
 	if(add > 0){
 		spr_count = 0;
 
-	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
+	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
 	spr_count++;
 
-	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
+	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
 	spr_count++;
 
 /*	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){

@@ -1276,6 +1276,9 @@ unsigned char b; //, e, eb;
 void check_collisions(void) {
 //	unsigned char b, e, eb;
 
+	if(!(vdps0 & 0x20))
+		return;
+
 	// ©‹@’e vs “GiŠù‘¶‚Ì‚Ü‚Üj
 __asm
 	push	bc
@@ -2632,9 +2635,9 @@ __endasm;
 	}else{
 		spr_count = 31;
 
-	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
-	spr_count--;
 	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
+	spr_count--;
+	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
 	spr_count--;
 
 /*	for (i = 0; i < MAX_BULLETS; i++) {
