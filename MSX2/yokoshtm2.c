@@ -1209,7 +1209,7 @@ void init_star(void)
 	unsigned char i;
 /* ƒXƒ^|‚ÌÀ•WŒn‚ğ‰Šú‰» */
 	for(i = 0;i < STAR_NUM; i++){
-		star_baseadr[i] = (24 * (i + 1) + 7) * 128;
+		star_baseadr[i] = (24 * (i + 1) + 7) * 128 - 128 * 8;
 		star_offset[i] = rand() % 128;
 		star_speed[i] = (rand() % 2) + 1;
 
