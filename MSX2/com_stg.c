@@ -1276,6 +1276,9 @@ unsigned char b; //, e, eb;
 void check_collisions(void) {
 //	unsigned char b, e, eb;
 
+	if(!(vdps0 & 0x20))
+		return;
+
 	// ©‹@’e vs “GiŠù‘¶‚Ì‚Ü‚Üj
 __asm
 	push	bc

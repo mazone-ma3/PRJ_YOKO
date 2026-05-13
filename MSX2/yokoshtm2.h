@@ -118,3 +118,5 @@ extern volatile unsigned char tmp_spr_count;
 extern short tx,ty;
 
 extern unsigned char keycode;
+
+extern unsigned char vdps0;
