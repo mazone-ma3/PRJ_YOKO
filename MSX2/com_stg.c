@@ -2779,13 +2779,20 @@ sprite_Particle_end:
 __endasm;
 
 
-	}else{
+	}else{	////////////////////////////
 		spr_count = 31;
 
 	msx_set_sprite(spr_count, player_x , player_y , 0, 15);
 	spr_count--;
 	msx_set_sprite(spr_count, player_x , player_y , (shield_active) ? 44 : 40, 7);
 	spr_count--;
+
+/*	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
+		if(Option_active[opt_idx] == False)
+			continue;
+		msx_set_sprite(spr_count ,(Option_x[opt_idx]),(Option_y[opt_idx]),16,2);
+		spr_count--;
+	}*/
 
 /*	for (i = 0; i < MAX_BULLETS; i++) {
 		if (bullets_active[i]){
@@ -2809,13 +2816,78 @@ __asm
 	ex	de,hl
 	dec	de
 
+
+	ld	b,0
+	ld	c,#MAX_Option
+	ld	hl,_Option_active+MAX_Option-1
+sprite_Option_loop2:
+	ld	a,(hl)
+	or	a
+	jr	z,sprite_Option_skip2_1
+	push	hl
+
+	ld	a,0;9
+	ld	(de),a
+	dec	de
+
+	ld	a,16;*4
+	ld	(de),a
+	dec	de
+
+	ld	hl,_Option_x-2
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	ld	(de),a
+	dec	de
+
+	ld	hl,_Option_y-2
+	add	hl,bc
+	add	hl,bc
+	ld	a,(hl)
+	dec	a
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
+	pop	hl
+	jr	sprite_Option_skip2
+
+sprite_Option_skip2_1:
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,16
+	ld	(de),a
+	dec	de
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,217
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
+sprite_Option_skip2:
+	dec	hl
+	dec	c
+	jr	nz,sprite_Option_loop2
+
+
+
 	ld	b,0
 	ld	c,#MAX_BULLETS
 	ld	hl,_bullets_active+MAX_BULLETS-1
 sprite_bullets_loop2:
 	ld	a,(hl)
 	or	a
-	jr	z,sprite_bullets_skip2
+	jr	z,sprite_bullets_skip2_1
 	push	hl
 
 	ld	a,0;9
@@ -2844,6 +2916,26 @@ sprite_bullets_loop2:
 	ld	(_spr_count),a
 
 	pop	hl
+	jr	sprite_bullets_skip2
+
+sprite_bullets_skip2_1:
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,4
+	ld	(de),a
+	dec	de
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,217
+	ld	(de),a
+	dec	de
+
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
 sprite_bullets_skip2:
 	dec	hl
 	dec	c
@@ -2867,7 +2959,7 @@ __asm
 sprite_enemies_loop2:
 	ld	a,(hl)
 	or	a
-	jr	z,sprite_enemies_skip2
+	jr	z,sprite_enemies_skip2_1
 	push	hl
 
 	ld	a,0;8
@@ -2896,6 +2988,25 @@ sprite_enemies_loop2:
 	ld	(_spr_count),a
 
 	pop	hl
+	jr	sprite_enemies_skip2
+
+sprite_enemies_skip2_1:
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,8
+	ld	(de),a
+	dec	de
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,217
+	ld	(de),a
+	dec	de
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
 sprite_enemies_skip2:
 	dec	hl
 	dec	c
@@ -2920,7 +3031,7 @@ __asm
 sprite_e_bullets_loop2:
 	ld	a,(hl)
 	or	a
-	jr	z,sprite_e_bullets_skip2
+	jr	z,sprite_e_bullets_skip2_1
 	push	hl
 
 	ld	a,0;8
@@ -2951,6 +3062,25 @@ sprite_e_bullets_loop2:
 	ld	(_spr_count),a
 
 	pop	hl
+	jr	sprite_e_bullets_skip2
+
+sprite_e_bullets_skip2_1:
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,12
+	ld	(de),a
+	dec	de
+	xor	a
+	ld	(de),a
+	dec	de
+	ld	a,217
+	ld	(de),a
+	dec	de
+	ld	a,(_spr_count)
+	dec	a
+	ld	(_spr_count),a
+
 sprite_e_bullets_skip2:
 	dec	hl
 	dec	c
@@ -2958,14 +3088,6 @@ sprite_e_bullets_skip2:
 
 __endasm;
 
-
-
-	for(opt_idx = 0; opt_idx < MAX_Option; ++opt_idx){
-		if(Option_active[opt_idx] == False)
-			continue;
-		msx_set_sprite(spr_count ,(Option_x[opt_idx]),(Option_y[opt_idx]),16,2);
-		spr_count--;
-	}
 
 	for(item_idx = 0; item_idx < MAX_ChainItem; ++item_idx){
 		if(ChainItem_active[item_idx] == False)
@@ -3084,13 +3206,44 @@ __endasm;
 			max_spr_count = spr_count;
 			msx_print_num(7, 2, max_spr_count, 2);
 		}*/
-	}else
-		set_sprite_all(spr_count+1, 32);
+	}else{
+//		set_sprite_all(spr_count+1, 32-(spr_count+1));
+__asm
+	ld	a,(_spr_count)
 
-//	add = -add;
-//	++add;
-//	add += 32;
-//	add %= 32;
+	inc	a
+	jr	z,sprsetskip
+	ld	l,a
+	ld	h,0
+
+	add	hl,hl
+	add	hl,hl
+
+	ld	de,_spr_chr
+	add	hl,de
+	ex	de,hl
+	dec	de
+
+	ld	b,a
+sprsetloop:
+	xor	a
+	ld	(de),a
+	dec	de
+	dec	de
+	ld	(de),a
+	dec	de
+	ld	a,217
+	ld	(de),a
+	dec	de
+
+	djnz	sprsetloop
+sprsetskip:
+
+__endasm;
+		set_sprite_all(0, 32);
+	}
+
+	add = -add;
 }
 
 

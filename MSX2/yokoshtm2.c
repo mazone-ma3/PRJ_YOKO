@@ -111,7 +111,7 @@ unsigned char org_pal[MAXCOLOR][3] = {
 
 
 CHR_PARA3 spr_chr[MAX_SPRITE * 2];
-
+CHR_PARA3 *pspr_chr;
 
 inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
@@ -1204,6 +1204,8 @@ unsigned char star_offset[STAR_NUM];
 unsigned char star_speed[STAR_NUM];
 unsigned char star_color[STAR_NUM];
 
+unsigned short star_adr_tmp;
+
 void init_star(void)
 {
 	unsigned char i;
@@ -1215,17 +1217,19 @@ void init_star(void)
 
 		star_color[i] = rand() % 14 + 2;
 	}
+
 }
 
 void draw_bg(void)
 {
-	unsigned char i;
+//	unsigned char i;
 
 /* ƒXƒNƒ|ƒ‹‚·‚éƒXƒ^|‚ÌŒvZ */
 
-	if(total_count & 1)
-		return;
-	i = STAR_NUM;
+//	if(total_count & 1){
+//		return;
+//	}
+/*	i = STAR_NUM;
 	while(i--){
 		DI();
 		write_vram_adr(0, star_baseadr[i] + star_offset[i]);
@@ -1237,7 +1241,141 @@ void draw_bg(void)
 		write_vram_adr(0, star_baseadr[i] + star_offset[i]);
 		write_vram_data(star_color[i]);
 		EI();
-	}
+	}*/
+__asm
+	ld	a,(_total_count)
+	and	1
+	ret	nz
+
+	ld	b,#0
+	ld	c,#STAR_NUM
+starloop:
+	push	bc
+;	write_vram_adr(0, star_baseadr[i] + star_offset[i]);
+
+	ld	hl,_star_baseadr-2
+	add	hl,bc
+	add	hl,bc
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)	; vram baseaddress
+
+	ld	hl,_star_offset-1
+	add	hl,bc
+;	ld	(_star_adr_tmp),hl	;offset
+
+	ld	a,(hl)
+	ld	l,a
+	ld	h,0
+	add	hl,de	;vram address
+
+	push	de	;vram baseaddress
+	push	bc	; counter
+	push	hl	;vram address
+
+	ld	a,h
+	rlca
+	rlca
+	and	3
+	ld	e,a		; A15,A14
+
+	ld	a,(_VDP_writeadr)
+	inc	a
+	ld	c,a
+	ld	a,e
+
+	di
+	out	(c),a
+	ld	a,14
+	set 7,a
+	out	(c),a
+
+	pop	de		;vram address
+;	ld	a,(_VDP_writeadr)
+;	inc	a
+;	ld	c,a
+	out	(c),e
+	ld	a,d
+	and	a,0x3f
+	set	6,a
+	out	(c),a
+
+;	write_vram_data(0);
+
+	dec	c
+	xor	a
+;	ld	a,15
+	out	(c),a
+	ei
+
+	pop	bc		; counter
+
+;	star_offset[i] -= star_speed[i];
+;	star_offset[i] %= 128;
+
+	ld	hl,_star_speed-1
+	add	hl,bc
+	ld	a,(hl)
+	ld	e,a
+	ld	hl,_star_offset-1
+	add	hl,bc
+;	ld	hl,(_star_adr_tmp)	;offset
+	ld	a,(hl)
+	sub	a,e
+	and	127
+	ld	(hl),a
+
+;	write_vram_adr(0, star_baseadr[i] + star_offset[i]);
+
+	pop	hl			;vram baseaddress
+	ld	e,a
+	ld	d,0
+	add	hl,de		;vramaddress
+
+	push	bc		; counter
+	push	hl		;vramaddress
+	ld	a,h
+	rlca
+	rlca
+	and	3
+	ld	e,a		; A15,A14
+
+	ld	a,(_VDP_writeadr)
+	inc	a
+	ld	c,a
+	ld	a,e
+
+	di
+	out	(c),a
+	ld	a,14
+	set 7,a
+	out	(c),a
+
+	pop	de			;vramaddress
+;	ld	a,(_VDP_writeadr)
+;	inc	a
+;	ld	c,a
+	out	(c),e
+	ld	a,d
+	and	a,0x3f
+	set	6,a
+	out	(c),a
+
+;	write_vram_data(star_color[i]);
+
+	dec	c
+	pop	de		; counter
+
+	ld	hl,_star_color-1
+	add	hl,de
+	ld	a,(hl)
+	out	(c),a
+	ei
+
+	pop	bc
+	dec	c
+	jp	nz,starloop
+__endasm;
 }
 
 void clr_sp(void)
@@ -1258,7 +1396,7 @@ unsigned char palskip_flag = 0;
 inline void set_spr(void)
 {
 __asm
-	ld	hl,_spr_chr ;chr_data
+	ld	hl,(_pspr_chr) ;chr_data
 
 	ld	a,(_VDP_writeadr)
 	ld	c,a
@@ -1284,6 +1422,7 @@ void set_sprite_all(unsigned char start, unsigned char end)
 {
 	unsigned char i, j;
 
+	pspr_chr = &spr_chr[start];
 	tmp_spr_count = end;
 
 /* •\¦”‚Ô‚ñ‘‚«‚Ş */
@@ -1324,7 +1463,9 @@ __asm
 	add	hl,bc
 	ex	de,hl
 
-	ld	hl,_spr_chr+2 ;chr_data
+	ld	hl,(_pspr_chr)
+	ld	bc,2
+	add	hl,bc ;chr_data
 
 	ld	c,0
 

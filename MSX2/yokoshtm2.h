@@ -39,6 +39,7 @@ typedef struct chr_para4{
 } CHR_PARA4;
 
 extern CHR_PARA3 spr_chr[MAX_SPRITE * 2];
+extern CHR_PARA3 *psprchr;
 
 //extern CHR_PARA3 chr_data[MAX_SPRITE * 2];
 #define chr_data spr_chr
