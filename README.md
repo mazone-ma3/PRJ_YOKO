@@ -32,6 +32,10 @@ https://mazone-ma3.github.io/github.io/py/yokosht_plus.html
 
 https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX1/BIN/yokosht.rom
 
+↓WebMSXでMSX2版を実行
+
+https://webmsx.org/cbios/?MACHINE=MSX2J&rom=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX2ROM/BIN/yokoshtm2.rom
+
 ↓元のPyxel版のコード
 
 https://github.com/mazone-ma3/py/blob/main/yokosht.py
