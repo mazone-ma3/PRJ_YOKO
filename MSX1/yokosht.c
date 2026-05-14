@@ -2937,6 +2937,9 @@ __endasm;
 			max_spr_count = spr_count;
 			msx_print_num(7, 2, max_spr_count, 2);
 		}*/
+#ifdef DEBUG_FPS
+		msx_print_num(22, 22, spr_count, 2);
+#endif
 	}else
 		set_sprite_all(spr_count+1, 32);
 

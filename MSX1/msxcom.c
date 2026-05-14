@@ -29,13 +29,29 @@ __endasm;
 }
 
 unsigned char old_jiffy;
-
+#ifdef DEBUG_FPS
+unsigned char old_jiffy2=0;
+unsigned char total_count=0;
+#endif
 inline void msx_wait_vsync(void)
 {
 //	while(((old_jiffy - *jiffy + 256) % 256) < 1);
 //	old_jiffy = *jiffy;
 	while(old_jiffy == *jiffy);
 	old_jiffy = *jiffy;
+
+#ifdef DEBUG_FPS
+	++total_count;
+	if((unsigned char)(old_jiffy - old_jiffy2) >= 60){
+//	if(*jiffy >= 60){
+		old_jiffy2 = old_jiffy;
+		EI();
+		msx_print_num(27, 22, (total_count), 2);
+		total_count = 0;
+//		*jiffy = 0;
+	}
+	EI();
+#endif
 }
 
 /*unsigned char spr_x[32];
@@ -139,6 +155,7 @@ void set_sprite_all(unsigned char start, unsigned char end) __sdcccall(1)
 		VPOKE(spr_base + 3 + spr_count * 4, spr_color[start]);
 	}*/
 __asm
+	push	bc
 
 	ld	c,a
 	ld	b,0
@@ -214,6 +231,8 @@ sprloop:
 	out	(c),a
 
 sprend:
+
+	pop	bc
 __endasm;
 
 
@@ -233,6 +252,7 @@ __endasm;
 	spr_page = 1 - spr_page;
 	EI();
 	msx_wait_vsync();
+
 //	EI();
 }
 
@@ -248,7 +268,7 @@ void msx_print(unsigned char x, unsigned char y, char *str)
 
 	DI();
 	write_vram_adr(0, vramadr);
-	EI();
+//	EI();
 
 /*	while(*chr != '\0'){
 		if((*chr < 0x30)) //|| (chr > 0x5f))
@@ -277,6 +297,7 @@ msx_printskip:
 	jr	msx_printloop
 msx_printend:
 __endasm;
+	EI();
 }
 
 char str_temp[9];

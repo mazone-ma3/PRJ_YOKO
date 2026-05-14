@@ -189,6 +189,7 @@ PASS2:
 ;	LD	(HL),0F7H	; RST命令（自己書き換え）
 ;	INC	HL
 
+	DI
 	LD	(HL),0C3H
 	INC	HL
 	LD	(HL),C		; 開始アドレス下位をベクタにセットする
