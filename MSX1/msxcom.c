@@ -828,6 +828,10 @@ __endasm;
 
 void reset_int(void)
 {
+	EI();
+	if(INTWORK[0] != 0){
+		while(spr_flag != 0);
+	}
 __asm
 	DI
 	LD	HL,_INTWORK

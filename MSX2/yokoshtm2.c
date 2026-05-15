@@ -297,33 +297,22 @@ void set_vol(unsigned char vol) __sdcccall(1)
 void set_psg(unsigned char reg, unsigned char tone) __sdcccall(1)
 {
 __asm
-;	ld	hl, #2
-;	add	hl, sp
 	push	ix
 
-	ld	h,a
+;	ld	h,a
 
-	ld	a,(#0xfcc1)	; exptbl
-	ld	b,a
-	ld	c,0
-	push	bc
-	pop	iy
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	b,a
+;	ld	c,0
+;	push	bc
+;	pop	iy
 
-;	ld	c,(hl)
-;	inc	hl
-;	ld	b,(hl)	;bc = reg
-;	inc	hl
-;	ld	e, (hl)
-;	inc	hl
-;	ld	d, (hl)	; de = tone
-
-;	ld	a,e
-;	ld	e,d
-	ld	a,h
+;	ld	a,h
 	ld	e,l
 
-	ld ix,#0x0093	; WRTPSG(MAINROM)
-	call	#0x001c	; CALSLT
+;	ld ix,#0x0093	; WRTPSG(MAINROM)
+;	call	#0x001c	; CALSLT
+	call	#0x0093
 	pop	ix
 __endasm;
 }
@@ -332,23 +321,20 @@ __endasm;
 void set_screenmode(unsigned char mode) __sdcccall(1)
 {
 __asm
-;	ld	 hl, 2
-;	add	hl, sp
-
 	push	ix
-	ld	b,a
+;	ld	b,a
 
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,0
-	push	de
-	pop	iy
-	ld ix,#0x005f	; CHGMOD(MAINROM)
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	d,a
+;	ld	e,0
+;	push	de
+;	pop	iy
+;	ld ix,#0x005f	; CHGMOD(MAINROM)
 
-;	ld	a, (hl)	; a = mode
-	ld	a,b
+;	ld	a,b
 
-	call	#0x001c	; CALSLT
+;	call	#0x001c	; CALSLT
+	call	#0x005f
 	pop	ix
 __endasm;
 }
@@ -357,14 +343,15 @@ void set_screencolor(void)
 {
 __asm
 	push	ix
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,0
-	push	de
-	pop	iy
-	ld ix,#0x0062	; CHGCLR(MAINROM)
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	d,a
+;	ld	e,0
+;	push	de
+;	pop	iy
+;	ld ix,#0x0062	; CHGCLR(MAINROM)
 
-	call	#0x001c	; CALSLT
+;	call	#0x001c	; CALSLT
+	call	#0x0062
 	pop	ix
 __endasm;
 }
@@ -373,14 +360,15 @@ void key_flush(void)
 {
 __asm
 	push	ix
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,0
-	push	de
-	pop	iy
-	ld ix,#0x0156	; KILBUF(MAINROM)
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	d,a
+;	ld	e,0
+;	push	de
+;	pop	iy
+;	ld ix,#0x0156	; KILBUF(MAINROM)
 
-	call	#0x001c	; CALSLT
+;	call	#0x001c	; CALSLT
+	call	#0x0156
 	pop	ix
 __endasm;
 }
@@ -389,14 +377,15 @@ void cls(void)
 {
 __asm
 	push	ix
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,0
-	push	de
-	pop	iy
-	ld ix,#0x00c3	; CLS(MAINROM)
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	d,a
+;	ld	e,0
+;	push	de
+;	pop	iy
+;	ld ix,#0x00c3	; CLS(MAINROM)
 
-	call	#0x001c	; CALSLT
+;	call	#0x001c	; CALSLT
+	call	#0x00c3
 	pop	ix
 __endasm;
 }
@@ -405,23 +394,8 @@ __endasm;
 unsigned char  read_mainrom(unsigned short adr) __sdcccall(1)
 {
 __asm
-;	ld	 hl, #2
-;	add	hl, sp
-;	push	ix
-
-;	ld	e, (hl)
-;	inc	hl
-;	ld	d, (hl)	; de=adr
-;	ld	h,d
-;	ld	l,e	; hl=adr
-
 	ld	a,(#0xfcc1)	; exptbl
 	call	#0x000c	; RDSLT
-
-;	ld	l,a
-;	ld	h,#0
-
-;	pop	ix
 __endasm;
 }
 
@@ -801,25 +775,21 @@ __endasm;
 unsigned char get_stick(unsigned char trigno) __sdcccall(1)
 {
 __asm
-;	ld	 hl, #2
-;	add	hl, sp
-	ld	l,a
+;	ld	l,a
 
 	push	ix
 
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,#0
-	push	de
-	pop	iy
-	ld ix,#0x00d5	; GTSTCK(MAINROM)
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	d,a
+;	ld	e,#0
+;	push	de
+;	pop	iy
+;	ld ix,#0x00d5	; GTSTCK(MAINROM)
 
-;	ld	a, (hl)	; a = mode
-	ld	a,l
+;	ld	a,l
 
-	call	#0x001c	; CALSLT
-;	ld	l,a
-;	ld	h,#0
+;	call	#0x001c	; CALSLT
+	call	#0x00d5
 
 	pop	ix
 __endasm;
@@ -828,26 +798,21 @@ __endasm;
 unsigned char get_pad(unsigned char trigno) __sdcccall(1)
 {
 __asm
-;	ld	 hl, #2
-;	add	hl, sp
-	ld	l,a
+;	ld	l,a
 
 	push	ix
 
-	ld	a,(#0xfcc1)	; exptbl
-	ld	d,a
-	ld	e,#0
-	push	de
-	pop	iy
-	ld ix,#0x00d8	; GTTRIG(MAINROM)
+;	ld	a,(#0xfcc1)	; exptbl
+;	ld	d,a
+;	ld	e,#0
+;	push	de
+;	pop	iy
+;	ld ix,#0x00d8	; GTTRIG(MAINROM)
 
-;	ld	a, (hl)	; a = mode
-	ld	a,l
+;	ld	a,l
 
-	call	#0x001c	; CALSLT
-;	ld	l,a
-;	ld	h,#0
-
+;	call	#0x001c	; CALSLT
+	call	#0x00d8
 	pop	ix
 __endasm;
 }
@@ -1074,7 +1039,7 @@ unsigned char vdps0;
 short test_h_f = TRUE;
 short soundflag = FALSE;
 
-char chr;
+unsigned char chr;
 
 void msx_print(unsigned char x, unsigned char y,  char *str)
 {
@@ -1088,14 +1053,14 @@ void msx_print(unsigned char x, unsigned char y,  char *str)
 	VDPcommand = HMMM;
 
 	while(1){
-		chr = *(str++);
+		chr = (unsigned char)*(str++);
 		if(chr == '\0')
 			break;
 		if((chr < 0x30))
 			chr = 0x40;
 		chr -= '0';
 		sx = (chr & 0x0f) * 8;
-		sy = (chr / 16) * 8;
+		sy = ((unsigned char)chr / 16) * 8;
 		vdp_dx = x * 8;
 		vdp_dy = y * 8;
 		VDPsetAREA2();
@@ -1159,7 +1124,7 @@ void keyscan1(void)
 
 unsigned char keyscan(void)
 {
-	DI();
+//	DI();
 	keycode = 0;
 
 	k3 = get_key(3);
@@ -1174,7 +1139,7 @@ unsigned char keyscan(void)
 	pd0 = get_pad(0);
 	pd1 = get_pad(1);
 	pd2 = get_pad(3);
-	EI();
+//	EI();
 
 	if((pd0) || (pd1) || !(k5 & 0x20)) /* X,SPACE */
 		keycode |= KEY_A;
@@ -1926,6 +1891,10 @@ __endasm;
 void reset_int(void)
 {
 #ifndef SINGLEMODE
+	EI();
+	if(INTWORK[0] != 0){
+		while(spr_flag != 0);
+	}
 __asm
 	DI
 	LD	HL,_INTWORK
