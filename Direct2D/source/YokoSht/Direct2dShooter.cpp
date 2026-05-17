@@ -42,7 +42,7 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 struct Bullet { float x, y; };
 struct Enemy { float x, y;  int count, type; };
-struct Star { float x, y, speed, size; ID2D1SolidColorBrush* brush = nullptr; };
+struct Star { float x, y, baseSpeed, speed, size; ID2D1SolidColorBrush* brush = nullptr; };
 
 struct SoundEffect {
     BYTE* pData = nullptr;
@@ -434,7 +434,8 @@ void ShooterGame::InitStars() {
         Star s;
         s.x = static_cast<float>(rand() % SCREEN_WIDTH);
         s.y = static_cast<float>(rand() % SCREEN_HEIGHT);
-        s.speed = 0.5f + static_cast<float>(rand() % 100) / 30.0f;
+		s.baseSpeed = 0.5f + static_cast<float>(rand() % 100) / 30.0f;
+		s.speed = s.baseSpeed;   // もし個別速度も欲しい場合
         s.size = (s.speed > 2.0f) ? 2.0f : 1.0f;
         s.brush = nullptr;                    // 最初はnullptrにしておく
         stars.push_back(s);
@@ -834,7 +835,8 @@ void ShooterGame::OnRender() {
 void ShooterGame::StarUpdate() {
     // 星移動
     for (auto& s : stars) {
-        s.x -= s.speed;
+//        s.x -= s.speed * m_deltaTime * 60.0f;   // 60.0fは基準FPS（調整用）
+		s.x -= s.baseSpeed * m_deltaTime * 60.0f;   // これでFPSが60の時に元の速度と同じになる
         if (s.x < 0) {
             s.x = SCREEN_WIDTH; //800;
             s.y = static_cast<float>(rand() % SCREEN_HEIGHT); //600);
