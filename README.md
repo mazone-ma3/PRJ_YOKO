@@ -18,7 +18,7 @@ MSX2 MSX1版の移植。試作。
 
 MSX2ROM MSX2版をROM化した物。
 
-Direct2D Windows版作りかけ。(XInputのみ対応)
+Direct2D Windows版。VS2022での作りかけ。(XInputのみ対応)
 
 BMP 旧版の画像データファイル
 
