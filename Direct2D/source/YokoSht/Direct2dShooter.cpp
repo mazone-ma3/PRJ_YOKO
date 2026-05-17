@@ -40,8 +40,15 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
 #endif
 
+// 構造体
 struct Bullet { float x, y; };
-struct Enemy { float x, y;  int count, type; };
+struct Enemy { float x, y, shootTimer, nextShootTime; int type, count, count2, count_hp; bool count_flag; };
+struct eBullets { float x, y, vx=0.0f, vy=0.0f; };
+struct Particle { float x, y, vx, vy; int life; };
+
+struct Option{ float offset_y, x, y; };
+struct Item { float x, y; int timer, type; };
+
 struct Star { float x, y, baseSpeed, speed, size; ID2D1SolidColorBrush* brush = nullptr; };
 
 struct SoundEffect {
@@ -109,8 +116,8 @@ private:
     ID2D1SolidColorBrush* m_pTextBrush = NULL;
 
     IWICImagingFactory* m_pWICFactory = NULL;
-    ID2D1Bitmap* m_pPlayerBitmap = NULL;
-    ID2D1Bitmap* m_pEnemyBitmap = NULL;
+//    ID2D1Bitmap* m_pPlayerBitmap = NULL;
+//    ID2D1Bitmap* m_pEnemyBitmap = NULL;
     ID2D1Bitmap* m_pSpriteBitmap = NULL;
 
     IXAudio2* m_pXAudio2 = NULL;
@@ -122,17 +129,8 @@ private:
     SoundEffect m_seExplosion;
     std::vector<IXAudio2SourceVoice*> m_activeSounds;
 
-    float playerX = 100.0f, playerY = SCREEN_HEIGHT / 2 - 32 + 0.0f;
-    std::list<Bullet> playerBullets;
-    std::list<Bullet> enemyBullets;
-    std::vector<Enemy> enemies;
-    std::vector<Star> stars;
-
     int scrollX = 0;
-    int score = 0, lives = 3;
-    int gameOver = 0;
     bool keys[256] = {};
-
 
     bool m_isFullscreen = false;
     RECT m_windowedRect = {};   // ウィンドウモード時の位置・サイズを保存
@@ -140,7 +138,6 @@ private:
     bool m_altEnterPressed = false;
     bool m_escPressed = false;
 
-    // 追加
     float m_scaleX = 1.0f;
     float m_scaleY = 1.0f;
     D2D1::Matrix3x2F m_transform = D2D1::Matrix3x2F::Identity();
@@ -152,7 +149,46 @@ private:
     float m_deltaTime = 0.0f;
     const float TARGET_FRAME_TIME = 1.0f / 60.0f; // 60FPS目標
     float m_accumulator = 0.0f;
+
+	// 各種変数
+    float playerX = 60.0f, playerY = 160.0f;
+    std::list<Bullet> playerBullets;
+    std::list<eBullets> enemyBullets;
+    std::list<Particle> Particles;
+    std::list<Option> Options;
+    std::list<Item> Items;
+
+    std::vector<Enemy> enemies;
+    std::vector<Star> stars;
+
+	int bomb_stok = 0;
+	bool shield_active = false;
+
+	int chain_count = 0;
+
+	int chain_timer = 0;
+	int option_cooldown = 10;
+	int enemy_spawn_timer = 0;
+	int kill_count = 0;
+	int shoot_timer = 0;
+
+	int score = 0, lives = 3, highscore=5000;
+	int gameOver = 0;
+
+	int play_time = 0;		  // 経過時間（フレーム）
+
+
+	int sx,sy,dx,dy,ex,ey,ph_x,ph_y,ph_w,ph_h;
+
+	int enemy_bullet_speed;
+
+	int shoot_interval;
+	int dist;
+	int direction_factor;
+	int offset;
 };
+
+int sin_table[256 * 4];
 
 
 ShooterGame::ShooterGame() {
@@ -406,7 +442,7 @@ void ShooterGame::UpdateInput() {
 
 // ゲームリセット
 void ShooterGame::ResetGame() {
-    playerX = 60; playerY = 160; //SCREEN_HEIGHT / 2 - 32;
+    playerX = 60.f; playerY = 160.0f; //SCREEN_HEIGHT / 2 - 32;
     score = 0; lives = 3; gameOver = 0;
     playerBullets.clear();
     enemyBullets.clear();
@@ -443,10 +479,10 @@ void ShooterGame::InitStars() {
 }
 
 void ShooterGame::ClampPlayer() {
-    if (playerX < 10) playerX = 10;
-    if (playerY < 32) playerY = 32;
-    if (playerX > SCREEN_WIDTH-16) playerX = SCREEN_WIDTH-16;//720;
-    if (playerY > SCREEN_HEIGHT-16) playerY = SCREEN_HEIGHT-16;//520;
+    if (playerX < 0) playerX = 0;
+    if (playerY < 0) playerY = 0;
+    if (playerX > SCREEN_WIDTH-40) playerX = SCREEN_WIDTH-40;//720;
+    if (playerY > SCREEN_HEIGHT-32) playerY = SCREEN_HEIGHT-32;//520;
 }
 
 HRESULT ShooterGame::LoadBitmapFromFile(PCWSTR uri, ID2D1Bitmap** ppBitmap) {
@@ -644,13 +680,11 @@ HRESULT ShooterGame::CreateDeviceResources() {
         m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 0.9f, 0.2f), &m_pBulletBrush);
         m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f), &m_pTextBrush);
 
-        if (!m_pPlayerBitmap) LoadBitmapFromFile((m_exeDir + L"player.png").c_str(), &m_pPlayerBitmap);
+//        if (!m_pPlayerBitmap) LoadBitmapFromFile((m_exeDir + L"player.png").c_str(), &m_pPlayerBitmap);
 
 
-// LoadBitmapFromFile(L"player.png", &m_pPlayerBitmap);
-        if (!m_pEnemyBitmap) LoadBitmapFromFile((m_exeDir + L"enemy.png").c_str(), &m_pEnemyBitmap);
+//        if (!m_pEnemyBitmap) LoadBitmapFromFile((m_exeDir + L"enemy.png").c_str(), &m_pEnemyBitmap);
 
-//LoadBitmapFromFile(L"enemy.png", &m_pEnemyBitmap);
 
         if (!m_pSpriteBitmap) LoadBitmapFromFile((m_exeDir + L"yokosht.png").c_str(), &m_pSpriteBitmap);
 
@@ -664,13 +698,6 @@ HRESULT ShooterGame::CreateDeviceResources() {
         m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.7f, 0.8f, 1.0f), &m_starBrushes[3]); // 青白
         m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 0.8f, 0.8f), &m_starBrushes[4]); // 薄赤
 
-/*        if (!stars.empty()) {
-            for (auto& s : stars) {
-                if (s.brush == nullptr) {
-                    s.brush = m_starBrushes[rand() % 5];
-                }
-            }
-        }*/
       for (auto& s : stars) {
             if (s.brush == nullptr || s.brush == (ID2D1SolidColorBrush*)0xcccccccc || s.brush == (ID2D1SolidColorBrush*)0xdeadbeef) {
                 s.brush = m_starBrushes[rand() % 5];
@@ -686,8 +713,8 @@ void ShooterGame::DiscardDeviceResources() {
     SafeRelease(&m_pEnemyBrush);
     SafeRelease(&m_pBulletBrush);
     SafeRelease(&m_pTextBrush);
-    SafeRelease(&m_pPlayerBitmap);
-    SafeRelease(&m_pEnemyBitmap);
+//    SafeRelease(&m_pPlayerBitmap);
+//    SafeRelease(&m_pEnemyBitmap);
     SafeRelease(&m_pSpriteBitmap);
 
     for (int i = 0; i < 5; ++i) {
@@ -786,7 +813,7 @@ void ShooterGame::OnRender() {
         }
     }
 
-
+    
     // UI
     if (m_pTextFormat && m_pTextBrush) {
         wchar_t text[128];
@@ -858,32 +885,23 @@ void ShooterGame::GameUpdate() {
     if (keys[VK_DOWN])  playerY += moveSpeed;
     ClampPlayer();
 
-/*    static int shootCool = 0;
-    if (keys[VK_SPACE] && shootCool <= 0) {
-        playerBullets.push_back({ playerX + 45, playerY + 18 });
-        shootCool = 5;
-        PlaySound(m_seLaser);
-    }
-    if (shootCool > 0) shootCool--;
-*/
-
 // 射撃クールタイムも時間ベースに
     static float shootTimer = 0.0f;
     shootTimer += m_deltaTime;
     if (keys[VK_SPACE] && shootTimer >= 0.08f) {   // 約毎秒12.5発
-        playerBullets.push_back({ playerX + 45, playerY + 18 });
+        playerBullets.push_back({ playerX + 32, playerY + 12 });
         shootTimer = 0.0f;
-        PlaySound(m_seLaser);
+//        PlaySound(m_seLaser);
     }
 
     CleanupVoices();
 
     // 敵生成
     if (rand() % 32 == 0)
-        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0, rand() % 3});
+        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0, 0, 0, rand() % 3, 0, 0, false});
 
-    // 敵移動 + 敵弾
-    for (auto it = enemies.begin(); it != enemies.end(); ) {
+    // 敵移動 + 敵弾発射
+/*    for (auto it = enemies.begin(); it != enemies.end(); ) {
 
         it->count += 1;
 
@@ -895,6 +913,61 @@ void ShooterGame::GameUpdate() {
         if (rand() % 50 == 0) enemyBullets.push_back({ it->x, it->y + 16 });
         if (it->x < -50) it = enemies.erase(it);
         else ++it;
+    }*/
+
+    for (auto& e : enemies) {
+//        e.x -= /*速度*/ * m_deltaTime * 60.0f;
+
+        if (e.type == 0)		// 通常敵
+            e.x -= enemySpeed;
+        else
+            e.x -= enemySpeed2;
+
+        // 敵弾発射処理
+        e.shootTimer += m_deltaTime;
+
+        if (e.shootTimer >= e.nextShootTime) {
+
+
+	        float dx = playerX - e.x;
+	        float dy = playerY - e.y;
+
+//            dx -= 4.0f;
+
+	        // ベクトルの長さを計算
+	        float length = sqrtf(dx * dx + dy * dy);
+	        if (length > 0.001f) {   // 0除算防止
+	            dx /= length;   // 正規化
+	            dy /= length;
+
+
+	            // 弾を発射（速度は8.0fくらいが目安）
+//            difficulty = int(min(1, self.play_time / 10800))                    
+//            enemy_bullet_speed = 2 + difficulty
+                float bulletSpeed = 4;//7.5f / 2;// / 60; //7.5f;
+	            enemyBullets.push_back({
+	                e.x + 16, 
+	                e.y + 16,
+	                dx * bulletSpeed - 1.0f*1,   // vx
+	                dy * bulletSpeed    // vy
+	            });
+	        }
+
+//            enemyBullets.push_back({e.x, e.y + 16});
+
+
+//            PlaySound(...);
+
+            // 次回の発射間隔を設定
+            if (e.count < 1) {                    // 最初は早めに1回
+                e.nextShootTime = 5.0f/60;           // 0.4秒間隔
+            } else {
+                e.nextShootTime = 1.2f;           // その後は1.2秒間隔
+            }
+
+            e.shootTimer = 0.0f;
+            e.count++;
+        }
     }
 
     // 弾移動
@@ -903,11 +976,22 @@ void ShooterGame::GameUpdate() {
         if (it->x > SCREEN_WIDTH) it = playerBullets.erase(it);
         else ++it;
     }
+/*
     for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
         it->x -= 9.0f * 60 * m_deltaTime;
         if (it->x < -30) it = enemyBullets.erase(it);
         else ++it;
-    }
+    }*/
+	for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
+	    it->x += it->vx * m_deltaTime * 60.0f;
+	    it->y += it->vy * m_deltaTime * 60.0f;
+
+	    if (it->x < -30) {
+		    	    it = enemyBullets.erase(it);
+	    } else {
+	        ++it;
+	    }
+	}
 
     CheckCollisions();
 }
@@ -958,35 +1042,6 @@ void ShooterGame::CheckCollisions() {
     }
 }
 
-/*void ShooterGame::RunMessageLoop() {
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}*/
-
-/*void ShooterGame::RunMessageLoop() {
-    MSG msg = {};
-    while (msg.message != WM_QUIT) {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-        else {
-            // 時間計測
-            LARGE_INTEGER now;
-            QueryPerformanceCounter(&now);
-            m_deltaTime = static_cast<float>(now.QuadPart - m_lastTime.QuadPart) / m_freq.QuadPart;
-            m_lastTime = now;
-            UpdateInput();
-            if(!gameOver)
-                GameUpdate();     // deltaTimeを使って更新
-            else StarUpdate();
-            InvalidateRect(m_hwnd, NULL, FALSE);
-        }
-    }
-}*/
 
 void ShooterGame::RunMessageLoop() {
     MSG msg = {};
@@ -1001,12 +1056,10 @@ void ShooterGame::RunMessageLoop() {
         }
         else {
             QueryPerformanceCounter(&now);
- //           float delta = static_cast<float>(now.QuadPart - last.QuadPart) / freq.QuadPart;
             m_deltaTime = static_cast<float>(now.QuadPart - last.QuadPart) / freq.QuadPart;
             last = now;
 
-            m_accumulator += m_deltaTime; //delta;
-//            UpdateInput();
+            m_accumulator += m_deltaTime;
 
             while (m_accumulator >= TARGET_FRAME_TIME) {
                 UpdateInput();
