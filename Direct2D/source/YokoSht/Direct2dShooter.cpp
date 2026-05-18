@@ -900,11 +900,11 @@ void ShooterGame::OnRender() {
 //            D2D1::RectF(SCREEN_WIDTH - 180, 35, SCREEN_WIDTH, 70), m_pTextBrush);
     }
     if (m_pTextFormat && m_pTextBrush) {
-		put_strings_num(0, 0, (wchar_t *)L"SCORE ", score, 7);
-		put_strings_num(0, 2*16, (wchar_t*) L"LIVES ", lives, 1);
+		put_strings_num(0, 0, const_cast<wchar_t *>(L"SCORE "), score, 7);
+		put_strings_num(0, 2*16, const_cast<wchar_t *>(L"LIVES "), lives, 1);
 
-        put_strings_num(0, 1*16, (wchar_t *)L"BOMB  ", bomb_stock , 1);
-//        put_strings_num(16*16, 0, (wchar_t*)L"COUNT: ");
+        put_strings_num(0, 1*16, const_cast<wchar_t *>(L"BOMB  "), bomb_stock , 1);
+//        put_strings_num(16*16, 0, const_cast<wchar_t*>L"COUNT: ");
 
 
         wchar_t text[128];
@@ -919,26 +919,26 @@ void ShooterGame::OnRender() {
         // TIME（LIVESの下）
 //      swprintf_s(text, L"COUNT %.0f", m_gameTime);
 //		put_strings(16*16, 0, text);
-        put_strings_num(16 * 16, 0, (wchar_t *)L"COUNT ", m_gameTime, 7);
+        put_strings_num(16 * 16, 0, const_cast<wchar_t *>(L"COUNT "), m_gameTime, 7);
 
 /*        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
             D2D1::RectF(10, 80, 300, 110), m_pTextBrush);*/
 
 
 //        if (chain_count > 0) {
-            put_strings_num(16*16, 1*16, (wchar_t *)L"CHAIN ", chain_count, 3);
+            put_strings_num(16*16, 1*16, const_cast<wchar_t *>(L"CHAIN "), chain_count, 3);
 //        }
     }
 
     if (gameOver && m_pTextFormat && m_pEnemyBrush) {
-		put_strings(11*16, 12*16, (wchar_t *)L"GAME OVER");
+		put_strings(11*16, 12*16, const_cast<wchar_t *>(L"GAME OVER"));
 //        m_pRenderTarget->DrawText(L"GAME OVER", 9, m_pTextFormat, 
 //			D2D1::RectF(11*16, 12*16, 11*16+9*16, 12*16+16), m_pEnemyBrush);
 
-        put_strings_num(7*16, 15*16, (wchar_t *)L"HIGH SCORE ", high_score, 7);
+        put_strings_num(7*16, 15*16, const_cast<wchar_t *>(L"HIGH SCORE "), high_score, 7);
 
         if (m_pTextBrush) {
-			put_strings(7*16, 18*16, (wchar_t*)L"PRESS A TO RESTART");
+			put_strings(7*16, 18*16, const_cast<wchar_t *>(L"PRESS A TO RESTART"));
 /*	        m_pRenderTarget->DrawText(L"PRESS A TO RESTART", 18, m_pTextFormat,
                 D2D1::RectF(7*16, 18*16, 7* 16 +16*18, 18*16+16), m_pTextBrush);
 */
