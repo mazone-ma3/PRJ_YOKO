@@ -106,9 +106,11 @@ private:
 
 	void CalculateFPS();
 
-	bool put_sprite(int x, int y, int pat);
-	void put_strings(int x, int y, wchar_t *str);
-	void put_strings_num(int x, int y, wchar_t* str, int num, int digit);
+	bool put_sprite(float x, float y, int pat);
+    void put_strings(float x, float y, wchar_t* str, int mode);
+    void put_strings(float x, float y, wchar_t *str);
+    void put_strings_num(float x, float y, wchar_t* str, int num, int digit, int mode);
+    void put_strings_num(float x, float y, wchar_t* str, int num, int digit);
 
     HWND m_hwnd = NULL;
     ID2D1Factory* m_pFactory = NULL;
@@ -125,6 +127,7 @@ private:
 //    ID2D1Bitmap* m_pPlayerBitmap = NULL;
 //    ID2D1Bitmap* m_pEnemyBitmap = NULL;
     ID2D1Bitmap* m_pSpriteBitmap = NULL;
+    ID2D1Bitmap* m_pFontBitmap = NULL;
 
     IXAudio2* m_pXAudio2 = NULL;
     IXAudio2MasteringVoice* m_pMasterVoice = NULL;
@@ -731,6 +734,7 @@ HRESULT ShooterGame::CreateDeviceResources() {
 
         if (!m_pSpriteBitmap) LoadBitmapFromFile((m_exeDir + L"yokosht.png").c_str(), &m_pSpriteBitmap);
 
+        if (!m_pFontBitmap) LoadBitmapFromFile((m_exeDir + L"FONTYOKO.png").c_str(), &m_pFontBitmap);
     }
     InitStars();
     if (SUCCEEDED(hr)) {
@@ -759,6 +763,7 @@ void ShooterGame::DiscardDeviceResources() {
 //    SafeRelease(&m_pPlayerBitmap);
 //    SafeRelease(&m_pEnemyBitmap);
     SafeRelease(&m_pSpriteBitmap);
+    SafeRelease(&m_pFontBitmap);
 
     for (int i = 0; i < 5; ++i) {
         SafeRelease(&m_starBrushes[i]);
@@ -834,31 +839,32 @@ void ShooterGame::OnRender() {
     }*/
 
     // 自機
-    if (m_pSpriteBitmap) {
+//    if (m_pSpriteBitmap) {
 		put_sprite(playerX, playerY, 1);
 /*        D2D1_RECT_F rect = D2D1::RectF(playerX, playerY, playerX + 31, playerY + 31);
         D2D1_RECT_F sourceRect = D2D1::RectF(32 * 1, 0, 32 * 1 + 31, 31);
         m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
-    }
+//    }
 
     // 敵
-    if (m_pEnemyBrush || m_pSpriteBitmap) {
+//    if (m_pEnemyBrush || m_pSpriteBitmap) {
         for (const auto& e : enemies) {
-			put_sprite(e.x, e.y, 2);
-/*            D2D1_RECT_F rect = D2D1::RectF(e.x, e.y, e.x + 31, e.y + 31);
-            D2D1_RECT_F sourceRect = D2D1::RectF(32 * 2, 0, 32 * 2 + 31, 31);
+			if(put_sprite(e.x, e.y, 2) == false){
+            D2D1_RECT_F rect = D2D1::RectF(e.x, e.y, e.x + 31, e.y + 31);
+/*            D2D1_RECT_F sourceRect = D2D1::RectF(32 * 2, 0, 32 * 2 + 31, 31);
             if (m_pSpriteBitmap) {
                 m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
-            }
-            else if (m_pEnemyBrush) {
-                m_pRenderTarget->FillRectangle(rect, m_pEnemyBrush);
             }*/
+                if (m_pEnemyBrush) {
+                    m_pRenderTarget->FillRectangle(rect, m_pEnemyBrush);
+                }
+            }
         }
-    }
+//    }
 
     // 弾
 //    if (m_pBulletBrush) {
-    if (m_pSpriteBitmap) {
+//    if (m_pSpriteBitmap) {
         for (const auto& b : playerBullets) {
 			put_sprite(b.x, b.y, 4);
             //        m_pRenderTarget->FillRectangle(D2D1::RectF(b.x, b.y - 3, b.x + 8, b.y + 3), m_pBulletBrush);
@@ -874,7 +880,7 @@ void ShooterGame::OnRender() {
             D2D1_RECT_F sourceRect = D2D1::RectF(32 * 0, 0, 32 * 0 + 31, 31);
             m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
         }
-    }
+//    }
 
     
     // UI
@@ -882,22 +888,22 @@ void ShooterGame::OnRender() {
     if (m_pTextFormat && m_pTextBrush) {
         wchar_t text[64];
 
-        swprintf_s(text, L"Update: %.1f", m_updateFPS);
-		put_strings(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 32 - 16, text);
+        swprintf_s(text, L"UPDATE %.1f", m_updateFPS);
+		put_strings(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 32 - 16, text, 1);
 
 //        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
 //            D2D1::RectF(SCREEN_WIDTH - 180, 8, SCREEN_WIDTH, 40), m_pTextBrush);
 
-        swprintf_s(text, L"Render: %.1f", m_renderFPS);
-		put_strings(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 16 - 16, text);
+        swprintf_s(text, L"RENDER %.1f", m_renderFPS);
+		put_strings(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 16 - 16, text, 1);
 //        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
 //            D2D1::RectF(SCREEN_WIDTH - 180, 35, SCREEN_WIDTH, 70), m_pTextBrush);
     }
     if (m_pTextFormat && m_pTextBrush) {
-		put_strings_num(0, 0, (wchar_t *)L"SCORE: ", score, 7);
-		put_strings_num(0, 2*16, (wchar_t*) L"LIVES: ", lives, 1);
+		put_strings_num(0, 0, (wchar_t *)L"SCORE ", score, 7);
+		put_strings_num(0, 2*16, (wchar_t*) L"LIVES ", lives, 1);
 
-        put_strings_num(0, 1*16, (wchar_t *)L"BOMB: ", bomb_stock , 1);
+        put_strings_num(0, 1*16, (wchar_t *)L"BOMB  ", bomb_stock , 1);
 //        put_strings_num(16*16, 0, (wchar_t*)L"COUNT: ");
 
 
@@ -911,29 +917,31 @@ void ShooterGame::OnRender() {
 	        D2D1::RectF(0, 16, 160, 32), m_pTextBrush);
 */
         // TIME（LIVESの下）
-        swprintf_s(text, L"COUNT: %.0f", m_gameTime);
-		put_strings(16*16, 0, text);
+//      swprintf_s(text, L"COUNT %.0f", m_gameTime);
+//		put_strings(16*16, 0, text);
+        put_strings_num(16 * 16, 0, (wchar_t *)L"COUNT ", m_gameTime, 7);
+
 /*        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
             D2D1::RectF(10, 80, 300, 110), m_pTextBrush);*/
 
 
 //        if (chain_count > 0) {
-            put_strings_num(16*16, 1*16, (wchar_t *)L"CHAIN: ", chain_count, 3);
+            put_strings_num(16*16, 1*16, (wchar_t *)L"CHAIN ", chain_count, 3);
 //        }
     }
 
     if (gameOver && m_pTextFormat && m_pEnemyBrush) {
-//		put_strings(250/2, 220/2, (wchar_t *)L"GAME OVER");
-        m_pRenderTarget->DrawText(L"GAME OVER", 9, m_pTextFormat, 
-			D2D1::RectF(11*16, 12*16, 11*16+9*16, 12*16+16), m_pEnemyBrush);
+		put_strings(11*16, 12*16, (wchar_t *)L"GAME OVER");
+//        m_pRenderTarget->DrawText(L"GAME OVER", 9, m_pTextFormat, 
+//			D2D1::RectF(11*16, 12*16, 11*16+9*16, 12*16+16), m_pEnemyBrush);
 
-        put_strings_num(7*16, 15*16, (wchar_t *)L"HIGH SCORE: ", high_score, 7);
+        put_strings_num(7*16, 15*16, (wchar_t *)L"HIGH SCORE ", high_score, 7);
 
         if (m_pTextBrush) {
-//			put_strings(250/2, 280/2, (wchar_t*)L"Press R to Restart");
-	        m_pRenderTarget->DrawText(L"PRESS A TO RESTART", 18, m_pTextFormat,
+			put_strings(7*16, 18*16, (wchar_t*)L"PRESS A TO RESTART");
+/*	        m_pRenderTarget->DrawText(L"PRESS A TO RESTART", 18, m_pTextFormat,
                 D2D1::RectF(7*16, 18*16, 7* 16 +16*18, 18*16+16), m_pTextBrush);
-
+*/
         }
     }
 
@@ -1292,7 +1300,7 @@ void ShooterGame::CalculateFPS() {
     }
 }*/
 
-bool ShooterGame::put_sprite(int x, int y, int pat_no) {
+bool ShooterGame::put_sprite(float x, float y, int pat_no) {
     D2D1_RECT_F destrect = D2D1::RectF(x, y, x + 31, y + 31);
     D2D1_RECT_F sourceRect = D2D1::RectF(32 * pat_no, 0, 32 * pat_no + 31, 31);
     if (m_pSpriteBitmap) {
@@ -1302,17 +1310,48 @@ bool ShooterGame::put_sprite(int x, int y, int pat_no) {
 	return false;
 }
 
-void ShooterGame::put_strings(int x, int y, wchar_t *text) {
+void ShooterGame::put_strings(float x, float y, wchar_t *text, int mode) {
 	int len=wcslen(text);
-    m_pRenderTarget->DrawText(text, len, m_pTextFormat, 
-		D2D1::RectF(x, y, x+16*len, y+16), m_pTextBrush);
+
+    if (m_pFontBitmap && !mode) {
+        D2D1_RECT_F destrect, sourceRect;
+		for(int i = 0; i < len; ++i){
+            if (text[i] != ' ') {
+                int pat_no = text[i] - '0';
+                destrect = D2D1::RectF(x, y, x + 15, y + 15);
+                sourceRect = D2D1::RectF(16 * (pat_no % 16), 16 * (pat_no / 16), 16 * (pat_no % 16) + 15, 16 * (pat_no / 16) + 15);
+                m_pRenderTarget->DrawBitmap(m_pFontBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
+            }
+            x += 16;
+		}
+//		return true;
+    }else{
+        m_pRenderTarget->DrawText(text, len, m_pTextFormat, 
+			D2D1::RectF(x, y, x+16*len, y+16), m_pTextBrush);
+//		return false;
+	}
 }
 
-void ShooterGame::put_strings_num(int x, int y, wchar_t *str, int num, int digit) {
-    wchar_t text[128];
-    swprintf_s(text, L"%s%d", str, num);
+void ShooterGame::put_strings(float x, float y, wchar_t* text) {
+    put_strings(x, y, text, 0);
+}
 
-	put_strings(x, y, text);
+void ShooterGame::put_strings_num(float x, float y, wchar_t *str, int num, int digit, int mode) {
+    wchar_t text[128];
+    int len = wcslen(str), i = digit, j = num;
+//    swprintf_s(text, L"%s%d", str, num);
+	put_strings(x, y, str);
+
+    while (i--) {
+        text[i] = j % 10 + '0';
+        j /= 10;
+    }
+    text[digit] = '\0';
+    put_strings(x+len*16, y, text);
+}
+
+void ShooterGame::put_strings_num(float x, float y, wchar_t* str, int num, int digit) {
+    put_strings_num(x, y, str, num, digit, 0);
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
