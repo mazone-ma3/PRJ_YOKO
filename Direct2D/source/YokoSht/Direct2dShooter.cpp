@@ -18,6 +18,7 @@
 
 #define SCREEN_WIDTH  (256*2)
 #define SCREEN_HEIGHT (192*2)
+#define COUNT1S 60.0f
 
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "shcore.lib") 
@@ -158,7 +159,7 @@ private:
     LARGE_INTEGER m_freq;
     LARGE_INTEGER m_lastTime;
     float m_deltaTime = 0.0f;
-    const float TARGET_FRAME_TIME = 1.0f / 60.0f; // 60FPS目標
+    const float TARGET_FRAME_TIME = 1.0f / COUNT1S; // 60FPS目標
     float m_accumulator = 0.0f;
 
     // FPS測定用
@@ -179,7 +180,7 @@ private:
     float m_enemySpawnRate = 1.0f;     // 現在の敵生成頻度（小さいほど頻繁）
 
 	// 各種変数
-    float playerX = 60.0f, playerY = 160.0f;
+    float playerX = COUNT1S, playerY = 160.0f;
     std::vector<Bullet> playerBullets;
     std::vector<eBullets> enemyBullets;
     std::vector<Particle> Particles;
@@ -957,8 +958,8 @@ void ShooterGame::OnRender() {
 void ShooterGame::StarUpdate() {
     // 星移動
     for (auto& s : stars) {
-//        s.x -= s.speed * m_deltaTime * 60.0f;   // 60.0fは基準FPS（調整用）
-		s.x -= s.baseSpeed * m_deltaTime * 60.0f;   // これでFPSが60の時に元の速度と同じになる
+//        s.x -= s.speed * m_deltaTime * COUNT1S;   // COUNT1Sは基準FPS（調整用）
+		s.x -= s.baseSpeed * m_deltaTime * COUNT1S;   // これでFPSが60の時に元の速度と同じになる
         if (s.x < 0) {
             s.x = SCREEN_WIDTH; //800;
             s.y = static_cast<float>(rand() % SCREEN_HEIGHT); //600);
@@ -1005,9 +1006,9 @@ void ShooterGame::GameUpdate() {
     // 最初は敵が少なく、徐々に増える（0.8秒間隔 → 0.25秒間隔くらい）
 //    m_enemySpawnRate = 0.8f - (0.55f * progress);
 
-	float moveSpeed = 4.0f * 60 * m_deltaTime;
-	float enemySpeed = 4.0f * 60 * m_deltaTime;
-	float enemySpeed2 = 5.0f * 60 * m_deltaTime;
+	float moveSpeed = 4.0f * COUNT1S * m_deltaTime;
+	float enemySpeed = 4.0f * COUNT1S * m_deltaTime;
+	float enemySpeed2 = 5.0f * COUNT1S * m_deltaTime;
 
     if (keys[VK_LEFT])  playerX -= moveSpeed;
     if (keys[VK_RIGHT]) playerX += moveSpeed;
@@ -1042,7 +1043,7 @@ void ShooterGame::GameUpdate() {
 
     // 元のロジックをdeltaTimeに変換
     float baseInterval = 50.0f - (score / 250.0f);   // scoreが増えるほど短く
-    float spawnInterval = max(0.3f, baseInterval / 60.0f);  // フレーム→秒に変換
+    float spawnInterval = max(0.3f, baseInterval / COUNT1S);  // フレーム→秒に変換
 
 //    if (spawnTimer >= m_enemySpawnRate) {
     if (enemySpawnTimer >= spawnInterval) {
@@ -1053,7 +1054,7 @@ void ShooterGame::GameUpdate() {
 
         int type = rand() % 3;
         float count = rand() % (30 * 2 + SCREEN_HEIGHT - 40 * 2) - 30 * 2;
-        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0.0f, 5.0f/60, type, 0.0f, count,
+        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0.0f, 5.0f / COUNT1S, type, 0.0f, count,
             (type == 0)? 1:3, false});
 //        spawnTimer = 0.0f;
 		enemySpawnTimer = 0.0f;
@@ -1075,8 +1076,8 @@ void ShooterGame::GameUpdate() {
     }*/
 
     for (auto& e : enemies) {
-//        e.x -= /*速度*/ * m_deltaTime * 60.0f;
-        e.count += m_deltaTime * 60.0f;
+//        e.x -= /*速度*/ * m_deltaTime * COUNT1S;
+        e.count += m_deltaTime * COUNT1S;
 
         if (e.type == 0)		// 通常敵
             e.x -= enemySpeed;
@@ -1085,18 +1086,18 @@ void ShooterGame::GameUpdate() {
 		else if(e.type == 1){	  // ヘリザコ - 勢いよく突っ込む
 //			static float dist_x = e.x - player_x;
             if (e.count < 24) {	// 1段階：超急接近
-                 e.x -= 6 * 2 * m_deltaTime * 60.0f;
-                e.y += ((playerY + 8 - e.y) / 8) / 2;// m_deltaTime; // *60.0f;// *m_deltaTime; // *60.0f;
+                 e.x -= 6 * 2 * m_deltaTime * COUNT1S;
+                e.y += ((playerY + 8 - e.y) / 8) / 2;
             }
             else if (e.count < 49)	// 2段階：短くホバリング
                 e.x -= 0;
             else							// 3段階：右へ全力逃走
-                e.x += 6 * 2 * m_deltaTime *60.0f;
+                e.x += 6 * 2 * m_deltaTime * COUNT1S;
 		}
 
 		else if(e.type == 2){	  // サインカーブ
 			e.x -= enemySpeed;
-            e.y = (e.count2 + sinf(e.count * 0.12) * 55 * 2); // *60.0f; //sin_table[e.count];
+            e.y = (e.count2 + sinf(e.count * 0.12) * 55 * 2);
 		}
 
 //        if (e.x > SCREEN_WIDTH || e.x < 0)
@@ -1105,9 +1106,9 @@ void ShooterGame::GameUpdate() {
         // 敵弾発射処理
         e.shootTimer += m_deltaTime;
 
-        int difficulty = (min(1, m_gameTime / (180 * 60)));
+        int difficulty = (min(1, m_gameTime / (180 * COUNT1S)));
         int enemy_bullet_speed = 4 + difficulty * 2;
-        float shoot_interval = ((82 - difficulty * 36) - 5)/60;
+        float shoot_interval = ((82 - difficulty * 36) - 5) / COUNT1S;
 
 
         if (e.shootTimer >= e.nextShootTime) {
@@ -1128,7 +1129,7 @@ void ShooterGame::GameUpdate() {
 	            // 弾を発射（速度は8.0fくらいが目安）
 //            difficulty = int(min(1, self.play_time / 10800))                    
 //            enemy_bullet_speed = 2 + difficulty
-                float bulletSpeed = enemy_bullet_speed; //4;//7.5f / 2;// / 60; //7.5f;
+                float bulletSpeed = enemy_bullet_speed;
 	            enemyBullets.push_back({
 	                e.x + 16, 
 	                e.y + 16,
@@ -1165,20 +1166,20 @@ void ShooterGame::GameUpdate() {
 
     // 自機弾移動
     for (auto it = playerBullets.begin(); it != playerBullets.end(); ) {
-        it->x += 13.0f * 60 * m_deltaTime;
+        it->x += 13.0f *COUNT1S * m_deltaTime;
         if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < -32)|| (it->y > SCREEN_HEIGHT))  it = playerBullets.erase(it);
         else ++it;
     }
 /*
     for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
-        it->x -= 9.0f * 60 * m_deltaTime;
+        it->x -= 9.0f * COUNT1S * m_deltaTime;
         if (it->x < -30) it = enemyBullets.erase(it);
         else ++it;
     }*/
     // 敵弾移動&画面範囲外判定
 	for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
-	    it->x += it->vx * m_deltaTime * 60.0f;
-	    it->y += it->vy * m_deltaTime * 60.0f;
+	    it->x += it->vx * m_deltaTime * COUNT1S;
+	    it->y += it->vy * m_deltaTime * COUNT1S;
 
 	    if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
 		    it = enemyBullets.erase(it);
@@ -1259,15 +1260,13 @@ void ShooterGame::RunMessageLoop() {
             m_deltaTime = static_cast<float>(now.QuadPart - last.QuadPart) / freq.QuadPart;
             last = now;
 
-            m_accumulator += m_deltaTime;
+//            m_accumulator += m_deltaTime;
 
-            while (m_accumulator >= TARGET_FRAME_TIME) {
+//            while (m_accumulator >= TARGET_FRAME_TIME) {
                 UpdateInput();
-//                if (!gameOver)
-                    GameUpdate();     // deltaTimeを使って更新
-//                else StarUpdate();
-                m_accumulator -= TARGET_FRAME_TIME;
-            }
+                GameUpdate();     // deltaTimeを使って更新
+//                m_accumulator -= TARGET_FRAME_TIME;
+//            }
 
             OnRender();           // 描画は毎回呼ぶ（垂直同期に任せる）
         }
