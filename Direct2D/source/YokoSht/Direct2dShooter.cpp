@@ -1053,19 +1053,19 @@ void ShooterGame::GameUpdate() {
 //..            e.x -= enemySpeed2;
 		else if(e.type == 1){	  // ヘリザコ - 勢いよく突っ込む
 //			static float dist_x = e.x - player_x;
-            if (e.count < 24 * 2) {	// 1段階：超急接近
-                 e.x -= 6 * m_deltaTime * 60.0f;
+            if (e.count < 24) {	// 1段階：超急接近
+                 e.x -= 6 * 2 * m_deltaTime * 60.0f;
                 e.y += ((playerY + 8 - e.y) / 8) / 2;// m_deltaTime; // *60.0f;// *m_deltaTime; // *60.0f;
             }
-            else if (e.count < 49 * 2)	// 2段階：短くホバリング
+            else if (e.count < 49)	// 2段階：短くホバリング
                 e.x -= 0;
             else							// 3段階：右へ全力逃走
-                e.x += 6 * m_deltaTime *60.0f;
+                e.x += 6 * 2 * m_deltaTime *60.0f;
 		}
 
 		else if(e.type == 2){	  // サインカーブ
 			e.x -= enemySpeed;
-            e.y = (e.count2 + sin(e.count * 0.12) * 55); // *60.0f; //sin_table[e.count];
+            e.y = (e.count2 + sinf(e.count * 0.12) * 55 * 2); // *60.0f; //sin_table[e.count];
 		}
 
 //        if (e.x > SCREEN_WIDTH || e.x < 0)
