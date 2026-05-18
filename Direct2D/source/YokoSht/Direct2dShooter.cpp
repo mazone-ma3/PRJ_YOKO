@@ -1135,7 +1135,7 @@ void ShooterGame::GameUpdate() {
     // 自機弾移動
     for (auto it = playerBullets.begin(); it != playerBullets.end(); ) {
         it->x += 13.0f * 60 * m_deltaTime;
-        if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < -32)|| (it->x > SCREEN_HEIGHT))  it = playerBullets.erase(it);
+        if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < -32)|| (it->y > SCREEN_HEIGHT))  it = playerBullets.erase(it);
         else ++it;
     }
 /*
