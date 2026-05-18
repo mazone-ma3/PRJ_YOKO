@@ -6,7 +6,7 @@
 #include <wincodec.h>
 #include <xaudio2.h>
 #include <xinput.h>
-#include <list>
+//#include <list>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
@@ -42,7 +42,7 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 // 構造体
 struct Bullet { float x, y; };
-struct Enemy { float x, y, shootTimer, nextShootTime; int type, count, count2, count_hp; bool count_flag; };
+struct Enemy { float x, y, shootTimer, nextShootTime; int type; float count, count2; int count_hp; bool count_flag; };
 struct eBullets { float x, y, vx=0.0f, vy=0.0f; };
 struct Particle { float x, y, vx, vy; int life; };
 
@@ -104,6 +104,8 @@ private:
     void ToggleFullscreen();
 	void InitStars();
 
+	void CalculateFPS();
+
     HWND m_hwnd = NULL;
     ID2D1Factory* m_pFactory = NULL;
     IDWriteFactory* m_pDWFactory = NULL;
@@ -150,13 +152,30 @@ private:
     const float TARGET_FRAME_TIME = 1.0f / 60.0f; // 60FPS目標
     float m_accumulator = 0.0f;
 
+    // FPS測定用
+/*    LARGE_INTEGER m_lastFPSTime;
+    int m_frameCount = 0;
+    float m_currentFPS = 0.0f;
+    std::vector<float> m_fpsHistory;   // 移動平均用
+    const int FPS_HISTORY_MAX = 30;    // 直近30フレームの平均*/
+
+    LARGE_INTEGER m_lastUpdateTime;
+    LARGE_INTEGER m_lastRenderTime;
+    int m_updateFrameCount = 0;
+    int m_renderFrameCount = 0;
+    float m_updateFPS = 0.0f;
+    float m_renderFPS = 0.0f;
+
+    float m_gameTime = 0.0f;           // 経過時間（秒）
+    float m_enemySpawnRate = 1.0f;     // 現在の敵生成頻度（小さいほど頻繁）
+
 	// 各種変数
     float playerX = 60.0f, playerY = 160.0f;
-    std::list<Bullet> playerBullets;
-    std::list<eBullets> enemyBullets;
-    std::list<Particle> Particles;
-    std::list<Option> Options;
-    std::list<Item> Items;
+    std::vector<Bullet> playerBullets;
+    std::vector<eBullets> enemyBullets;
+    std::vector<Particle> Particles;
+    std::vector<Option> Options;
+    std::vector<Item> Items;
 
     std::vector<Enemy> enemies;
     std::vector<Star> stars;
@@ -309,7 +328,13 @@ HRESULT ShooterGame::Initialize() {
 //    PlayBGM((m_exeDir + L"bgm.wav").c_str());
  
     QueryPerformanceFrequency(&m_freq);
-    QueryPerformanceCounter(&m_lastTime);
+/*    QueryPerformanceCounter(&m_lastTime);
+
+    QueryPerformanceCounter(&m_lastFPSTime);
+
+    m_fpsHistory.reserve(FPS_HISTORY_MAX);*/
+    QueryPerformanceCounter(&m_lastUpdateTime);
+    QueryPerformanceCounter(&m_lastRenderTime);
 
     return S_OK;
 }
@@ -431,13 +456,13 @@ void ShooterGame::UpdateInput() {
         PostQuitMessage(0);
     }
     m_escPressed = escNow;
-
+/*
     if (gameOver == 1)
         if(!keys[VK_SPACE] && !keys['R'])
 			gameOver = 2;
 
 	if (gameOver == 2)
-        if(keys[VK_SPACE] ||  keys['R']) ResetGame();
+        if(keys[VK_SPACE] ||  keys['R']) ResetGame();*/
 }
 
 // ゲームリセット
@@ -448,6 +473,7 @@ void ShooterGame::ResetGame() {
     enemyBullets.clear();
     enemies.clear();
     scrollX = 0;
+    m_gameTime = 0;
 
 /*    stars.clear();
     for (int i = 0; i < 80; ++i) {
@@ -743,6 +769,22 @@ void ShooterGame::OnRender() {
     // スケール適用
     m_pRenderTarget->SetTransform(m_transform);
 
+    // 描画FPS計算
+    static LARGE_INTEGER lastRender = {};
+    if (lastRender.QuadPart == 0) QueryPerformanceCounter(&lastRender);
+
+    m_renderFrameCount++;
+
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    float elapsed = static_cast<float>(now.QuadPart - lastRender.QuadPart) / m_freq.QuadPart;
+
+    if (elapsed >= 1.0f) {
+        m_renderFPS = m_renderFrameCount / elapsed;
+        m_renderFrameCount = 0;
+        lastRender = now;
+    }
+
     // 星背景（ブラシが有効なときだけ）
 /*    if (m_pTextBrush) {
        for (const auto& s : stars) {
@@ -815,8 +857,25 @@ void ShooterGame::OnRender() {
 
     
     // UI
+    // FPS表示（右上に2段で表示）
+    if (m_pTextFormat && m_pTextBrush) {
+        wchar_t text[64];
+
+        swprintf_s(text, L"Update: %.1f", m_updateFPS);
+        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
+            D2D1::RectF(SCREEN_WIDTH - 180, 8, SCREEN_WIDTH, 40), m_pTextBrush);
+
+        swprintf_s(text, L"Render: %.1f", m_renderFPS);
+        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
+            D2D1::RectF(SCREEN_WIDTH - 180, 35, SCREEN_WIDTH, 70), m_pTextBrush);
+    }
     if (m_pTextFormat && m_pTextBrush) {
         wchar_t text[128];
+/*        wchar_t fpsText[32];
+
+        swprintf_s(fpsText, L"FPS: %.1f", m_currentFPS);
+        m_pRenderTarget->DrawText(fpsText, wcslen(fpsText), m_pTextFormat,
+        D2D1::RectF(SCREEN_WIDTH - 150, 10, SCREEN_WIDTH - 10, 50), m_pTextBrush);*/
 
 //        swprintf_s(text, L"SCORE: %d", score);
 //        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
@@ -834,6 +893,10 @@ void ShooterGame::OnRender() {
 	    m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
 	        D2D1::RectF(0, 16, 160, 32), m_pTextBrush);
 
+        // TIME（LIVESの下）
+        swprintf_s(text, L"TIME: %.0f", m_gameTime);
+        m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat,
+            D2D1::RectF(10, 80, 300, 110), m_pTextBrush);
     }
 
     if (gameOver && m_pTextFormat && m_pEnemyBrush) {
@@ -856,6 +919,7 @@ void ShooterGame::OnRender() {
     if (hr == D2DERR_RECREATE_TARGET){ //} || hr == D2DERR_DEVICE_LOST) {
         DiscardDeviceResources();
     }
+//    CalculateFPS();     // ← ここを追加
 
 }
 
@@ -869,11 +933,46 @@ void ShooterGame::StarUpdate() {
             s.y = static_cast<float>(rand() % SCREEN_HEIGHT); //600);
         }
     }
+//    CalculateFPS();     // ← ここを追加
+    m_updateFrameCount++;
+
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    float elapsed = static_cast<float>(now.QuadPart - m_lastUpdateTime.QuadPart) / m_freq.QuadPart;
+
+    if (elapsed >= 1.0f) {
+        m_updateFPS = m_updateFrameCount / elapsed;
+        m_updateFrameCount = 0;
+        m_lastUpdateTime = now;
+    }
 }
 
 // ゲーム進行
 void ShooterGame::GameUpdate() {
+    if (gameOver == 1)
+        if(!keys[VK_SPACE] && !keys['R'])
+			gameOver = 2;
+
+	if (gameOver == 2)
+        if(keys[VK_SPACE] ||  keys['R']) ResetGame();
+
     StarUpdate();
+    if (gameOver)
+		return;
+
+/*    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    m_deltaTime = static_cast<float>(now.QuadPart - m_lastTime.QuadPart) / m_freq.QuadPart;
+    m_lastTime = now;*/
+
+    m_gameTime += m_deltaTime;
+
+    // 敵生成頻度を時間経過で徐々に上げる
+//    float progress = m_gameTime / 180.0f;           // 0.0 ~ 1.0（180秒で最大）
+//    if (progress > 1.0f) progress = 1.0f;
+
+    // 最初は敵が少なく、徐々に増える（0.8秒間隔 → 0.25秒間隔くらい）
+//    m_enemySpawnRate = 0.8f - (0.55f * progress);
 
 	float moveSpeed = 4.0f * 60 * m_deltaTime;
 	float enemySpeed = 4.0f * 60 * m_deltaTime;
@@ -888,17 +987,46 @@ void ShooterGame::GameUpdate() {
 // 射撃クールタイムも時間ベースに
     static float shootTimer = 0.0f;
     shootTimer += m_deltaTime;
-    if (keys[VK_SPACE] && shootTimer >= 0.08f) {   // 約毎秒12.5発
+    if (keys[VK_SPACE] && shootTimer >= 0.08f*2) {   // 約毎秒12.5/2発
         playerBullets.push_back({ playerX + 32, playerY + 12 });
         shootTimer = 0.0f;
 //        PlaySound(m_seLaser);
     }
 
-    CleanupVoices();
-
+//    CleanupVoices();
+	static float voiceCleanTimer = 0.0f;
+	voiceCleanTimer += m_deltaTime;
+	if (voiceCleanTimer > 0.5f) {     // 0.5秒ごとに掃除
+	    CleanupVoices();
+	    voiceCleanTimer = 0.0f;
+	}
     // 敵生成
-    if (rand() % 32 == 0)
-        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0, 0, 0, rand() % 3, 0, 0, false});
+//    if (rand() % 32 == 0)
+// 敵生成（時間進行で増える）
+//    static float spawnTimer = 0.0f;
+//    spawnTimer += m_deltaTime;
+ // === 敵生成処理（スコアベース）===
+    static float enemySpawnTimer = 0.0f;
+    enemySpawnTimer += m_deltaTime;
+
+    // 元のロジックをdeltaTimeに変換
+    float baseInterval = 50.0f - (score / 250.0f);   // scoreが増えるほど短く
+    float spawnInterval = max(0.3f, baseInterval / 60.0f);  // フレーム→秒に変換
+
+//    if (spawnTimer >= m_enemySpawnRate) {
+    if (enemySpawnTimer >= spawnInterval) {
+
+//        struct Enemy { float x, y, shootTimer, nextShootTime; int type, count, count2, count_hp; bool count_flag; };
+
+//        struct Enemy { float x, y, shootTimer, nextShootTime; int type; float count, count2; int count_hp; bool count_flag; };
+
+        int type = rand() % 3;
+        float count = rand() % (30 * 2 + SCREEN_HEIGHT - 40 * 2) - 30 * 2;
+        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0.0f, 5.0f/60, type, 0.0f, count,
+            (type == 0)? 1:3, false});
+//        spawnTimer = 0.0f;
+		enemySpawnTimer = 0.0f;
+    }
 
     // 敵移動 + 敵弾発射
 /*    for (auto it = enemies.begin(); it != enemies.end(); ) {
@@ -917,14 +1045,39 @@ void ShooterGame::GameUpdate() {
 
     for (auto& e : enemies) {
 //        e.x -= /*速度*/ * m_deltaTime * 60.0f;
+        e.count += m_deltaTime * 60.0f;
 
         if (e.type == 0)		// 通常敵
             e.x -= enemySpeed;
-        else
-            e.x -= enemySpeed2;
+//        else
+//..            e.x -= enemySpeed2;
+		else if(e.type == 1){	  // ヘリザコ - 勢いよく突っ込む
+//			static float dist_x = e.x - player_x;
+            if (e.count < 24 * 2) {	// 1段階：超急接近
+                 e.x -= 6 * m_deltaTime * 60.0f;
+                e.y += ((playerY + 8 - e.y) / 8) / 2;// m_deltaTime; // *60.0f;// *m_deltaTime; // *60.0f;
+            }
+            else if (e.count < 49 * 2)	// 2段階：短くホバリング
+                e.x -= 0;
+            else							// 3段階：右へ全力逃走
+                e.x += 6 * m_deltaTime *60.0f;
+		}
+
+		else if(e.type == 2){	  // サインカーブ
+			e.x -= enemySpeed;
+            e.y = (e.count2 + sin(e.count * 0.12) * 55); // *60.0f; //sin_table[e.count];
+		}
+
+//        if (e.x > SCREEN_WIDTH || e.x < 0)
+//            PlaySound(m_seLaser);
 
         // 敵弾発射処理
         e.shootTimer += m_deltaTime;
+
+        int difficulty = (min(1, m_gameTime / (180 * 60)));
+        int enemy_bullet_speed = 4 + difficulty * 2;
+        float shoot_interval = ((82 - difficulty * 36) - 5)/60;
+
 
         if (e.shootTimer >= e.nextShootTime) {
 
@@ -944,7 +1097,7 @@ void ShooterGame::GameUpdate() {
 	            // 弾を発射（速度は8.0fくらいが目安）
 //            difficulty = int(min(1, self.play_time / 10800))                    
 //            enemy_bullet_speed = 2 + difficulty
-                float bulletSpeed = 4;//7.5f / 2;// / 60; //7.5f;
+                float bulletSpeed = enemy_bullet_speed; //4;//7.5f / 2;// / 60; //7.5f;
 	            enemyBullets.push_back({
 	                e.x + 16, 
 	                e.y + 16,
@@ -959,21 +1112,30 @@ void ShooterGame::GameUpdate() {
 //            PlaySound(...);
 
             // 次回の発射間隔を設定
-            if (e.count < 1) {                    // 最初は早めに1回
-                e.nextShootTime = 5.0f/60;           // 0.4秒間隔
-            } else {
-                e.nextShootTime = 1.2f;           // その後は1.2秒間隔
-            }
+//            if (e.count < 1) {                    // 最初は早めに1回
+//               e.nextShootTime = 5.0f/60;           // 0.4秒間隔
+ //           } else {
+                e.nextShootTime = shoot_interval;//1.2f;           // その後は1.2秒間隔
+ //           }
 
             e.shootTimer = 0.0f;
             e.count++;
         }
     }
 
-    // 弾移動
+    for (auto it = enemies.begin(); it != enemies.end(); ) {
+        if ((it->x < -32) || (it->x > SCREEN_WIDTH)){// || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
+            it = enemies.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // 自機弾移動
     for (auto it = playerBullets.begin(); it != playerBullets.end(); ) {
         it->x += 13.0f * 60 * m_deltaTime;
-        if (it->x > SCREEN_WIDTH) it = playerBullets.erase(it);
+        if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < -32)|| (it->x > SCREEN_HEIGHT))  it = playerBullets.erase(it);
         else ++it;
     }
 /*
@@ -982,12 +1144,13 @@ void ShooterGame::GameUpdate() {
         if (it->x < -30) it = enemyBullets.erase(it);
         else ++it;
     }*/
+    // 敵弾移動&画面範囲外判定
 	for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
 	    it->x += it->vx * m_deltaTime * 60.0f;
 	    it->y += it->vy * m_deltaTime * 60.0f;
 
-	    if (it->x < -30) {
-		    	    it = enemyBullets.erase(it);
+	    if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
+		    it = enemyBullets.erase(it);
 	    } else {
 	        ++it;
 	    }
@@ -1003,10 +1166,15 @@ void ShooterGame::CheckCollisions() {
         for (auto eit = enemies.begin(); eit != enemies.end(); ) {
             if (bit->x + 18 > eit->x && bit->x < eit->x + 32 &&
                 bit->y > eit->y - 5 && bit->y < eit->y + 37) {
-                eit = enemies.erase(eit);
+                if (--eit->count_hp == 0) {
+                    eit = enemies.erase(eit);
+                    PlaySound(m_seExplosion);
+                    score += 100;
+                }
+                else {
+                    ++eit;
+                }
                 hit = true;
-                score += 10;
-                PlaySound(m_seExplosion);
                 break;
             }
             else ++eit;
@@ -1040,6 +1208,7 @@ void ShooterGame::CheckCollisions() {
         }
         else ++it;
     }
+
 }
 
 
@@ -1063,9 +1232,9 @@ void ShooterGame::RunMessageLoop() {
 
             while (m_accumulator >= TARGET_FRAME_TIME) {
                 UpdateInput();
-                if (!gameOver)
+//                if (!gameOver)
                     GameUpdate();     // deltaTimeを使って更新
-                else StarUpdate();
+//                else StarUpdate();
                 m_accumulator -= TARGET_FRAME_TIME;
             }
 
@@ -1073,6 +1242,32 @@ void ShooterGame::RunMessageLoop() {
         }
     }
 }
+/*
+void ShooterGame::CalculateFPS() {
+    m_frameCount++;
+
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+
+    float elapsed = static_cast<float>(now.QuadPart - m_lastFPSTime.QuadPart) / m_freq.QuadPart;
+
+    if (elapsed >= 0.5f) {        // 0.5秒ごとに更新（滑らかに見せる）
+        float fps = m_frameCount / elapsed;
+
+        // 移動平均を計算
+        m_fpsHistory.push_back(fps);
+        if (m_fpsHistory.size() > FPS_HISTORY_MAX) {
+            m_fpsHistory.erase(m_fpsHistory.begin());
+        }
+
+        float sum = 0.0f;
+        for (float f : m_fpsHistory) sum += f;
+        m_currentFPS = sum / m_fpsHistory.size();
+
+        m_frameCount = 0;
+        m_lastFPSTime = now;
+    }
+}*/
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // DPI Awareを最優先で設定
