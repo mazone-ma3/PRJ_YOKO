@@ -475,6 +475,7 @@ void ShooterGame::UpdateInput() {
     keys[VK_SPACE] = ((GetAsyncKeyState(VK_SPACE) & 0x8000) != 0) | ((GetAsyncKeyState('Z') & 0x8000) != 0);
     keys['X'] = (GetAsyncKeyState('X') & 0x8000) != 0;
     keys['R'] = (GetAsyncKeyState('R') & 0x8000) != 0;
+    keys['B'] = (GetAsyncKeyState('B') & 0x8000) != 0;
 
     XINPUT_STATE state = {};
     if (XInputGetState(0, &state) == ERROR_SUCCESS) {
@@ -861,12 +862,12 @@ void ShooterGame::StarUpdate() {
 // ゲーム進行
 void ShooterGame::GameUpdate() {
     if (gameOver == 1)
-        if(!keys[VK_SPACE] && !keys['R'] && !keys['X'])
+        if(!keys[VK_SPACE] && !keys['R'] && !keys['X'] && !keys['B'])
 			gameOver = 2;
 
 	if (gameOver == 2)
         if (keys[VK_SPACE] || keys['R']) { easy_mode = false; ResetGame(); }
-        else if (keys['X']) { easy_mode = true; ResetGame(); }
+        else if (keys['X'] || keys['B']) { easy_mode = true; ResetGame(); }
 
     StarUpdate();
     if (gameOver)
@@ -903,7 +904,7 @@ void ShooterGame::GameUpdate() {
     for (auto& opt : Options) {
         opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
 
-        float target_x = ((playerX + 8) - opt.x) / 4;
+        float target_x = ((playerX + 16) - opt.x) / 4;
         float target_y = ((playerY + opt.offset_y) - opt.y) / 4;
 
         // 滑らかに追従
@@ -919,7 +920,7 @@ void ShooterGame::GameUpdate() {
 
         // オプションからも発射
         for (const auto& opt : Options) {
-            playerBullets.push_back({ opt.x + 8, opt.y + 8 });
+            playerBullets.push_back({ opt.x + 8, opt.y + 12 });
         }
         shootTimer = 0.0f;
 //        PlaySound(m_seLaser);
