@@ -1238,7 +1238,7 @@ void ShooterGame::CheckCollisions() {
         if (abs(it->x - playerX) < 44-16 && abs(it->y - playerY) < 44-16) {
 
             if (it->type == 1 && Options.size() < MAX_OPTIONS) {   // オプションアイテム
-                float offset = (Options.size() == 0) ? -25.0f : 25.0f;
+                float offset = (Options.size() == 0) ? 25.0f : -25.0f;
                 Option opt;
                 opt.offset_y = offset*2;
                 opt.x = 0;//playerX + 20;
