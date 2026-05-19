@@ -978,7 +978,7 @@ void ShooterGame::GameUpdate() {
         // 敵弾発射処理
         e.shootTimer += m_deltaTime;
 
-        int difficulty = (min(1, m_gameTime / (180 * COUNT1S)));
+        int difficulty = (min(1, m_gameTime / (180))); // * COUNT1S)));
         int enemy_bullet_speed = 4 + difficulty * 2;
         float shoot_interval = ((82 - difficulty * 36) - 5) / COUNT1S;
 
