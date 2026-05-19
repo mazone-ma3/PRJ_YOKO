@@ -249,6 +249,9 @@ private:
 	int offset;
 
     const int MAX_OPTIONS = 2;   // 最大オプション数
+
+	bool FPS_flag = false;
+    bool easy_mode = false;
 };
 
 int sin_table[256 * 4];
@@ -505,6 +508,13 @@ void ShooterGame::UpdateInput() {
     }
     m_altEnterPressed = altEnterNow;
 
+    static bool f12PressedLast = false;
+    bool f12Now = (GetAsyncKeyState(VK_F12) & 0x8000) != 0;
+    if (f12Now && !f12PressedLast) {
+        FPS_flag = !FPS_flag;
+    }
+    f12PressedLast = f12Now;
+
     // ESCで終了
     bool escNow = (GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0;
     if (escNow && !m_escPressed) {
@@ -520,54 +530,6 @@ void ShooterGame::UpdateInput() {
         if(keys[VK_SPACE] ||  keys['R']) ResetGame();*/
 }
 
-// ゲームリセット
-void ShooterGame::ResetGame() {
-    playerX = 60.f; playerY = 160.0f; //SCREEN_HEIGHT / 2 - 32;
-    score = 0; lives = 3; gameOver = 0;
-    playerBullets.clear();
-    enemyBullets.clear();
-    enemies.clear();
-    Options.clear();
-    Items.clear();
-    scrollX = 0;
-    m_gameTime = 0;
-    particles.clear();
-    option_cooldown = 10;
-	shield_active = false;
-    bomb_active = false;
-    bomb_stock = 0;
-    key_b_flag = false;
-    chain_items.clear();
-    chain_count = 0;
-
-/*    stars.clear();
-    for (int i = 0; i < 80; ++i) {
-        Star s;
-        s.x = static_cast<float>(rand() % SCREEN_WIDTH);
-        s.y = static_cast<float>(rand() % SCREEN_HEIGHT);
-        s.speed = 0.5f + static_cast<float>(rand() % 100) / 30.0f;
-        s.size = (s.speed > 2.0f) ? 2.0f : 1.0f;
-        stars.push_back(s);
-    }*/
-//	InitStars();
-
-    StopBGM();
-    PlayBGM((m_exeDir + L"bgm.wav").c_str());
-}
-
-void ShooterGame::InitStars() {
-    stars.clear();
-    for (int i = 0; i < 80; ++i) {
-        Star s;
-        s.x = static_cast<float>(rand() % SCREEN_WIDTH);
-        s.y = static_cast<float>(rand() % SCREEN_HEIGHT);
-		s.baseSpeed = 0.5f + static_cast<float>(rand() % 100) / 30.0f;
-		s.speed = s.baseSpeed;   // もし個別速度も欲しい場合
-        s.size = (s.speed > 2.0f) ? 2.0f : 1.0f;
-        s.brush = nullptr;                    // 最初はnullptrにしておく
-        stars.push_back(s);
-    }
-}
 
 void ShooterGame::ClampPlayer() {
     if (playerX < 0) playerX = 0;
@@ -824,6 +786,593 @@ void ShooterGame::DiscardDeviceResources() {
     }
 }
 
+
+void ShooterGame::InitStars() {
+    stars.clear();
+    for (int i = 0; i < 80; ++i) {
+        Star s;
+        s.x = static_cast<float>(rand() % SCREEN_WIDTH);
+        s.y = static_cast<float>(rand() % SCREEN_HEIGHT);
+		s.baseSpeed = 0.5f + static_cast<float>(rand() % 100) / 30.0f;
+		s.speed = s.baseSpeed;   // もし個別速度も欲しい場合
+        s.size = (s.speed > 2.0f) ? 2.0f : 1.0f;
+        s.brush = nullptr;                    // 最初はnullptrにしておく
+        stars.push_back(s);
+    }
+}
+
+
+
+// ゲームリセット
+void ShooterGame::ResetGame() {
+    playerX = 60.f; playerY = 160.0f; //SCREEN_HEIGHT / 2 - 32;
+    score = 0;
+    if (easy_mode == true)
+        lives = 3;
+    else
+        lives = 1;
+    gameOver = 0;
+    playerBullets.clear();
+    enemyBullets.clear();
+    enemies.clear();
+    Options.clear();
+    Items.clear();
+    scrollX = 0;
+    m_gameTime = 0;
+    particles.clear();
+    option_cooldown = 10;
+	shield_active = false;
+    bomb_active = false;
+    bomb_stock = 0;
+    key_b_flag = false;
+    chain_items.clear();
+    chain_count = 0;
+
+//	InitStars();
+
+    StopBGM();
+    PlayBGM((m_exeDir + L"bgm.wav").c_str());
+}
+
+
+void ShooterGame::StarUpdate() {
+    // 星移動
+    for (auto& s : stars) {
+//        s.x -= s.speed * m_deltaTime * COUNT1S;   // COUNT1Sは基準FPS（調整用）
+		s.x -= s.baseSpeed * m_deltaTime * COUNT1S;   // これでFPSが60の時に元の速度と同じになる
+        if (s.x < 0) {
+            s.x = SCREEN_WIDTH; //800;
+            s.y = static_cast<float>(rand() % SCREEN_HEIGHT); //600);
+        }
+    }
+    m_updateFrameCount++;
+
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    float elapsed = static_cast<float>(now.QuadPart - m_lastUpdateTime.QuadPart) / m_freq.QuadPart;
+
+    if (elapsed >= 1.0f) {
+        m_updateFPS = m_updateFrameCount / elapsed;
+        m_updateFrameCount = 0;
+        m_lastUpdateTime = now;
+    }
+}
+
+// ゲーム進行
+void ShooterGame::GameUpdate() {
+    if (gameOver == 1)
+        if(!keys[VK_SPACE] && !keys['R'] && !keys['X'])
+			gameOver = 2;
+
+	if (gameOver == 2)
+        if (keys[VK_SPACE] || keys['R']) { easy_mode = false; ResetGame(); }
+        else if (keys['X']) { easy_mode = true; ResetGame(); }
+
+    StarUpdate();
+    if (gameOver)
+		return;
+
+    m_gameTime += m_deltaTime;
+
+//    CleanupVoices();
+	static float voiceCleanTimer = 0.0f;
+	voiceCleanTimer += m_deltaTime;
+	if (voiceCleanTimer > 0.5f) {     // 0.5秒ごとに掃除
+	    CleanupVoices();
+	    voiceCleanTimer = 0.0f;
+	}
+
+    // 敵生成頻度を時間経過で徐々に上げる
+//    float progress = m_gameTime / 180.0f;           // 0.0 ~ 1.0（180秒で最大）
+//    if (progress > 1.0f) progress = 1.0f;
+
+    // 最初は敵が少なく、徐々に増える（0.8秒間隔 → 0.25秒間隔くらい）
+//    m_enemySpawnRate = 0.8f - (0.55f * progress);
+
+	float moveSpeed = 4.0f * COUNT1S * m_deltaTime;
+	float enemySpeed = 4.0f * COUNT1S * m_deltaTime;
+	float enemySpeed2 = 5.0f * COUNT1S * m_deltaTime;
+
+    if (keys[VK_LEFT])  playerX -= moveSpeed;
+    if (keys[VK_RIGHT]) playerX += moveSpeed;
+    if (keys[VK_UP])    playerY -= moveSpeed;
+    if (keys[VK_DOWN])  playerY += moveSpeed;
+    ClampPlayer();
+
+    // オプション更新
+    for (auto& opt : Options) {
+        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
+
+        float target_x = ((playerX + 8) - opt.x) / 4;
+        float target_y = ((playerY + opt.offset_y) - opt.y) / 4;
+
+        // 滑らかに追従
+        opt.x += target_x; //(target_x - opt.x) * 0.25f;
+        opt.y += target_y; //(target_y - opt.y) * 0.25f;
+    }
+
+// 射撃クールタイムも時間ベースに
+    static float shootTimer = 0.0f;
+    shootTimer += m_deltaTime;
+    if (keys[VK_SPACE] && shootTimer >= 8 / COUNT1S) {
+        playerBullets.push_back({ playerX + 32, playerY + 12 });
+
+        // オプションからも発射
+        for (const auto& opt : Options) {
+            playerBullets.push_back({ opt.x + 8, opt.y + 8 });
+        }
+        shootTimer = 0.0f;
+//        PlaySound(m_seLaser);
+    }
+
+	// GameUpdate()内がおすすめ
+	if ((keys['X'] || keys['B']) && bomb_stock > 0 && !bomb_active) {
+        if (key_b_flag == false)
+            UseBomb();
+        key_b_flag = true;
+    }
+    else{
+        key_b_flag = false;
+ 	}
+
+// === 敵生成処理（スコアベース）===
+    static float enemySpawnTimer = 0.0f;
+    enemySpawnTimer += m_deltaTime;
+
+    // 元のロジックをdeltaTimeに変換
+    float baseInterval = 50.0f - (score / 250.0f);   // scoreが増えるほど短く
+    float spawnInterval = max(0.3f, baseInterval / COUNT1S);  // フレーム→秒に変換
+
+    if (enemySpawnTimer >= spawnInterval) {
+
+        int type = rand() % 3;
+        float count = rand() % (30 * 2 + SCREEN_HEIGHT - 40 * 2) - 30 * 2;
+        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0.0f, 5.0f / COUNT1S, type, 0.0f, count,
+            (type == 0)? 1:3, false});
+		enemySpawnTimer = 0.0f;
+    }
+
+    // 敵移動 + 敵弾発射
+    for (auto& e : enemies) {
+        e.count += m_deltaTime * COUNT1S;
+
+        if (e.type == 0)		// 通常敵
+            e.x -= enemySpeed;
+		else if(e.type == 1){	  // ヘリザコ - 勢いよく突っ込む
+//			static float dist_x = e.x - player_x;
+            if (e.count < 24) {	// 1段階：超急接近
+                 e.x -= 6 * 2 * m_deltaTime * COUNT1S;
+                e.y += ((playerY + 8 - e.y) / 8) / 2;
+            }
+            else if (e.count < 49)	// 2段階：短くホバリング
+                e.x -= 0;
+            else							// 3段階：右へ全力逃走
+                e.x += 6 * 2 * m_deltaTime * COUNT1S;
+		}
+
+		else if(e.type == 2){	  // サインカーブ
+			e.x -= enemySpeed;
+            e.y = (e.count2 + sinf(e.count * 0.12) * 55 * 2);
+		}
+
+        // 敵弾発射処理
+        e.shootTimer += m_deltaTime;
+
+        int difficulty = (min(1, m_gameTime / (180 * COUNT1S)));
+        int enemy_bullet_speed = 4 + difficulty * 2;
+        float shoot_interval = ((82 - difficulty * 36) - 5) / COUNT1S;
+
+
+        if (e.shootTimer >= e.nextShootTime) {
+
+            float dx = playerX - e.x;
+	        float dy = playerY - e.y;
+
+//            dx -= 4.0f;
+
+	        // ベクトルの長さを計算
+	        float length = sqrtf(dx * dx + dy * dy);
+	        if (length > 0.001f) {   // 0除算防止
+	            dx /= length;   // 正規化
+	            dy /= length;
+
+
+	            // 弾を発射
+                float bulletSpeed = enemy_bullet_speed;
+	            enemyBullets.push_back({
+	                e.x + 16, 
+	                e.y + 16,
+	                dx * bulletSpeed - 1.0f*1,   // vx
+	                dy * bulletSpeed    // vy
+	            });
+	        }
+
+            // 次回の発射間隔を設定
+            e.nextShootTime = shoot_interval;
+
+            e.shootTimer = 0.0f;
+            e.count++;
+        }
+    }
+
+    for (auto it = enemies.begin(); it != enemies.end(); ) {
+        if ((it->x < -32) || (it->x > SCREEN_WIDTH)){// || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
+            it = enemies.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // 自機弾移動
+    for (auto it = playerBullets.begin(); it != playerBullets.end(); ) {
+        it->x += 12.0f *COUNT1S * m_deltaTime;
+        if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < -32)|| (it->y > SCREEN_HEIGHT))  it = playerBullets.erase(it);
+        else ++it;
+    }
+
+    // 敵弾移動&画面範囲外判定
+	for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
+	    it->x += it->vx * m_deltaTime * COUNT1S;
+	    it->y += it->vy * m_deltaTime * COUNT1S;
+
+	    if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
+		    it = enemyBullets.erase(it);
+	    } else {
+	        ++it;
+	    }
+	}
+
+    CheckCollisions();
+
+
+    // パーティクル更新
+    for (auto it = particles.begin(); it != particles.end(); ) {
+        it->x += it->vx;
+        it->y += it->vy;
+        it->vx *= 0.96f;      // 少し減速（空気抵抗）
+        it->vy *= 0.96f;
+        it->life--;
+
+        if (it->life <= 0) {
+            it = particles.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // ボム更新
+    if (bomb_active) {
+        bomb_timer -= m_deltaTime;
+        if (bomb_timer <= 0.0f) {
+            bomb_active = false;
+        }
+    }
+
+    // チェインアイテム更新
+    for (auto it = chain_items.begin(); it != chain_items.end(); ) {
+        it->x -= 4.0f * m_deltaTime * COUNT1S;   // 左に流れる
+        it->timer -= m_deltaTime;
+
+        // 自機取得判定
+        if (abs(it->x - playerX) < 44-16 && abs(it->y - playerY) < 44-16) {
+            chain_count++;
+            chain_timer = 240 / COUNT1S;           // チェイン持続時間リセット
+            score += chain_count * 100;    // チェイン数に応じたボーナス
+
+            it = chain_items.erase(it);
+            PlaySound(m_seLaser);     // 取得音
+            continue;
+        }
+
+        // 時間切れ or 画面外
+        if (it->timer <= 0.0f || it->x < -20) {
+            chain_count = 0;
+            it = chain_items.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // チェインタイマー減少
+    if (chain_timer > 0.0f) {
+        chain_timer -= m_deltaTime;
+        if (chain_timer <= 0.0f) {
+            chain_count = 0;
+        }
+    }
+    if(gameOver && (score > high_score))
+        high_score = score;
+
+}
+
+void ShooterGame::CheckCollisions() {
+    // 自弾 vs 敵
+    for (auto bit = playerBullets.begin(); bit != playerBullets.end(); ) {
+        bool hit = false;
+        for (auto eit = enemies.begin(); eit != enemies.end(); ) {
+            if (bit->x + 16 > eit->x && bit->x < eit->x + 32 &&
+                bit->y + 8> eit->y && bit->y < eit->y + 32) {
+
+				CreateParticles(eit->x + 16, eit->y + 16, 8, 0);   // 通常爆発
+
+                if (--eit->count_hp == 0) {
+
+				    // オプションアイテム出現（確率20%くらい）
+//				    if (rand() % 100 < 22 && Options.size() < MAX_OPTIONS) {
+                    if (option_cooldown <= 0){
+				        Item item;
+				        item.x = eit->x;
+				        item.y = eit->y;
+                        item.timer = 300.0f;        // 約5秒で消える
+				        item.type = 1;           // 1 = オプションアイテム
+				        Items.push_back(item);
+                        option_cooldown = 10;
+                    }
+                    else {
+                        --option_cooldown;
+                    }
+
+				    // シールドアイテム出現（確率12%程度）
+				    if (rand() % 100 < 12 && !shield_active) {
+				        Item item;
+				        item.x = eit->x;
+				        item.y = eit->y;
+				        item.timer = 280.0f;
+				        item.type = 2;         // 2 = シールド
+				        Items.push_back(item);
+				    }
+
+                    // ボムアイテム出現
+                    if (rand() % 100 < 10) {        // 約10%の確率
+					    Item item;
+					    item.x = eit->x;
+					    item.y = eit->y;
+					    item.timer = 270.0f;
+					    item.type = 3;              // 3 = ボム
+					    Items.push_back(item);
+					}
+				    // === チェインアイテム出現 ===
+				    if (rand() % 100 < 40) {        // 40%くらいの確率で落とす
+				        ChainItem item;
+				        item.x = eit->x;
+				        item.y = eit->y;
+				        item.timer = 240.0f;
+				        chain_items.push_back(item);
+				    }
+
+                    eit = enemies.erase(eit);
+                    PlaySound(m_seExplosion);
+                    score += 100;
+
+                }
+                else {
+                    ++eit;
+                }
+                hit = true;
+                break;
+            }
+            else ++eit;
+        }
+        if (hit) bit = playerBullets.erase(bit);
+        else ++bit;
+    }
+
+    // 敵弾 vs 自機
+    for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
+        if (it->x > playerX && it->x + 8 < playerX + 32 &&
+            it->y > playerY + 6 && it->y + 8 < playerY + 6 + 20) {
+
+	        if (shield_active) {
+	            shield_active = false;           // シールド消費
+	            CreateParticles(playerX + 16, playerY + 16, 18, 1); // 大きな爆発
+	        } else {
+	            lives--;
+	            if (lives <= 0) {
+	                gameOver = 1;
+	                StopBGM();
+	            }
+			}
+            it = enemyBullets.erase(it);
+            break;
+        }
+        else ++it;
+    }
+
+    // 敵 vs 自機
+    for (auto it = enemies.begin(); it != enemies.end(); ) {
+        if (it->x + 32 > playerX && it->x < playerX + 32 &&
+            it->y + 32 > playerY + 6 && it->y < playerY + 6 + 32) {
+            if (shield_active) {
+                shield_active = false;           // シールド消費
+                CreateParticles(playerX + 16, playerY + 16, 18, 1); // 大きな爆発
+            }
+            else {
+                lives--;
+                if (lives <= 0) {
+                    gameOver = 1;
+                    StopBGM();
+                    return;
+                }
+            }
+            it = enemies.erase(it);
+            break;
+        }
+        else ++it;
+    }
+ 
+    // アイテム更新
+    for (auto it = Items.begin(); it != Items.end(); ) {
+        if (it->type == 1) {
+            it->x -= 2.0f * COUNT1S * m_deltaTime;   // 左に流れる
+        }
+        else if (it->type == 2) {
+            it->x -= 4.0f * COUNT1S * m_deltaTime;   // 左に流れる
+        }
+        else if (it->type == 3) {
+            it->x -= 4.0f * COUNT1S * m_deltaTime;   // 左に流れる
+        }
+        it->timer -= m_deltaTime;
+
+        // 自機との当たり判定
+        if (abs(it->x - playerX) < 44-16 && abs(it->y - playerY) < 44-16) {
+
+            if (it->type == 1 && Options.size() < MAX_OPTIONS) {   // オプションアイテム
+                float offset = (Options.size() == 0) ? -25.0f : 25.0f;
+                Option opt;
+                opt.offset_y = offset*2;
+                opt.x = 0;//playerX + 20;
+                opt.y = 0;//playerY + 16 + offset;
+                opt.angle = 0.0f;
+                Options.push_back(opt);
+            }
+            else if (it->type == 2) {                    // シールド
+                shield_active = true;
+                shield_timer = SHIELD_DURATION;
+            }
+			else if (it->type == 3) {        // 3 = ボムアイテム
+			    bomb_stock = min(3, bomb_stock + 1);
+			}
+
+            PlaySound(m_seLaser);
+            it = Items.erase(it);
+            continue;
+        }
+
+        // 画面外 or 時間切れ
+        if (it->x < -40 || it->timer <= 0) {
+            it = Items.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // シールドタイマー更新
+/*    if (shield_active) {
+        shield_timer -= m_deltaTime;
+        if (shield_timer <= 0.0f) {
+            shield_active = false;
+        }
+    }*/
+}
+
+
+
+void ShooterGame::UseBomb() {
+    if (bomb_stock <= 0 || bomb_active) return;
+
+    bomb_stock--;
+    bomb_active = true;
+    bomb_timer = BOMB_DURATION;
+
+    // 敵と敵弾を全滅
+    enemies.clear();
+    enemyBullets.clear();
+
+    // 大量の破片を発生
+    CreateParticles(playerX + 16, playerY + 16, 45, 1);   // 大爆発
+
+    // 画面全体に破片を散らす
+    for (int i = 0; i < 60; ++i) {
+        float rx = rand() % SCREEN_WIDTH;
+        float ry = rand() % SCREEN_HEIGHT;
+        CreateParticles(rx, ry, 6, 1);
+    }
+
+    score += 200;
+//    PlaySound(m_seExplosion);   // ボム音（大きめの効果音を使う）
+}
+
+
+bool ShooterGame::put_sprite(float x, float y, int pat_no) {
+    D2D1_RECT_F destrect = D2D1::RectF(x, y, x + 31, y + 31);
+    D2D1_RECT_F sourceRect = D2D1::RectF(32 * pat_no, 0, 32 * pat_no + 31, 31);
+    if (m_pSpriteBitmap) {
+        m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
+		return true;
+    }
+	return false;
+}
+
+void ShooterGame::put_strings(float x, float y, wchar_t *text, int mode) {
+	int len=wcslen(text);
+
+    if (m_pFontBitmap && !mode) {
+        D2D1_RECT_F destrect, sourceRect;
+		for(int i = 0; i < len; ++i){
+            if (text[i] != ' ') {
+                int pat_no = text[i] - '0';
+                destrect = D2D1::RectF(x, y, x + 15, y + 15);
+                sourceRect = D2D1::RectF(16 * (pat_no % 16), 16 * (pat_no / 16), 16 * (pat_no % 16) + 15, 16 * (pat_no / 16) + 15);
+                m_pRenderTarget->DrawBitmap(m_pFontBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
+            }
+            x += 16;
+		}
+//		return true;
+    }else{
+        m_pRenderTarget->DrawText(text, len, m_pTextFormat, 
+			D2D1::RectF(x, y, x+16*len, y+16), m_pTextBrush);
+//		return false;
+	}
+}
+
+void ShooterGame::put_strings(float x, float y, wchar_t* text) {
+    put_strings(x, y, text, 0);
+}
+
+void ShooterGame::put_strings_num(float x, float y, wchar_t *str, int num, int digit, int mode) {
+    wchar_t text[128];
+    int len = wcslen(str), i = digit, j = num;
+//    swprintf_s(text, L"%s%d", str, num);
+	put_strings(x, y, str);
+
+    while (i--) {
+        text[i] = j % 10 + '0';
+        j /= 10;
+    }
+    text[digit] = '\0';
+    put_strings(x+len*16, y, text);
+}
+
+void ShooterGame::put_strings_num(float x, float y, wchar_t* str, int num, int digit) {
+    put_strings_num(x, y, str, num, digit, 0);
+}
+
+void ShooterGame::CreateParticles(float x, float y, int count, int type = 0) {
+    for (int i = 0; i < count; ++i) {
+        Particle p;
+        p.x = x;
+        p.y = y;
+        p.vx = (rand() % 100 - 50) * 0.12f;   // -6.0 ~ +6.0
+        p.vy = (rand() % 100 - 50) * 0.12f;
+        p.life = 20 + (rand() % 25);
+        p.color_index = rand() % 5;
+        p.type = type;
+        particles.push_back(p);
+    }
+}
+
+
 // ゲーム表示
 void ShooterGame::OnRender() {
     // 必ず最初にリソース作成を試みる
@@ -898,28 +1447,34 @@ void ShooterGame::OnRender() {
 	    }
 	}
 
-    // シールド描画
-    if (shield_active && m_pSpriteBitmap) {
-        // 自機の周りにバリアを表示
-        D2D1_RECT_F rect = D2D1::RectF(playerX - 8, playerY - 8, playerX + 40, playerY + 40);
-        D2D1_RECT_F sourceRect = D2D1::RectF(32 * 6, 0, 32 * 7, 32);   // 6番パターンにシールド画像を入れる
-        m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 0.7f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
-
-//		put_sprite(playerX, playerY, 6);
+    // チェインアイテム描画
+    for (const auto& item : chain_items) {
+        put_sprite(item.x, item.y, 3);   // 3番パターンにチェインアイテムの画像を入れる
     }
 
-    // 自機
-//    if (m_pSpriteBitmap) {
-		put_sprite(playerX, playerY, 1);
-/*        D2D1_RECT_F rect = D2D1::RectF(playerX, playerY, playerX + 31, playerY + 31);
-        D2D1_RECT_F sourceRect = D2D1::RectF(32 * 1, 0, 32 * 1 + 31, 31);
-        m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
-//    }
+    for (const auto& i : Items) {
+        if (i.type == 1)
+            put_sprite(i.x, i.y, 8);
+        else if (i.type == 2)
+            put_sprite(i.x, i.y, 7);
+        else if (i.type == 3)
+            put_sprite(i.x, i.y, 9);
+    }
 
     // オプション描画
     for (const auto& opt : Options) {
         put_sprite(opt.x, opt.y, 10);   // 10 = オプションのパターン番号（要調整）
     }
+
+    // 敵弾
+    for (const auto& b : enemyBullets) {
+        put_sprite(b.x, b.y, 0);
+        //            m_pRenderTarget->FillRectangle(D2D1::RectF(b.x, b.y - 3, b.x + 6, b.y + 3), m_pBulletBrush);
+        /*            D2D1_RECT_F rect = D2D1::RectF(b.x, b.y, b.x + 31, b.y + 31);
+                    D2D1_RECT_F sourceRect = D2D1::RectF(32 * 0, 0, 32 * 0 + 31, 31);
+                    m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
+    }
+    //    }
 
     // 敵
 //    if (m_pEnemyBrush || m_pSpriteBitmap) {
@@ -937,7 +1492,7 @@ void ShooterGame::OnRender() {
         }
 //    }
 
-    // 弾
+    // 自機弾
 //    if (m_pBulletBrush) {
 //    if (m_pSpriteBitmap) {
         for (const auto& b : playerBullets) {
@@ -948,32 +1503,28 @@ void ShooterGame::OnRender() {
             m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
         }
 
-        for (const auto& b : enemyBullets) {
-			put_sprite(b.x, b.y, 0);
-//            m_pRenderTarget->FillRectangle(D2D1::RectF(b.x, b.y - 3, b.x + 6, b.y + 3), m_pBulletBrush);
-/*            D2D1_RECT_F rect = D2D1::RectF(b.x, b.y, b.x + 31, b.y + 31);
-            D2D1_RECT_F sourceRect = D2D1::RectF(32 * 0, 0, 32 * 0 + 31, 31);
-            m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
+    // シールド描画
+        if (shield_active && m_pSpriteBitmap) {
+            // 自機の周りにバリアを表示
+            D2D1_RECT_F rect = D2D1::RectF(playerX - 8, playerY - 8, playerX + 40, playerY + 40);
+            D2D1_RECT_F sourceRect = D2D1::RectF(32 * 6, 0, 32 * 7, 32);   // 6番パターンにシールド画像を入れる
+            m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 0.7f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
+
+            //		put_sprite(playerX, playerY, 6);
         }
-//    }
 
-    for (const auto& i : Items) {
-        if(i.type == 1)
-            put_sprite(i.x, i.y, 8);
-        else if(i.type == 2)
-            put_sprite(i.x, i.y, 7);
-        else if(i.type == 3)
-            put_sprite(i.x, i.y, 9);
-    }
+        // 自機
+    //    if (m_pSpriteBitmap) {
+        put_sprite(playerX, playerY, 1);
+        /*        D2D1_RECT_F rect = D2D1::RectF(playerX, playerY, playerX + 31, playerY + 31);
+                D2D1_RECT_F sourceRect = D2D1::RectF(32 * 1, 0, 32 * 1 + 31, 31);
+                m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
+                //    }
 
-    // チェインアイテム描画
-    for (const auto& item : chain_items) {
-        put_sprite(item.x, item.y, 3);   // 3番パターンにチェインアイテムの画像を入れる
-    }
 
     // UI
     // FPS表示（右上に2段で表示）
-    if (m_pTextFormat && m_pTextBrush) {
+    if (m_pTextFormat && m_pTextBrush && (FPS_flag == true)) {
         wchar_t text[64];
 
         swprintf_s(text, L"UPDATE %.1f", m_updateFPS);
@@ -988,8 +1539,12 @@ void ShooterGame::OnRender() {
 //            D2D1::RectF(SCREEN_WIDTH - 180, 35, SCREEN_WIDTH, 70), m_pTextBrush);
     }
     if (m_pTextFormat && m_pTextBrush) {
-		put_strings_num(0, 0, const_cast<wchar_t *>(L"SCORE "), score, 7);
-		put_strings_num(0, 2*16, const_cast<wchar_t *>(L"LIVES "), lives, 1);
+        if (score >= high_score)
+            put_strings_num(0, 0, const_cast<wchar_t*>(L"HIGH  "), score, 7);
+        else
+            put_strings_num(0, 0, const_cast<wchar_t *>(L"SCORE "), score, 7);
+        if(easy_mode == true)
+    		put_strings_num(0, 2*16, const_cast<wchar_t *>(L"LIVES "), lives, 1);
 
         put_strings_num(0, 1*16, const_cast<wchar_t *>(L"BOMB  "), bomb_stock , 1);
 //        put_strings_num(16*16, 0, const_cast<wchar_t*>L"COUNT: ");
@@ -1022,7 +1577,6 @@ void ShooterGame::OnRender() {
 		put_strings(11*16, 12*16, const_cast<wchar_t *>(L"GAME OVER"));
 //        m_pRenderTarget->DrawText(L"GAME OVER", 9, m_pTextFormat, 
 //			D2D1::RectF(11*16, 12*16, 11*16+9*16, 12*16+16), m_pEnemyBrush);
-
         put_strings_num(7*16, 15*16, const_cast<wchar_t *>(L"HIGH SCORE "), high_score, 7);
 
         if (m_pTextBrush) {
@@ -1038,495 +1592,7 @@ void ShooterGame::OnRender() {
     if (hr == D2DERR_RECREATE_TARGET){ //} || hr == D2DERR_DEVICE_LOST) {
         DiscardDeviceResources();
     }
-//    CalculateFPS();     // ← ここを追加
 
-}
-
-void ShooterGame::StarUpdate() {
-    // 星移動
-    for (auto& s : stars) {
-//        s.x -= s.speed * m_deltaTime * COUNT1S;   // COUNT1Sは基準FPS（調整用）
-		s.x -= s.baseSpeed * m_deltaTime * COUNT1S;   // これでFPSが60の時に元の速度と同じになる
-        if (s.x < 0) {
-            s.x = SCREEN_WIDTH; //800;
-            s.y = static_cast<float>(rand() % SCREEN_HEIGHT); //600);
-        }
-    }
-//    CalculateFPS();     // ← ここを追加
-    m_updateFrameCount++;
-
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-    float elapsed = static_cast<float>(now.QuadPart - m_lastUpdateTime.QuadPart) / m_freq.QuadPart;
-
-    if (elapsed >= 1.0f) {
-        m_updateFPS = m_updateFrameCount / elapsed;
-        m_updateFrameCount = 0;
-        m_lastUpdateTime = now;
-    }
-}
-
-// ゲーム進行
-void ShooterGame::GameUpdate() {
-    if (gameOver == 1)
-        if(!keys[VK_SPACE] && !keys['R'])
-			gameOver = 2;
-
-	if (gameOver == 2)
-        if(keys[VK_SPACE] ||  keys['R']) ResetGame();
-
-    StarUpdate();
-    if (gameOver)
-		return;
-
-/*    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-    m_deltaTime = static_cast<float>(now.QuadPart - m_lastTime.QuadPart) / m_freq.QuadPart;
-    m_lastTime = now;*/
-
-    m_gameTime += m_deltaTime;
-
-//    CleanupVoices();
-	static float voiceCleanTimer = 0.0f;
-	voiceCleanTimer += m_deltaTime;
-	if (voiceCleanTimer > 0.5f) {     // 0.5秒ごとに掃除
-	    CleanupVoices();
-	    voiceCleanTimer = 0.0f;
-	}
-
-    // 敵生成頻度を時間経過で徐々に上げる
-//    float progress = m_gameTime / 180.0f;           // 0.0 ~ 1.0（180秒で最大）
-//    if (progress > 1.0f) progress = 1.0f;
-
-    // 最初は敵が少なく、徐々に増える（0.8秒間隔 → 0.25秒間隔くらい）
-//    m_enemySpawnRate = 0.8f - (0.55f * progress);
-
-	float moveSpeed = 4.0f * COUNT1S * m_deltaTime;
-	float enemySpeed = 4.0f * COUNT1S * m_deltaTime;
-	float enemySpeed2 = 5.0f * COUNT1S * m_deltaTime;
-
-    if (keys[VK_LEFT])  playerX -= moveSpeed;
-    if (keys[VK_RIGHT]) playerX += moveSpeed;
-    if (keys[VK_UP])    playerY -= moveSpeed;
-    if (keys[VK_DOWN])  playerY += moveSpeed;
-    ClampPlayer();
-
-    // オプション更新
-    for (auto& opt : Options) {
-        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
-
-        float target_x = ((playerX + 8) - opt.x) / 4;
-        float target_y = ((playerY + opt.offset_y) - opt.y) / 4;
-
-        // 滑らかに追従
-        opt.x += target_x; //(target_x - opt.x) * 0.25f;
-        opt.y += target_y; //(target_y - opt.y) * 0.25f;
-    }
-
-// 射撃クールタイムも時間ベースに
-    static float shootTimer = 0.0f;
-    shootTimer += m_deltaTime;
-    if (keys[VK_SPACE] && shootTimer >= 0.08f*2) {   // 約毎秒12.5/2発
-        playerBullets.push_back({ playerX + 32, playerY + 12 });
-
-        // オプションからも発射
-        for (const auto& opt : Options) {
-            playerBullets.push_back({ opt.x + 8, opt.y + 8 });
-        }
-        shootTimer = 0.0f;
-//        PlaySound(m_seLaser);
-    }
-
-	// GameUpdate()内がおすすめ
-	if ((keys['X'] || keys['B']) && bomb_stock > 0 && !bomb_active) {
-        if (key_b_flag == false)
-            UseBomb();
-        key_b_flag = true;
-    }
-    else{
-        key_b_flag = false;
- 	}
-
-    // 敵生成
-//    if (rand() % 32 == 0)
-// 敵生成（時間進行で増える）
-//    static float spawnTimer = 0.0f;
-//    spawnTimer += m_deltaTime;
- // === 敵生成処理（スコアベース）===
-    static float enemySpawnTimer = 0.0f;
-    enemySpawnTimer += m_deltaTime;
-
-    // 元のロジックをdeltaTimeに変換
-    float baseInterval = 50.0f - (score / 250.0f);   // scoreが増えるほど短く
-    float spawnInterval = max(0.3f, baseInterval / COUNT1S);  // フレーム→秒に変換
-
-//    if (spawnTimer >= m_enemySpawnRate) {
-    if (enemySpawnTimer >= spawnInterval) {
-
-//        struct Enemy { float x, y, shootTimer, nextShootTime; int type, count, count2, count_hp; bool count_flag; };
-
-//        struct Enemy { float x, y, shootTimer, nextShootTime; int type; float count, count2; int count_hp; bool count_flag; };
-
-        int type = rand() % 3;
-        float count = rand() % (30 * 2 + SCREEN_HEIGHT - 40 * 2) - 30 * 2;
-        enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0.0f, 5.0f / COUNT1S, type, 0.0f, count,
-            (type == 0)? 1:3, false});
-//        spawnTimer = 0.0f;
-		enemySpawnTimer = 0.0f;
-    }
-
-    // 敵移動 + 敵弾発射
-/*    for (auto it = enemies.begin(); it != enemies.end(); ) {
-
-        it->count += 1;
-
-        if (it->type == 0)		// 通常敵
-            it->x -= enemySpeed;
-        else
-            it->x -= enemySpeed2;
-
-        if (rand() % 50 == 0) enemyBullets.push_back({ it->x, it->y + 16 });
-        if (it->x < -50) it = enemies.erase(it);
-        else ++it;
-    }*/
-
-    for (auto& e : enemies) {
-//        e.x -= /*速度*/ * m_deltaTime * COUNT1S;
-        e.count += m_deltaTime * COUNT1S;
-
-        if (e.type == 0)		// 通常敵
-            e.x -= enemySpeed;
-//        else
-//..            e.x -= enemySpeed2;
-		else if(e.type == 1){	  // ヘリザコ - 勢いよく突っ込む
-//			static float dist_x = e.x - player_x;
-            if (e.count < 24) {	// 1段階：超急接近
-                 e.x -= 6 * 2 * m_deltaTime * COUNT1S;
-                e.y += ((playerY + 8 - e.y) / 8) / 2;
-            }
-            else if (e.count < 49)	// 2段階：短くホバリング
-                e.x -= 0;
-            else							// 3段階：右へ全力逃走
-                e.x += 6 * 2 * m_deltaTime * COUNT1S;
-		}
-
-		else if(e.type == 2){	  // サインカーブ
-			e.x -= enemySpeed;
-            e.y = (e.count2 + sinf(e.count * 0.12) * 55 * 2);
-		}
-
-//        if (e.x > SCREEN_WIDTH || e.x < 0)
-//            PlaySound(m_seLaser);
-
-        // 敵弾発射処理
-        e.shootTimer += m_deltaTime;
-
-        int difficulty = (min(1, m_gameTime / (180 * COUNT1S)));
-        int enemy_bullet_speed = 4 + difficulty * 2;
-        float shoot_interval = ((82 - difficulty * 36) - 5) / COUNT1S;
-
-
-        if (e.shootTimer >= e.nextShootTime) {
-
-
-	        float dx = playerX - e.x;
-	        float dy = playerY - e.y;
-
-//            dx -= 4.0f;
-
-	        // ベクトルの長さを計算
-	        float length = sqrtf(dx * dx + dy * dy);
-	        if (length > 0.001f) {   // 0除算防止
-	            dx /= length;   // 正規化
-	            dy /= length;
-
-
-	            // 弾を発射（速度は8.0fくらいが目安）
-//            difficulty = int(min(1, self.play_time / 10800))                    
-//            enemy_bullet_speed = 2 + difficulty
-                float bulletSpeed = enemy_bullet_speed;
-	            enemyBullets.push_back({
-	                e.x + 16, 
-	                e.y + 16,
-	                dx * bulletSpeed - 1.0f*1,   // vx
-	                dy * bulletSpeed    // vy
-	            });
-	        }
-
-//            enemyBullets.push_back({e.x, e.y + 16});
-
-
-//            PlaySound(...);
-
-            // 次回の発射間隔を設定
-//            if (e.count < 1) {                    // 最初は早めに1回
-//               e.nextShootTime = 5.0f/60;           // 0.4秒間隔
- //           } else {
-                e.nextShootTime = shoot_interval;//1.2f;           // その後は1.2秒間隔
- //           }
-
-            e.shootTimer = 0.0f;
-            e.count++;
-        }
-    }
-
-    for (auto it = enemies.begin(); it != enemies.end(); ) {
-        if ((it->x < -32) || (it->x > SCREEN_WIDTH)){// || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
-            it = enemies.erase(it);
-        }
-        else {
-            ++it;
-        }
-    }
-
-    // 自機弾移動
-    for (auto it = playerBullets.begin(); it != playerBullets.end(); ) {
-        it->x += 13.0f *COUNT1S * m_deltaTime;
-        if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < -32)|| (it->y > SCREEN_HEIGHT))  it = playerBullets.erase(it);
-        else ++it;
-    }
-/*
-    for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
-        it->x -= 9.0f * COUNT1S * m_deltaTime;
-        if (it->x < -30) it = enemyBullets.erase(it);
-        else ++it;
-    }*/
-    // 敵弾移動&画面範囲外判定
-	for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
-	    it->x += it->vx * m_deltaTime * COUNT1S;
-	    it->y += it->vy * m_deltaTime * COUNT1S;
-
-	    if ((it->x < -32) || (it->x > SCREEN_WIDTH) || (it->y < 32) || (it->y > SCREEN_HEIGHT)) {
-		    it = enemyBullets.erase(it);
-	    } else {
-	        ++it;
-	    }
-	}
-
-    CheckCollisions();
-
-
-    // パーティクル更新
-    for (auto it = particles.begin(); it != particles.end(); ) {
-        it->x += it->vx;
-        it->y += it->vy;
-        it->vx *= 0.96f;      // 少し減速（空気抵抗）
-        it->vy *= 0.96f;
-        it->life--;
-
-        if (it->life <= 0) {
-            it = particles.erase(it);
-        } else {
-            ++it;
-        }
-    }
-
-    // ボム更新
-    if (bomb_active) {
-        bomb_timer -= m_deltaTime;
-        if (bomb_timer <= 0.0f) {
-            bomb_active = false;
-        }
-    }
-
-    // チェインアイテム更新
-    for (auto it = chain_items.begin(); it != chain_items.end(); ) {
-        it->x -= 4.0f * m_deltaTime * COUNT1S;   // 左に流れる
-        it->timer -= m_deltaTime;
-
-        // 自機取得判定
-        if (abs(it->x - playerX - 16) < 26 && abs(it->y - playerY - 16) < 26) {
-            chain_count++;
-            chain_timer = 3.8f;           // チェイン持続時間リセット
-            score += chain_count * 300;    // チェイン数に応じたボーナス
-
-            it = chain_items.erase(it);
-            PlaySound(m_seLaser);     // 取得音
-            continue;
-        }
-
-        // 時間切れ or 画面外
-        if (it->timer <= 0.0f || it->x < -20) {
-            it = chain_items.erase(it);
-        } else {
-            ++it;
-        }
-    }
-
-    // チェインタイマー減少
-    if (chain_timer > 0.0f) {
-        chain_timer -= m_deltaTime;
-        if (chain_timer <= 0.0f) {
-            chain_count = 0;
-        }
-    }
-}
-
-void ShooterGame::CheckCollisions() {
-    // 自弾 vs 敵
-    for (auto bit = playerBullets.begin(); bit != playerBullets.end(); ) {
-        bool hit = false;
-        for (auto eit = enemies.begin(); eit != enemies.end(); ) {
-            if (bit->x + 18 > eit->x && bit->x < eit->x + 32 &&
-                bit->y > eit->y - 5 && bit->y < eit->y + 37) {
-
-				CreateParticles(eit->x + 16, eit->y + 16, 4, 0);   // 通常爆発
-//				CreateParticles(x, y, 35, 1);
-
-                if (--eit->count_hp == 0) {
-
-				    // オプションアイテム出現（確率20%くらい）
-//				    if (rand() % 100 < 22 && Options.size() < MAX_OPTIONS) {
-                    if (option_cooldown <= 0){
-				        Item item;
-				        item.x = eit->x + 12;
-				        item.y = eit->y + 12;
-                        item.timer = 4.6 * COUNT1S; //280;        // 約4.6秒で消える
-				        item.type = 1;           // 1 = オプションアイテム
-				        Items.push_back(item);
-                        option_cooldown = 10;
-                    }
-                    else {
-                        --option_cooldown;
-                    }
-
-				    // シールドアイテム出現（確率12%程度）
-				    if (rand() % 100 < 13 && !shield_active) {
-				        Item item;
-				        item.x = eit->x + 12;
-				        item.y = eit->y + 12;
-				        item.timer = 4.6 * COUNT1S;      // 約4.6秒で消える
-				        item.type = 2;         // 2 = シールド
-				        Items.push_back(item);
-				    }
-
-					if (rand() % 100 < 11) {        // 約11%の確率
-					    Item item;
-					    item.x = eit->x + 12;
-					    item.y = eit->y + 12;
-					    item.timer = 260;
-					    item.type = 3;              // 3 = ボム
-					    Items.push_back(item);
-					}
-				    // === チェインアイテム出現 ===
-				    if (rand() % 100 < 45) {        // 45%くらいの確率で落とす
-				        ChainItem item;
-				        item.x = eit->x + 12;
-				        item.y = eit->y + 12;
-				        item.timer = 4.2f;          // 約4.2秒で消える
-				        chain_items.push_back(item);
-				    }
-
-                    eit = enemies.erase(eit);
-                    PlaySound(m_seExplosion);
-                    score += 100;
-
-/*				    // === チェイン処理 ===
-				    chain_count++;
-				    chain_timer = CHAIN_TIME_LIMIT;     // タイマーリセット
-
-				    // チェイン Bonus
-				    score += chain_count * 20;          // チェイン数に応じたボーナス
-*/
-                }
-                else {
-                    ++eit;
-                }
-                hit = true;
-                break;
-            }
-            else ++eit;
-        }
-        if (hit) bit = playerBullets.erase(bit);
-        else ++bit;
-    }
-
-    // 敵弾 vs 自機
-    for (auto it = enemyBullets.begin(); it != enemyBullets.end(); ) {
-        if (it->x + 14 > playerX && it->x < playerX + 40 &&
-            it->y > playerY && it->y < playerY + 35) {
-
-	        if (shield_active) {
-	            shield_active = false;           // シールド消費
-	            CreateParticles(playerX + 16, playerY + 16, 18, 1); // 大きな爆発
-	        } else {
-	            lives--;
-	            if (lives <= 0) {
-	                gameOver = 1;
-	                StopBGM();
-	            }
-			}
-            it = enemyBullets.erase(it);
-        }
-        else ++it;
-    }
-
-    // 敵 vs 自機
-    for (auto it = enemies.begin(); it != enemies.end(); ) {
-        if (it->x + 32 > playerX && it->x < playerX + 40 &&
-            it->y + 32 > playerY && it->y < playerY + 35) {
-            lives = 0;
-            gameOver = 1;
-            StopBGM();
-            return;
-        }
-        else ++it;
-    }
- 
-    // アイテム更新
-    for (auto it = Items.begin(); it != Items.end(); ) {
-        if (it->type == 1) {
-            it->x -= 2.0f * COUNT1S * m_deltaTime;   // 左に流れる
-        }
-        else if (it->type == 2) {
-            it->x -= 4.0f * COUNT1S * m_deltaTime;   // 左に流れる
-        }
-        else if (it->type == 3) {
-            it->x -= 4.0f * COUNT1S * m_deltaTime;   // 左に流れる
-        }
-        it->timer -= m_deltaTime;
-
-        // 自機との当たり判定
-        if (abs(it->x - playerX) < 28 && abs(it->y - playerY) < 28) {
-
-            if (it->type == 1 && Options.size() < MAX_OPTIONS) {   // オプションアイテム
-                float offset = (Options.size() == 0) ? -25.0f : 25.0f;
-                Option opt;
-                opt.offset_y = offset*2;
-                opt.x = 0;//playerX + 20;
-                opt.y = 0;//playerY + 16 + offset;
-                opt.angle = 0.0f;
-                Options.push_back(opt);
-            }
-            else if (it->type == 2) {                    // シールド
-                shield_active = true;
-                shield_timer = SHIELD_DURATION;
-            }
-			else if (it->type == 3) {        // 3 = ボムアイテム
-			    bomb_stock = min(3, bomb_stock + 1);
-			}
-            // 他のアイテム（シールド、ボムなど）もここに追加可能
-
-            PlaySound(m_seLaser);
-            it = Items.erase(it);
-            continue;
-        }
-
-        // 画面外 or 時間切れ
-        if (it->x < -20 || it->timer <= 0) {
-            it = Items.erase(it);
-        } else {
-            ++it;
-        }
-    }
-
-    // シールドタイマー更新
-/*    if (shield_active) {
-        shield_timer -= m_deltaTime;
-        if (shield_timer <= 0.0f) {
-            shield_active = false;
-        }
-    }*/
 }
 
 
@@ -1558,124 +1624,7 @@ void ShooterGame::RunMessageLoop() {
         }
     }
 }
-/*
-void ShooterGame::CalculateFPS() {
-    m_frameCount++;
 
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-
-    float elapsed = static_cast<float>(now.QuadPart - m_lastFPSTime.QuadPart) / m_freq.QuadPart;
-
-    if (elapsed >= 0.5f) {        // 0.5秒ごとに更新（滑らかに見せる）
-        float fps = m_frameCount / elapsed;
-
-        // 移動平均を計算
-        m_fpsHistory.push_back(fps);
-        if (m_fpsHistory.size() > FPS_HISTORY_MAX) {
-            m_fpsHistory.erase(m_fpsHistory.begin());
-        }
-
-        float sum = 0.0f;
-        for (float f : m_fpsHistory) sum += f;
-        m_currentFPS = sum / m_fpsHistory.size();
-
-        m_frameCount = 0;
-        m_lastFPSTime = now;
-    }
-}*/
-
-bool ShooterGame::put_sprite(float x, float y, int pat_no) {
-    D2D1_RECT_F destrect = D2D1::RectF(x, y, x + 31, y + 31);
-    D2D1_RECT_F sourceRect = D2D1::RectF(32 * pat_no, 0, 32 * pat_no + 31, 31);
-    if (m_pSpriteBitmap) {
-        m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
-		return true;
-    }
-	return false;
-}
-
-void ShooterGame::put_strings(float x, float y, wchar_t *text, int mode) {
-	int len=wcslen(text);
-
-    if (m_pFontBitmap && !mode) {
-        D2D1_RECT_F destrect, sourceRect;
-		for(int i = 0; i < len; ++i){
-            if (text[i] != ' ') {
-                int pat_no = text[i] - '0';
-                destrect = D2D1::RectF(x, y, x + 15, y + 15);
-                sourceRect = D2D1::RectF(16 * (pat_no % 16), 16 * (pat_no / 16), 16 * (pat_no % 16) + 15, 16 * (pat_no / 16) + 15);
-                m_pRenderTarget->DrawBitmap(m_pFontBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
-            }
-            x += 16;
-		}
-//		return true;
-    }else{
-        m_pRenderTarget->DrawText(text, len, m_pTextFormat, 
-			D2D1::RectF(x, y, x+16*len, y+16), m_pTextBrush);
-//		return false;
-	}
-}
-
-void ShooterGame::put_strings(float x, float y, wchar_t* text) {
-    put_strings(x, y, text, 0);
-}
-
-void ShooterGame::put_strings_num(float x, float y, wchar_t *str, int num, int digit, int mode) {
-    wchar_t text[128];
-    int len = wcslen(str), i = digit, j = num;
-//    swprintf_s(text, L"%s%d", str, num);
-	put_strings(x, y, str);
-
-    while (i--) {
-        text[i] = j % 10 + '0';
-        j /= 10;
-    }
-    text[digit] = '\0';
-    put_strings(x+len*16, y, text);
-}
-
-void ShooterGame::put_strings_num(float x, float y, wchar_t* str, int num, int digit) {
-    put_strings_num(x, y, str, num, digit, 0);
-}
-
-void ShooterGame::CreateParticles(float x, float y, int count, int type = 0) {
-    for (int i = 0; i < count; ++i) {
-        Particle p;
-        p.x = x;
-        p.y = y;
-        p.vx = (rand() % 100 - 50) * 0.12f;   // -6.0 ~ +6.0
-        p.vy = (rand() % 100 - 50) * 0.12f;
-        p.life = 20 + (rand() % 25);
-        p.color_index = rand() % 5;
-        p.type = type;
-        particles.push_back(p);
-    }
-}
-
-void ShooterGame::UseBomb() {
-    if (bomb_stock <= 0 || bomb_active) return;
-
-    bomb_stock--;
-    bomb_active = true;
-    bomb_timer = BOMB_DURATION;
-
-    // 敵と敵弾を全滅
-    enemies.clear();
-    enemyBullets.clear();
-
-    // 大量の破片を発生
-    CreateParticles(playerX + 16, playerY + 16, 45, 1);   // 大爆発
-
-    // 画面全体に破片を散らす
-    for (int i = 0; i < 60; ++i) {
-        float rx = rand() % SCREEN_WIDTH;
-        float ry = rand() % SCREEN_HEIGHT;
-        CreateParticles(rx, ry, 6, 1);
-    }
-
-//    PlaySound(m_seExplosion);   // ボム音（大きめの効果音を使う）
-}
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // DPI Awareを最優先で設定
