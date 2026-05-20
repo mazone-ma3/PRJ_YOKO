@@ -415,7 +415,7 @@ class App:
 				dx = max(-3 * 1024, dx)
 				dx = min(dx, 4 * 1024)
 				dy = max(-4 * 1024, dy)
-				dy = min(dy * 1024, 4)
+				dy = min(dy, 1024 * 4)
 				self.enemy_bullets.append([sx * 1024, sy * 1024, dx, dy])
 #				pyxel.play(2, 2)
 
