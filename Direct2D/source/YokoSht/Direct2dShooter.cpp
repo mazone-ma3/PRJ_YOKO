@@ -980,7 +980,7 @@ void ShooterGame::GameUpdate() {
         e.shootTimer += m_deltaTime;
 
         int difficulty = (min(1, m_gameTime / (180))); // * COUNT1S)));
-        int enemy_bullet_speed = 4 + difficulty * 2;
+        float enemy_bullet_speed = (4 + difficulty * 2);
         float shoot_interval = ((82 - difficulty * 36) - 5) / COUNT1S;
 
 
@@ -991,22 +991,39 @@ void ShooterGame::GameUpdate() {
 
 //            dx -= 4.0f;
 
+			float dist;
+			if(abs(dx) > abs(dy))
+				dist = abs(dx);
+			else
+				dist = abs(dy);
+
+			if (dist == 0) dist = 1;
+
+
 	        // ベクトルの長さを計算
-	        float length = sqrtf(dx * dx + dy * dy);
-	        if (length > 0.001f) {   // 0除算防止
-	            dx /= length;   // 正規化
-	            dy /= length;
+//	        float length = sqrtf(dx * dx + dy * dy);
+//	        if (length > 0.001f) {   // 0除算防止
+//	            dx /= length;   // 正規化
+//	            dy /= length;
 
 
 	            // 弾を発射
                 float bulletSpeed = enemy_bullet_speed;
+
+				dx = (dx * bulletSpeed/dist);
+				dy = (dy * bulletSpeed/dist);
+				dx = max(-3*2, dx);
+				dx = min(dx, 4*2);
+				dy = max(-4*2, dy);
+				dy = min(dy, 4*2);
+
 	            enemyBullets.push_back({
 	                e.x + 16, 
 	                e.y + 16,
-	                dx * bulletSpeed - 1.0f*1,   // vx
-	                dy * bulletSpeed    // vy
+	                dx, // * bulletSpeed - 1.0f*1,   // vx
+	                dy, // * bulletSpeed     // vy
 	            });
-	        }
+//	        }
 
             // 次回の発射間隔を設定
             e.nextShootTime = shoot_interval;
