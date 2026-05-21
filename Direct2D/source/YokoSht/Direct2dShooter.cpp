@@ -50,7 +50,7 @@ struct eBullets { float x, y, vx=0.0f, vy=0.0f; };
 struct Option {
     float offset_y;     // 自機からの相対Y（-25 or +25 など）
     float x, y;         // 現在の位置
-    float angle;        // 回転角度（滑らかに回す用）
+//    float angle;        // 回転角度（滑らかに回す用）
 };
 
 struct Item { float x, y, timer; int type; };
@@ -103,14 +103,6 @@ private:
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-    void UpdateInput();
-    void StarUpdate();
-    void GameUpdate();
-    void OnRender();
-    void CheckCollisions();
-    void ResetGame();
-    void ClampPlayer();
-
     HRESULT CreateDeviceResources();
     void DiscardDeviceResources();
 
@@ -121,9 +113,15 @@ private:
     void StopBGM();
     void CleanupVoices();
     void ToggleFullscreen();
-	void InitStars();
+    void UpdateInput();
 
-	void CalculateFPS();
+	void InitStars();
+    void StarUpdate();
+    void GameUpdate();
+    void OnRender();
+    void CheckCollisions();
+    void ResetGame();
+    void ClampPlayer();
 
 	bool put_sprite(float x, float y, int pat);
     void put_strings(float x, float y, wchar_t* str, int mode);
@@ -532,13 +530,6 @@ void ShooterGame::UpdateInput() {
 }
 
 
-void ShooterGame::ClampPlayer() {
-    if (playerX < 0) playerX = 0;
-    if (playerY < 0) playerY = 0;
-    if (playerX > SCREEN_WIDTH-40) playerX = SCREEN_WIDTH-40;//720;
-    if (playerY > SCREEN_HEIGHT-32) playerY = SCREEN_HEIGHT-32;//520;
-}
-
 HRESULT ShooterGame::LoadBitmapFromFile(PCWSTR uri, ID2D1Bitmap** ppBitmap) {
     if (!m_pWICFactory || !m_pRenderTarget) return E_FAIL;
 
@@ -859,6 +850,13 @@ void ShooterGame::StarUpdate() {
     }
 }
 
+void ShooterGame::ClampPlayer() {
+    if (playerX < 0) playerX = 0;
+    if (playerY < 0) playerY = 0;
+    if (playerX > SCREEN_WIDTH-40) playerX = SCREEN_WIDTH-40;//720;
+    if (playerY > SCREEN_HEIGHT-32) playerY = SCREEN_HEIGHT-32;//520;
+}
+
 // ゲーム進行
 void ShooterGame::GameUpdate() {
     if (gameOver == 1)
@@ -902,14 +900,11 @@ void ShooterGame::GameUpdate() {
 
     // オプション更新
     for (auto& opt : Options) {
-        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
-
-        float target_x = ((playerX + 16) - opt.x) / 4;
-        float target_y = ((playerY + opt.offset_y) - opt.y) / 4;
+//        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
 
         // 滑らかに追従
-        opt.x += target_x; //(target_x - opt.x) * 0.25f;
-        opt.y += target_y; //(target_y - opt.y) * 0.25f;
+        opt.x += ((playerX + 16) - opt.x) / 4;
+        opt.y += ((playerY + opt.offset_y) - opt.y) / 4;
     }
 
 // 射撃クールタイムも時間ベースに
@@ -942,11 +937,17 @@ void ShooterGame::GameUpdate() {
 
     // 元のロジックをdeltaTimeに変換
     float baseInterval = 50.0f - (score / 250.0f);   // scoreが増えるほど短く
-    float spawnInterval = max(0.3f, baseInterval / COUNT1S);  // フレーム→秒に変換
+    float spawnInterval = max(18 / COUNT1S, baseInterval / COUNT1S);  // フレーム→秒に変換
 
     if (enemySpawnTimer >= spawnInterval) {
 
-        int type = rand() % 3;
+        int type, rand_num;
+
+		rand_num = rand() % 100;
+		if(rand_num < 60) type = 0;
+		else if(rand_num < 85) type = 1;
+		else type = 2;
+
         float count = rand() % (30 * 2 + SCREEN_HEIGHT - 40 * 2) - 30 * 2;
         enemies.push_back({ SCREEN_WIDTH+0.0f, 32.0f + (rand() % (SCREEN_HEIGHT-32-32-32)), 0.0f, 5.0f / COUNT1S, type, 0.0f, count,
             (type == 0)? 1:3, false});
@@ -1261,7 +1262,7 @@ void ShooterGame::CheckCollisions() {
                 opt.offset_y = offset*2;
                 opt.x = 0;//playerX + 20;
                 opt.y = 0;//playerY + 16 + offset;
-                opt.angle = 0.0f;
+//                opt.angle = 0.0f;
                 Options.push_back(opt);
             }
             else if (it->type == 2) {                    // シールド
