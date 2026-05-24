@@ -344,7 +344,9 @@ HRESULT ShooterGame::Initialize() {
     RegisterClassEx(&wcex);
 
     m_hwnd = CreateWindow(L"Direct2DShooter", L"Direct2D 横スクロールシューティング",
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+//        WS_OVERLAPPEDWINDOW,
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+        CW_USEDEFAULT, CW_USEDEFAULT,
         SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2,   // ← ここを2倍くらいに
         NULL, NULL, HINST_THISCOMPONENT, this);
 
