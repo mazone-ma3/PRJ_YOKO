@@ -14,13 +14,15 @@ PYXEL 逆にグラフィックを寄せた物。
 
 V9968 (MSX2++)X68K版のz88dk(2025/1/26以前の版)縮小移植。
 
+BMP 旧版の画像データファイル
+
 MSX2 MSX1版の移植。試作。
 
 MSX2ROM MSX2版をROM化した物。
 
 Direct2D Windows版。VS2022での作りかけ。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
 
-BMP 旧版の画像データファイル
+raylib gcc(MINGW)+raylibによるWindows版およびEmscriptenによるWeb版
 
 ※ボムを一瞬で使い切ってしまうバグがあります。(2026/4/11)→対策はしました。
 
@@ -39,6 +41,10 @@ https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_YO
 ↓WebMSXでMSX2版を実行
 
 https://webmsx.org/cbios/?MACHINE=MSX2J&rom=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX2ROM/BIN/yokoshtm2.rom
+
+↓EmscriptenによるWeb版を実行
+
+https://mazone-ma3.github.io/github.io/PRJYOKO/
 
 ↓元のPyxel版のコード
 
