@@ -22,9 +22,7 @@ MSX2ROM MSX2版をROM化した物。
 
 Direct2D Windows版。VS2022での作りかけ。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
 
-raylib gcc(MINGW)+raylibによるWindows版およびEmscriptenによるWeb版
-
-※ボムを一瞬で使い切ってしまうバグがあります。(2026/4/11)→対策はしました。
+raylib gcc(MINGW)+raylibによるWindows版およびEmscriptenによるWeb版。試作。F11でフルスクリーン。
 
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
