@@ -766,11 +766,10 @@ namespace RaylibSideScrollerShooter
                if (chain_timer <= 0.0f) {
                     chain_count = 0;
                 }
+			}
 
 		    if((gameOver != 0) && (score > high_score))
 		        high_score = score;
-}
-
 
             // 背景スクロール
             //            bgX -= 120 * 2 * delta;
