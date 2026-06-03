@@ -24,7 +24,7 @@ Direct2D Windows(x64)版。VS2022での作りかけ。(XInputのみ対応) F11�
 
 raylib gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb版。試作。F11でフルスクリーン。
 
-raylibcs VC#+raylub-csによるWindows(x64)版。gcc版の移植。試作。(要.NET SDK 10 & raylib.dll) 
+raylibcs VC#+raylib-csによるWindows(x64)版。gcc版の移植。試作。(要.NET SDK 10 & raylib.dll) 
 
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
