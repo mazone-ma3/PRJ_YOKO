@@ -20,9 +20,11 @@ MSX2 MSX1版の移植。試作。
 
 MSX2ROM MSX2版をROM化した物。
 
-Direct2D Windows版。VS2022での作りかけ。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
+Direct2D Windows(x64)版。VS2022での作りかけ。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
 
-raylib gcc(MINGW)+raylibによるWindows版およびEmscriptenによるWeb版。試作。F11でフルスクリーン。
+raylib gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb版。試作。F11でフルスクリーン。
+
+raylibcs VC#+raylub-csによるWindows(x64)版。gcc版の移植。試作。(要.NET SDK 10 & raylib.dll) 
 
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
