@@ -153,11 +153,11 @@ namespace RaylibSideScrollerShooter
 
         // プレイヤー
         static Rectangle player = new Rectangle(60f, 160f, 32f, 12f);//60, 50);
-        static float playerSpeed = 300f;
+        static float playerSpeed = 4f * COUNT1S;
 
         // 自機弾
         static List<Rectangle> bullets = new List<Rectangle>();
-        static float bulletSpeed = 600f;
+        static float bulletSpeed = 12f * COUNT1S;
         static float shootCooldown = 0f;
 
         // 敵
