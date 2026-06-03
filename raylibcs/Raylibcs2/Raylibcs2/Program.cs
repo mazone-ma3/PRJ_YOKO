@@ -956,25 +956,10 @@ namespace RaylibSideScrollerShooter
 
         static void ResetGame()
         {
-            if (score > highScore) highScore = score;
-            score = 0;
-            bullets.Clear();
-            enemies.Clear();
-            eBullets.Clear();
-            chain_items.Clear();
-            Items.Clear();
-            options.Clear();
-            particles.Clear();
-
-            gametime = 0;
-            enemySpawnTimer = 0.0f;
-            chain_count = 0;
-            chain_timer = 0f;
-
             player.X = 60f;
             player.Y = 160f; // ScreenHeight / 2 - 30;
-            gameOver = 0; // false;
-
+//            if (score > highScore) highScore = score;
+            score = 0;
             if (easy_mode == true)
             {
                 lives = 3;
@@ -983,6 +968,25 @@ namespace RaylibSideScrollerShooter
             {
                 lives = 1;
             }
+            gameOver = 0; // false;
+            bullets.Clear();
+            eBullets.Clear();
+            enemies.Clear();
+            options.Clear();
+            Items.Clear();
+            chain_items.Clear();
+            particles.Clear();
+
+            gametime = 0;
+		    option_cooldown = 10;
+			shield_active = false;
+		    bomb_active = false;
+	        bomb_stock = 0;
+		    key_b_flag = false;
+            chain_count = 0;
+            chain_timer = 0f;
+
+            enemySpawnTimer = 0.0f;
 
             Raylib.StopMusicStream(bgm);
             Raylib.PlayMusicStream(bgm);
