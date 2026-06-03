@@ -147,7 +147,6 @@ namespace RaylibSideScrollerShooter
         static int chain_count = 0;
         static float chain_timer = 0f;
 
-        static int high_score = 5000;
         static bool easy_mode = false;
         static int lives = 0;
 
@@ -186,7 +185,7 @@ namespace RaylibSideScrollerShooter
 
         // スコア
         static int score = 0;
-        static int highScore = 0;
+        static int high_score = 5000;
 
         // ゲームオーバー
         static int gameOver = 1;
@@ -544,6 +543,7 @@ namespace RaylibSideScrollerShooter
             for (int b = bullets.Count - 1; b >= 0; b--)
             {
                 Rectangle bullet = bullets[b];
+		        bool hit = false;
 
                 for (int e = enemies.Count - 1; e >= 0; e--)
                 {
@@ -555,62 +555,71 @@ namespace RaylibSideScrollerShooter
                     {
                         CreateParticles(enemy.X + 16, enemy.Y + 16, 8, 0);   // 通常爆発
 
-		                if (--enemy.count_hp == 0) {
+		                if (--enemy.count_hp == 0)
+						{
 
-						    // オプションアイテム出現（確率20%くらい）
-//						    if (Raylib.GetRandomValue(0, 100 - 1) < 22 && Options.size() < MAX_OPTIONS) {
-			                    if (option_cooldown <= 0){
-//							        Item item;
-//							        item.x = eit->x;
-//							        item.y = eit->y;
-//			                        item.timer = 300.0f;        // 約5秒で消える
-//							        item.type = 1;           // 1 = オプションアイテム
-							        Items.Add(new Item(enemy.X, enemy.Y, 300f, 1)); //push_back(item);
+                            // オプションアイテム出現（確率20%くらい）
+//                            if (Raylib.GetRandomValue(0, 100 - 1) < 22 && options.Count() < MAX_OPTIONS)
+ //                           {
+                                if (option_cooldown <= 0)
+                                {
+ //							        Item item;
+ //							        item.x = eit->x;
+ //							        item.y = eit->y;
+ //			                        item.timer = 300.0f;        // 約5秒で消える
+ //							        item.type = 1;           // 1 = オプションアイテム
+                                    Items.Add(new Item(enemy.X, enemy.Y, 300f, 1)); //push_back(item);
 
-			                        option_cooldown = 10;
-			                    }
-			                    else {
-			                        --option_cooldown;
-			                    }
-
+                                    option_cooldown = 10;
+                                }
+                                else
+                                {
+                                    --option_cooldown;
+                                }
+ //                           }
 							    // シールドアイテム出現（確率12%程度）
-							    if (Raylib.GetRandomValue(0, 100 - 1) < 12 && !shield_active) {
-//							        Item item;
-//							        item.x = eit->x;
-//							        item.y = eit->y;
-//							        item.timer = 280.0f;
-//							        item.type = 2;         // 2 = シールド
-							        Items.Add(new Item(enemy.X, enemy.Y, 280f, 2)); //push_back(item);
-							    }
+						    if (Raylib.GetRandomValue(0, 100 - 1) < 12 && !shield_active) {
+//						        Item item;
+//						        item.x = eit->x;
+//						        item.y = eit->y;
+//						        item.timer = 280.0f;
+//						        item.type = 2;         // 2 = シールド
+						        Items.Add(new Item(enemy.X, enemy.Y, 280f, 2)); //push_back(item);
+						    }
 
-			                    // ボムアイテム出現
-			                    if (Raylib.GetRandomValue(0, 100 - 1) < 10) {        // 約10%の確率
-//								    Item item;
-//								    item.x = eit->x;
-//								    item.y = eit->y;
-//								    item.timer = 270.0f;
-//								    item.type = 3;              // 3 = ボム
-								    Items.Add(new Item(enemy.X, enemy.Y, 270f, 3));//push_back(item);
-								}
-							    // === チェインアイテム出現 ===
-							    if (Raylib.GetRandomValue(0, 100 - 1) < 40) {        // 40%くらいの確率で落とす
-//							        ChainItem item;
-//							        item.x = eit->x;
-//							        item.y = eit->y;
-//							        item.timer = 240.0f;
-							        chain_items.Add(new ChainItem(enemy.X, enemy.Y, 240)); //)push_back(item);
-							    }
+		                    // ボムアイテム出現
+		                    if (Raylib.GetRandomValue(0, 100 - 1) < 10) {        // 約10%の確率
+//							    Item item;
+//							    item.x = eit->x;
+//							    item.y = eit->y;
+//	    					    item.timer = 270.0f;
+//							    item.type = 3;              // 3 = ボム
+							    Items.Add(new Item(enemy.X, enemy.Y, 270f, 3));//push_back(item);
+							}
+						    // === チェインアイテム出現 ===
+						    if (Raylib.GetRandomValue(0, 100 - 1) < 40) {        // 40%くらいの確率で落とす
+//						        ChainItem item;
+//						        item.x = eit->x;
+//						        item.y = eit->y;
+//						        item.timer = 240.0f;
+						        chain_items.Add(new ChainItem(enemy.X, enemy.Y, 240)); //)push_back(item);
+						    }
 
-		                        bullets.RemoveAt(b);
-		                        enemies.RemoveAt(e);
-		                        score += 100;
-		                        Raylib.PlaySound(explosionSound);
-		                        break;
-
-
+//		                      bullets.RemoveAt(b);
+		                    enemies.RemoveAt(e);
+		                    score += 100;
+		                    Raylib.PlaySound(explosionSound);
+//		                    break;
+							
 						}
+						hit = true;
+						break;
                     }
                 }
+				if(hit)
+				{
+	                bullets.RemoveAt(b);
+				}
             }
 
             // 敵弾 vs 自機
