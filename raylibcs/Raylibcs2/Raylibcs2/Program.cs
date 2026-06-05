@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Numerics;
 using System.Timers;
 using Raylib_cs;
+using RaylibSideScrollerShooter;
 using static System.Net.Mime.MediaTypeNames;
 using Color = Raylib_cs.Color;
 using Image = Raylib_cs.Image;
@@ -11,264 +12,196 @@ using Rectangle = Raylib_cs.Rectangle;
 
 namespace RaylibSideScrollerShooter
 {
-//  struct Bullet { float x, y; };
 
-    class Program
+    class Enemy {
+        public float X = 0f;
+        public float Y = 0f;
+        public float shootTimer = 0f;
+        public float nextShootTime = 0f;
+        public int type = 0;
+        public float count = 0f;
+        public float count2 = 0f;
+        public int count_hp = 0;
+        public bool count_flag = false;
+
+
+        public Enemy(float initX, float initY, float initshootTimer, float initnextShootTime,
+            int inittype, float initcount, float initcount2, int inithp, bool initflag)
+        {
+            X = initX;
+            Y = initY;
+            shootTimer = initshootTimer;
+            nextShootTime = initnextShootTime;
+            type = inittype;
+            count = initcount;
+            count2 = initcount2;
+            count_hp = inithp;
+            count_flag = initflag;
+        }
+    };
+    class eBullet {
+        public float X;
+        public float Y;
+        public float vx;
+        public float vy;
+
+        public eBullet(float initX, float initY, float initvx, float initvy)
+        {
+            X = initX;
+            Y = initY;
+            vx = initvx;
+            vy = initvy;
+        }
+    };
+
+    class Option {
+        public float offset_y;
+        public float X;
+        public float Y;
+
+        public Option(float initoffset_y, float initX, float initY)
+        {
+            offset_y = initoffset_y;
+            X = 0; // initX;
+            Y = 0; // initY;
+        }
+    }
+
+    class Item {
+        public float X;
+        public float Y;
+        public float timer;
+        public int type;
+        public Item(float initX, float initY, float inittimer, int inittype)
+        {
+            X = initX;
+            Y = initY;
+            timer = inittimer;
+            type = inittype;
+        }
+    }
+
+    class ChainItem {
+        public float X;
+        public float Y;
+        public float timer;
+        public ChainItem(float initX, float initY, float inittimer)
+        {
+            X = initX;
+            Y = initY;
+            timer = inittimer;
+        }
+    }
+
+    public class Star { public float x, y, baseSpeed, speed, size; }; // ID2D1SolidColorBrush* brush = nullptr; };
+
+    class Particle {
+        public float X, Y;
+        public float vx, vy;
+        public int life;           // 残りフレーム
+        public int color_index;    // 0?4で星ブラシと同じ色を使う
+        public int type;           // 0=通常破片、1=大きな爆発など（後で拡張用）
+        public Particle(float initX, float initY, float initvx, float initvy, int initlife, int initcolor_index, int inittype)
+        {
+            X = initX;
+            Y = initY;
+            vx = initvx;
+            vy = initvy;
+            life = initlife;
+            color_index = initcolor_index;
+            type = inittype;
+        }
+    };
+
+    public static class GameConfig
     {
-        class Enemy {
-            public float X = 0f;
-            public float Y = 0f;
-            public float shootTimer = 0f;
-            public float nextShootTime = 0f;
-            public int type = 0;
-            public float count = 0f;
-            public float count2 = 0f; 
-            public int count_hp = 0;
-            public bool count_flag = false;
-
-
-            public Enemy(float initX, float initY, float initshootTimer, float initnextShootTime,
-                int inittype, float initcount, float initcount2, int inithp, bool initflag)
-            {
-                X = initX;
-                Y = initY;
-                shootTimer = initshootTimer;
-                nextShootTime = initnextShootTime;
-                type = inittype;
-                count = initcount;
-                count2 = initcount2;
-                count_hp = inithp;
-                count_flag = initflag;
-            }
-        };
-        class eBullet {
-            public float X;
-            public float Y;
-            public float vx;
-            public float vy;
-
-            public eBullet(float initX, float initY, float initvx, float initvy)
-            {
-                X = initX;
-                Y = initY;
-                vx = initvx;
-                vy = initvy;
-            }
-        };
-
-        class Option {
-            public float offset_y;
-            public float X;
-            public float Y;
-
-            public Option(float initoffset_y, float initX, float initY)
-            {
-                offset_y = initoffset_y;
-                X = 0; // initX;
-                Y = 0; // initY;
-            }
-        }
-
-        class Item {
-            public float X;
-            public float Y;
-            public float timer;
-            public int type;
-            public Item(float initX, float initY, float inittimer, int inittype)
-            {
-                X = initX;
-                Y = initY;
-                timer = inittimer;
-                type = inittype;
-            }
-        }
-
-        class ChainItem {
-            public float X;
-            public float Y;
-            public float timer;
-            public ChainItem(float initX, float initY, float inittimer)
-            {
-                X = initX;
-                Y = initY;
-                timer = inittimer;
-            }
-        }
-
-        class Star { public float x, y, baseSpeed, speed, size; }; // ID2D1SolidColorBrush* brush = nullptr; };
-
-        class Particle {
-            public float X, Y;
-            public float vx, vy;
-            public int life;           // 残りフレーム
-            public int color_index;    // 0?4で星ブラシと同じ色を使う
-            public int type;           // 0=通常破片、1=大きな爆発など（後で拡張用）
-            public Particle(float initX, float initY, float initvx, float initvy, int initlife, int initcolor_index, int inittype)
-            {
-                X = initX;
-                Y = initY;
-                vx = initvx;
-                vy = initvy;
-                life = initlife;
-                color_index = initcolor_index;
-                type = inittype;
-            }
-        };
-
-
         // 画面サイズ
-        const int X_SCALE = 2;
-        const int Y_SCALE = 2;
-        static float scale;
-        static RenderTexture2D target;
-        const int ScreenWidth = 256*2*X_SCALE;
-        const int ScreenHeight = 192*2*Y_SCALE;
+        public const int X_SCALE = 2;
+        public const int Y_SCALE = 2;
+
+        public const int ScreenWidth = 256 * 2 * X_SCALE;
+        public const int ScreenHeight = 192 * 2 * Y_SCALE;
+        public const int FONT_SIZE = 32;
+        public const int MAX_OPTIONS = 2;
+        public const float BOMB_DURATION = 0.0f;
+    }
+
+ 
+    public class GameWorld
+    {
         const float COUNT1S = 60f;
-        const int FONT_SIZE = 32;
-        const int MAX_OPTIONS = 2;
 
-        static Texture2D chrTex;
-        static Texture2D fontTex;
-        static Sound laserSound;
-        static Sound explosionSound;
-        static Music bgm;
+        float scale;
 
-        static int bomb_stock = 0;
-        static bool bomb_active = false;
-        static float bomb_timer = 0.0f;
-        const float BOMB_DURATION = 0.0f;
-        static bool key_b_flag = false;
 
-        static bool shield_active = false;
+        int bomb_stock = 0;
+        bool bomb_active = false;
+        float bomb_timer = 0.0f;
+        bool key_b_flag = false;
 
-        static float gametime = 0;
-        static int option_cooldown = 0;
+        bool shield_active = false;
 
-        static int chain_count = 0;
-        static float chain_timer = 0f;
+        float gametime = 0;
+        int option_cooldown = 0;
 
-        static bool easy_mode = false;
-        static int lives = 0;
+        int chain_count = 0;
+        float chain_timer = 0f;
+
+        bool easy_mode = false;
+        int lives = 0;
 
         // プレイヤー
-        static Rectangle player = new Rectangle(60f, 160f, 32f, 12f);//60, 50);
-        static float playerSpeed = 4f * COUNT1S;
+        Rectangle player = new Rectangle(60f, 160f, 32f, 12f);//60, 50);
+        float playerSpeed = 4f * COUNT1S;
 
         // 自機弾
-        static List<Rectangle> bullets = new List<Rectangle>();
-        static float bulletSpeed = 12f * COUNT1S;
-        static float shootCooldown = 0f;
+        List<Rectangle> bullets = new List<Rectangle>();
+        float bulletSpeed = 12f * COUNT1S;
+        float shootCooldown = 0f;
 
         // 敵
-//        static List<Rectangle> enemies = new List<Rectangle>();
-        static List<Enemy> enemies = new List<Enemy>();
-        static float enemySpawnTimer = 0f;
-//        static float enemySpeed = 200f;
+        //        static List<Rectangle> enemies = new List<Rectangle>();
+        List<Enemy> enemies = new List<Enemy>();
+        float enemySpawnTimer = 0f;
+        //        static float enemySpeed = 200f;
 
         // 敵弾
-        static List<eBullet> eBullets = new List<eBullet>();
+        List<eBullet> eBullets = new List<eBullet>();
 
         // パーティクル
-        static List<Particle> particles = new List<Particle>();
+        List<Particle> particles = new List<Particle>();
 
 
-        static List<ChainItem> chain_items = new List<ChainItem>();
-        static List<Item> Items =  new List<Item>();
-        static List<Option> options = new List<Option>();
+        List<ChainItem> chain_items = new List<ChainItem>();
+        List<Item> Items = new List<Item>();
+        List<Option> options = new List<Option>();
 
-
-        // 背景
-//        static float bgX = 0f;
-//        static Texture2D bgTexture;
-
-        static List<Star> stars =  new List<Star>();
 
         // スコア
-        static int score = 0;
-        static int high_score = 5000;
+        public int score = 0;
 
         // ゲームオーバー
-        static int gameOver = 1;
+        public int gameOver = 1;
 
-//        static float enemySpawnTimer = 0.0f;
+        public AssetManager assets;
 
-        static void Main(string[] args)
+        //        static float enemySpawnTimer = 0.0f;
+        //	}
+        public RenderTexture2D target;
+        public List<Star> stars;
+
+        public GameWorld(List<Star> _stars, AssetManager _assets, RenderTexture2D _target)
         {
-            Raylib.SetConfigFlags(ConfigFlags.ResizableWindow | ConfigFlags.VSyncHint);
-            Raylib.InitWindow(ScreenWidth, ScreenHeight, "Raylib C# 横スクロールシューティング");
-            //            Raylib.SetTargetFPS(60);
-
-            target = Raylib.LoadRenderTexture(ScreenWidth, ScreenHeight);
-            Raylib.SetTextureFilter(target.Texture, TextureFilter.Point);
-
-            chrTex = Raylib.LoadTexture("yokosht.png"); // 画像がなければ後で矩形で代用
-            fontTex = Raylib.LoadTexture("FONTYOKO.png");
-
-            Raylib.InitAudioDevice();
-            laserSound = Raylib.LoadSound("laser.wav");
-            explosionSound = Raylib.LoadSound("explosion.wav");
-            bgm = Raylib.LoadMusicStream("bgm.mp3");
-
-
-            // 簡易的な背景用テクスチャ（星空）
-/*            Image bgImage = Raylib.GenImageColor(ScreenWidth, ScreenHeight, Color.Black);
-            // 星を少し描画
-            for (int i = 0; i < 100; i++)
-            {
-                int x = Raylib.GetRandomValue(0, 799);
-                int y = Raylib.GetRandomValue(0, ScreenHeight - 1);
-                Raylib.ImageDrawPixel(ref bgImage, x, y, Color.White);
-            }
-            bgTexture = Raylib.LoadTextureFromImage(bgImage);
-            Raylib.UnloadImage(bgImage);
-*/
-
-            for (int i = 0; i < 80; ++i) {
-                stars.Add(new Star());
-                Star s = stars[i];
-                s.x = Raylib.GetRandomValue(0, ScreenWidth / X_SCALE - 1);
-                s.y = Raylib.GetRandomValue(0, ScreenHeight / Y_SCALE - 1);
-                s.baseSpeed = 0.5f + Raylib.GetRandomValue(0,99) / 30f; // static_cast<float>(rand() % 100) / 30.0f;
-                s.speed = s.baseSpeed;   // もし個別速度も欲しい場合
-                if (s.speed > 2f)
-                    s.size = 2f;
-                else
-                    s.size = 1f;
-                //              s.brush = nullptr;                    // 最初はnullptrにしておく
-                //              stars.push_back(s);
-                stars[i] = s;//.Add(new s);
-            }
-
-//            ResetGame();
-
-            while (!Raylib.WindowShouldClose())
-            {
-//                if (gameOver == 0)
-//                {
-                    UpdateGame();
-//                }
-
-                DrawGame();
-            }
-
-  //          Raylib.UnloadTexture(bgTexture);
-
-            Raylib.UnloadTexture(fontTex);
-            Raylib.UnloadTexture(chrTex);
-
-            Raylib.UnloadSound(explosionSound);
-            Raylib.UnloadSound(laserSound);
-
-            Raylib.UnloadMusicStream(bgm);
-
-            Raylib.CloseWindow();
+            assets = _assets;
+            target = _target;
+            stars = _stars;
         }
 
         // ゲームの更新
-        static void UpdateGame()
+        public void UpdateGame()
         {
             float delta = Raylib.GetFrameTime();
-            Raylib.UpdateMusicStream(bgm);
+            Raylib.UpdateMusicStream(assets.bgm);
             if (Raylib.IsKeyPressed(KeyboardKey.F11))
             {
                 Raylib.ToggleFullscreen();
@@ -307,7 +240,7 @@ namespace RaylibSideScrollerShooter
                 s.x -= s.baseSpeed * delta * COUNT1S;   // これでFPSが60の時に元の速度と同じになる
                 if (s.x < 0)
                 {
-                    s.x = ScreenWidth / X_SCALE;
+                    s.x = GameConfig.ScreenWidth / GameConfig.X_SCALE;
 //                    s.y = Raylib.GetRandomValue(0, ScreenHeight/Y_SCALE - 1);
                 }
             }
@@ -327,8 +260,8 @@ namespace RaylibSideScrollerShooter
                 player.X += playerSpeed * delta * 0.7f;
 
             // 画面内制限
-            player.Y = Math.Clamp(player.Y, 0, ScreenHeight / X_SCALE - player.Height * 2);
-            player.X = Math.Clamp(player.X, 0, ScreenWidth / Y_SCALE - player.Width * 2); // 左側に留める
+            player.Y = Math.Clamp(player.Y, 0, GameConfig.ScreenHeight / GameConfig.X_SCALE - player.Height * 2);
+            player.X = Math.Clamp(player.X, 0, GameConfig.ScreenWidth / GameConfig.Y_SCALE - player.Width * 2); // 左側に留める
 
 
             // オプション更新
@@ -372,7 +305,7 @@ namespace RaylibSideScrollerShooter
                 b.X += bulletSpeed * delta;
                 bullets[i] = b;                     // リストに戻す
 
-                if (b.X > ScreenWidth / X_SCALE)
+                if (b.X > GameConfig.ScreenWidth / GameConfig.X_SCALE)
                     bullets.RemoveAt(i);
             }
 
@@ -396,8 +329,8 @@ namespace RaylibSideScrollerShooter
 
                 //                enemies.Add(new Enemy(ScreenWidth + 50,
                 //                  Raylib.GetRandomValue(50, ScreenHeight - 80), 50, 40));
-                enemies.Add(new Enemy(ScreenWidth / X_SCALE + 0f,
-                    Raylib.GetRandomValue(32, ScreenHeight / Y_SCALE - 32 - 32), 0f, 5f / COUNT1S, type, 0f, 0, 1, false));
+                enemies.Add(new Enemy(GameConfig.ScreenWidth / GameConfig.X_SCALE + 0f,
+                    Raylib.GetRandomValue(32, GameConfig.ScreenHeight / GameConfig.Y_SCALE - 32 - 32), 0f, 5f / COUNT1S, type, 0f, 0, 1, false));
                     enemySpawnTimer = 0f; // (float)Raylib.GetRandomValue(60, 120) / 100f;
             }
 
@@ -495,7 +428,7 @@ namespace RaylibSideScrollerShooter
                         lives--;
                         if (lives <= 0)
                         {
-                            Raylib.StopMusicStream(bgm);
+                            Raylib.StopMusicStream(assets.bgm);
                             gameOver = 1;
                         }
                     }
@@ -508,7 +441,7 @@ namespace RaylibSideScrollerShooter
             for (int i = enemies.Count - 1; i >= 0; i--)
             {
                 Enemy e = enemies[i];
-                if ((e.X < -32) || (e.X > ScreenWidth / X_SCALE))   // || (e.Y < 32) || (e.Y > ScreenHeight)) {
+                if ((e.X < -32) || (e.X > GameConfig.ScreenWidth / GameConfig.X_SCALE))   // || (e.Y < 32) || (e.Y > ScreenHeight)) {
                                                                     //                 if (e.X < -60)
                 {
                     enemies.RemoveAt(i);
@@ -528,7 +461,7 @@ namespace RaylibSideScrollerShooter
                 it.X += it.vx * delta * COUNT1S;
                 it.Y += it.vy * delta * COUNT1S;
 
-                if ((it.X < -32) || (it.X > ScreenWidth / X_SCALE) || (it.Y < 32) || (it.Y > ScreenHeight / Y_SCALE))
+                if ((it.X < -32) || (it.X > GameConfig.ScreenWidth / GameConfig.X_SCALE) || (it.Y < 32) || (it.Y > GameConfig.ScreenHeight / GameConfig.Y_SCALE))
                 {
                     eBullets.RemoveAt(i);
                 }
@@ -608,7 +541,7 @@ namespace RaylibSideScrollerShooter
 //		                      bullets.RemoveAt(b);
 		                    enemies.RemoveAt(e);
 		                    score += 100;
-		                    Raylib.PlaySound(explosionSound);
+		                    Raylib.PlaySound(assets.explosionSound);
 //		                    break;
 							
 						}
@@ -642,7 +575,7 @@ namespace RaylibSideScrollerShooter
                         {
                             gameOver = 1;
                             //                  StopBGM();
-                            Raylib.StopMusicStream(bgm);
+                            Raylib.StopMusicStream(assets.bgm);
                         }
                     }
                     eBullets.RemoveAt(i);
@@ -699,7 +632,7 @@ namespace RaylibSideScrollerShooter
 		        // 自機との当たり判定
 		        if (Math.Abs(it.X - player.X) < 44-16 && Math.Abs(it.Y - player.Y) < 44-16) {
 
-		            if (it.type == 1 && options.Count() < MAX_OPTIONS) {   // オプションアイテム
+		            if (it.type == 1 && options.Count() < GameConfig.MAX_OPTIONS) {   // オプションアイテム
 		                float offset;
 						if(options.Count() == 0)
 							offset = 25.0f;
@@ -721,7 +654,7 @@ namespace RaylibSideScrollerShooter
 					}
 
 //		            PlaySound(m_seLaser);
-					Raylib.PlaySound(laserSound);
+					Raylib.PlaySound(assets.laserSound);
 
 		            Items.RemoveAt(i); //it = Items.erase(it);
 		            continue;
@@ -752,7 +685,7 @@ namespace RaylibSideScrollerShooter
 
                     chain_items.RemoveAt(i);
                     //		            PlaySound(m_seLaser);     // 取得音
-                    Raylib.PlaySound(laserSound);
+                    Raylib.PlaySound(assets.laserSound);
                     continue;
                 }
                 chain_items[i] = it;
@@ -777,15 +710,15 @@ namespace RaylibSideScrollerShooter
                 }
 			}
 
-		    if((gameOver != 0) && (score > high_score))
-		        high_score = score;
+//		    if((gameOver != 0) && (score > high_score))
+//		        high_score = score;
 
             // 背景スクロール
             //            bgX -= 120 * 2 * delta;
             //            if (bgX <= -bgTexture.Width) bgX = 0;
         }
 
-		static void UseBomb() {
+		void UseBomb() {
 		    if (bomb_stock <= 0 || bomb_active) return;
 
 		    bomb_stock--;
@@ -801,28 +734,28 @@ namespace RaylibSideScrollerShooter
 
 		    // 画面全体に破片を散らす
 		    for (int i = 0; i < 60; ++i) {
-		        float rx = Raylib.GetRandomValue(0, (ScreenWidth / X_SCALE) - 1);
-		        float ry = Raylib.GetRandomValue(0, (ScreenHeight / Y_SCALE) - 1);
+		        float rx = Raylib.GetRandomValue(0, (GameConfig.ScreenWidth / GameConfig.X_SCALE) - 1);
+		        float ry = Raylib.GetRandomValue(0, (GameConfig.ScreenHeight / GameConfig.Y_SCALE) - 1);
 		        CreateParticles(rx, ry, 6, 1);
 		    }
 
 		    score += 200;
 //		    PlaySound(m_seExplosion);   // ボム音（大きめの効果音を使う）
-			Raylib.PlaySound(explosionSound);
+			Raylib.PlaySound(assets.explosionSound);
 		}
 
 
         // 描画
-        static void DrawGame()
+        public void DrawGame(int high_score)
         {
-            scale = Math.Min((float)Raylib.GetScreenWidth() / ScreenWidth, (float)Raylib.GetScreenHeight() / ScreenHeight);
+            scale = Math.Min((float)Raylib.GetScreenWidth() / GameConfig.ScreenWidth, (float)Raylib.GetScreenHeight() / GameConfig.ScreenHeight);
             //            X_SCALE = scale;
             //            Y_SCALE = scale;
             Rectangle destRec = new Rectangle(
-            ((float)Raylib.GetScreenWidth() - ((float)ScreenWidth * scale)) * 0.5f,
-            ((float)Raylib.GetScreenHeight() - ((float)ScreenHeight * scale)) * 0.5f,
-            (float)ScreenWidth * scale,
-            (float)ScreenHeight * scale
+            ((float)Raylib.GetScreenWidth() - ((float)GameConfig.ScreenWidth * scale)) * 0.5f,
+            ((float)Raylib.GetScreenHeight() - ((float)GameConfig.ScreenHeight * scale)) * 0.5f,
+            (float)GameConfig.ScreenWidth * scale,
+            (float)GameConfig.ScreenHeight * scale
             );
 
 
@@ -836,7 +769,7 @@ namespace RaylibSideScrollerShooter
 //            Raylib.DrawTexture(bgTexture, (int)bgX + bgTexture.Width, 0, Color.White);
 
             foreach (var s in stars) {
-                Raylib.DrawCircle((int)s.x * X_SCALE, (int)s.y * Y_SCALE, 1.5f, Color.White);
+                Raylib.DrawCircle((int)s.x * GameConfig.X_SCALE, (int)s.y * GameConfig.Y_SCALE, 1.5f, Color.White);
             }
 
 
@@ -844,7 +777,7 @@ namespace RaylibSideScrollerShooter
 //          if (!particles.empty()){ // && m_pTextBrush) {
                 foreach (var p in particles) {
                     if (p.life > 0) {
-                        Raylib.DrawCircle((int)p.X * X_SCALE, (int)p.Y * Y_SCALE, 1.5f, Color.Yellow);
+                        Raylib.DrawCircle((int)p.X * GameConfig.X_SCALE, (int)p.Y * GameConfig.Y_SCALE, 1.5f, Color.Yellow);
                     }
                 }
 //          }
@@ -918,16 +851,16 @@ namespace RaylibSideScrollerShooter
                 put_strings_num(0, 0, "SCORE ", score, 7);
 
             if (easy_mode == true)
-                put_strings_num(0, 2 * FONT_SIZE, "LIVES ", lives, 1);
+                put_strings_num(0, 2 * GameConfig.FONT_SIZE, "LIVES ", lives, 1);
 
-            put_strings_num(0, 1 * FONT_SIZE, "BOMB  ", bomb_stock, 1);
+            put_strings_num(0, 1 * GameConfig.FONT_SIZE, "BOMB  ", bomb_stock, 1);
 
 //            wchar_t text[128];
-            put_strings_num(16 * FONT_SIZE, 0, "COUNT ", (int)gametime, 7);
+            put_strings_num(16 * GameConfig.FONT_SIZE, 0, "COUNT ", (int)gametime, 7);
 
             if (chain_count > 0)
             {
-                put_strings_num(16 * FONT_SIZE, 1 * FONT_SIZE, "CHAIN ", chain_count, 3);
+                put_strings_num(16 * GameConfig.FONT_SIZE, 1 * GameConfig.FONT_SIZE, "CHAIN ", chain_count, 3);
             }
 
 
@@ -937,10 +870,10 @@ namespace RaylibSideScrollerShooter
                 //                Raylib.DrawText("GAME OVER", ScreenWidth / 2 - 180, ScreenHeight / 2 - 80, 70, Color.Red);
                 //                Raylib.DrawText($"FINAL SCORE: {score}", ScreenWidth / 2 - 160, ScreenHeight / 2 + 20, 40, Color.White);
                 //                Raylib.DrawText("RESTART R KEY", ScreenWidth / 2 - 140, ScreenHeight / 2 + 80, 30, Color.Yellow);
-                put_strings(11 * FONT_SIZE, 12 * FONT_SIZE, "GAME OVER");
-                put_strings_num(7 * FONT_SIZE, 15 * FONT_SIZE, "HIGH SCORE ", high_score, 7);
+                put_strings(11 * GameConfig.FONT_SIZE, 12 * GameConfig.FONT_SIZE, "GAME OVER");
+                put_strings_num(7 * GameConfig.FONT_SIZE, 15 * GameConfig.FONT_SIZE, "HIGH SCORE ", high_score, 7);
 
-                put_strings(7 * FONT_SIZE, 18 * FONT_SIZE, "PRESS A TO RESTART");
+                put_strings(7 * GameConfig.FONT_SIZE, 18 * GameConfig.FONT_SIZE, "PRESS A TO RESTART");
             }
 
             Raylib.EndTextureMode();
@@ -962,7 +895,7 @@ namespace RaylibSideScrollerShooter
             Raylib.EndDrawing();
         }
 
-        static void ResetGame()
+        void ResetGame()
         {
             player.X = 60f;
             player.Y = 160f; // ScreenHeight / 2 - 30;
@@ -996,11 +929,11 @@ namespace RaylibSideScrollerShooter
 
             enemySpawnTimer = 0.0f;
 
-            Raylib.StopMusicStream(bgm);
-            Raylib.PlayMusicStream(bgm);
+            Raylib.StopMusicStream(assets.bgm);
+            Raylib.PlayMusicStream(assets.bgm);
         }
 
-        static void CreateParticles(float x, float y, int count, int type = 0)
+        void CreateParticles(float x, float y, int count, int type = 0)
         {
             for (int i = 0; i < count; ++i)
             {
@@ -1014,7 +947,7 @@ namespace RaylibSideScrollerShooter
             }
         }
 
-		static void put_strings(float x, float y, string text) { //, int mode) {
+		void put_strings(float x, float y, string text) { //, int mode) {
             int len = text.Count(); // wcslen(text);
             for (int i = 0; i < len; ++i)
             {
@@ -1023,17 +956,17 @@ namespace RaylibSideScrollerShooter
                     int pat_no = text[i] - '0';
                     float rotation = 0.0f;
 
-                    Rectangle destRect = new Rectangle(x, y, 16 * X_SCALE - 1, 16 * Y_SCALE - 1);
+                    Rectangle destRect = new Rectangle(x, y, 16 * GameConfig.X_SCALE - 1, 16 * GameConfig.Y_SCALE - 1);
                     Rectangle sourceRect = new Rectangle(16.0f * (pat_no % 16), 16.0f * (pat_no / 16), 16.0f, 16.0f);
                     Vector2 origin = new Vector2(0, 0);
 
-                    Raylib.DrawTexturePro(fontTex, sourceRect, destRect, origin, rotation, Color.White);
+                    Raylib.DrawTexturePro(assets.fontTex, sourceRect, destRect, origin, rotation, Color.White);
                 }
-                x += 16 * X_SCALE;
+                x += 16 * GameConfig.X_SCALE;
             }
 		}
 
-		static void put_strings_num(float x, float y, string str, int num, int digit){ //, int mode) {
+		void put_strings_num(float x, float y, string str, int num, int digit){ //, int mode) {
 		    string text = ""; //[128];
             int len = str.Count(); // wcslen(str), i = digit, j = num;
             int i = digit;
@@ -1046,18 +979,130 @@ namespace RaylibSideScrollerShooter
 		        j /= 10;
 		    }
 //		    text[digit] = '\0';
-		    put_strings(x+len * FONT_SIZE, y, text);
+		    put_strings(x+len * GameConfig.FONT_SIZE, y, text);
 		}
 
-        static void put_sprite(float x, float y, int pat_no)
+        void put_sprite(float x, float y, int pat_no)
         {
             float rotation = 0.0f;
 
-            Rectangle destRect = new Rectangle(x * X_SCALE, y * Y_SCALE, 32 * X_SCALE - 1, 32 * Y_SCALE - 1);
+            Rectangle destRect = new Rectangle(x * GameConfig.X_SCALE, y * GameConfig.Y_SCALE, 32 * GameConfig.X_SCALE - 1, 32 * GameConfig.Y_SCALE - 1);
             Rectangle sourceRect = new(32.0f * pat_no, 0, 32.0f, 32.0f);
             Vector2 origin = new Vector2( 0, 0);//destRect.width/2, destRect.height/2 };
 
-            Raylib.DrawTexturePro(chrTex, sourceRect, destRect, origin, rotation, Color.White);
+            Raylib.DrawTexturePro(assets.chrTex, sourceRect, destRect, origin, rotation, Color.White);
         }
+    }
+    //}
+
+    public class AssetManager
+    {
+        public Texture2D chrTex;
+        public Texture2D fontTex;
+        public Sound laserSound;
+        public Sound explosionSound;
+        public Music bgm;
+
+        public void LoadAll()
+        {
+            chrTex = Raylib.LoadTexture("yokosht.png"); // 画像がなければ後で矩形で代用
+            fontTex = Raylib.LoadTexture("FONTYOKO.png");
+
+            Raylib.InitAudioDevice();
+            laserSound = Raylib.LoadSound("laser.wav");
+            explosionSound = Raylib.LoadSound("explosion.wav");
+            bgm = Raylib.LoadMusicStream("bgm.mp3");
+        }
+        public void UnloadAll()
+        {
+            Raylib.UnloadTexture(fontTex);
+            Raylib.UnloadTexture(chrTex);
+
+            Raylib.UnloadSound(explosionSound);
+            Raylib.UnloadSound(laserSound);
+
+            Raylib.UnloadMusicStream(bgm);
+        }
+    }
+
+    class Program
+    {
+        static int high_score = 5000;
+        static List<Star> stars = new List<Star>();
+
+        static RenderTexture2D target;
+
+
+        static void Main(string[] args)
+        {
+
+
+            // 背景
+            //        static float bgX = 0f;
+            //        static Texture2D bgTexture;
+
+
+            Raylib.SetConfigFlags(ConfigFlags.ResizableWindow | ConfigFlags.VSyncHint);
+            Raylib.InitWindow(GameConfig.ScreenWidth, GameConfig.ScreenHeight, "Raylib C# 横スクロールシューティング");
+            //            Raylib.SetTargetFPS(60);
+
+            target = Raylib.LoadRenderTexture(GameConfig.ScreenWidth, GameConfig.ScreenHeight);
+            Raylib.SetTextureFilter(target.Texture, TextureFilter.Point);
+
+            AssetManager assets = new AssetManager();
+            assets.LoadAll();
+
+            // 簡易的な背景用テクスチャ（星空）
+            /*            Image bgImage = Raylib.GenImageColor(ScreenWidth, ScreenHeight, Color.Black);
+                        // 星を少し描画
+                        for (int i = 0; i < 100; i++)
+                        {
+                            int x = Raylib.GetRandomValue(0, 799);
+                            int y = Raylib.GetRandomValue(0, ScreenHeight - 1);
+                            Raylib.ImageDrawPixel(ref bgImage, x, y, Color.White);
+                        }
+                        bgTexture = Raylib.LoadTextureFromImage(bgImage);
+                        Raylib.UnloadImage(bgImage);
+            */
+
+            for (int i = 0; i < 80; ++i)
+            {
+                stars.Add(new Star());
+                Star s = stars[i];
+                s.x = Raylib.GetRandomValue(0, GameConfig.ScreenWidth / GameConfig.X_SCALE - 1);
+                s.y = Raylib.GetRandomValue(0, GameConfig.ScreenHeight / GameConfig.Y_SCALE - 1);
+                s.baseSpeed = 0.5f + Raylib.GetRandomValue(0, 99) / 30f; // static_cast<float>(rand() % 100) / 30.0f;
+                s.speed = s.baseSpeed;   // もし個別速度も欲しい場合
+                if (s.speed > 2f)
+                    s.size = 2f;
+                else
+                    s.size = 1f;
+                //              s.brush = nullptr;                    // 最初はnullptrにしておく
+                //              stars.push_back(s);
+                stars[i] = s;//.Add(new s);
+            }
+
+            //            ResetGame();
+
+            GameWorld game = new GameWorld(stars, assets, target);
+
+            while (!Raylib.WindowShouldClose())
+            {
+                //                if (gameOver == 0)
+                //                {
+                game.UpdateGame();
+                //                }
+                if ((game.gameOver != 0) && (game.score > high_score))
+                    high_score = game.score;
+
+                game.DrawGame(high_score);
+            }
+
+            //          Raylib.UnloadTexture(bgTexture);
+            assets.UnloadAll();
+
+            Raylib.CloseWindow();
+        }
+        //	}
     }
 }
