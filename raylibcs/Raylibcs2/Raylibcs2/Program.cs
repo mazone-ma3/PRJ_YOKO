@@ -346,10 +346,14 @@ namespace RaylibSideScrollerShooter
                 else if (rand_num < 85) type = 1;
                 else type = 2;
 
+				int hp = 1;
+				if(type != 0)
+					hp = 3;
+
                 //                enemies.Add(new Enemy(ScreenWidth + 50,
                 //                  Raylib.GetRandomValue(50, ScreenHeight - 80), 50, 40));
                 enemies.Add(new Enemy(GameConfig.ScreenWidth / GameConfig.X_SCALE + 0f,
-                    Raylib.GetRandomValue(32, GameConfig.ScreenHeight / GameConfig.Y_SCALE - 32 - 32), 0f, 5f / COUNT1S, type, 0f, 0, 1, false));
+                    Raylib.GetRandomValue(32, GameConfig.ScreenHeight / GameConfig.Y_SCALE - 32 - 32), 0f, 5f / COUNT1S, type, 0f, 0, hp, false));
                     enemySpawnTimer = 0f; // (float)Raylib.GetRandomValue(60, 120) / 100f;
             }
 
