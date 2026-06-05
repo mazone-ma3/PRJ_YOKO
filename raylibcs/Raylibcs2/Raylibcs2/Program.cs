@@ -181,7 +181,7 @@ namespace RaylibSideScrollerShooter
         public int score = 0;
 
         // ゲームオーバー
-        public int gameOver = 1;
+        public int gameOver; // = 1;
 
         public AssetManager assets;
 
@@ -190,11 +190,47 @@ namespace RaylibSideScrollerShooter
         public RenderTexture2D target;
         public List<Star> stars;
 
-        public GameWorld(List<Star> _stars, AssetManager _assets, RenderTexture2D _target)
+        public GameWorld(List<Star> _stars, AssetManager _assets, RenderTexture2D _target, bool _easy_mode)
         {
             assets = _assets;
             target = _target;
             stars = _stars;
+			easy_mode = _easy_mode;
+
+            player.X = 60f;
+            player.Y = 160f; // ScreenHeight / 2 - 30;
+//            if (score > highScore) highScore = score;
+            score = 0;
+            if (easy_mode == true)
+            {
+                lives = 3;
+            }
+            else
+            {
+                lives = 1;
+            }
+            gameOver = 0; // false;
+            bullets.Clear();
+            eBullets.Clear();
+            enemies.Clear();
+            options.Clear();
+            Items.Clear();
+            chain_items.Clear();
+            particles.Clear();
+
+            gametime = 0;
+		    option_cooldown = 10;
+			shield_active = false;
+		    bomb_active = false;
+	        bomb_stock = 0;
+		    key_b_flag = false;
+            chain_count = 0;
+            chain_timer = 0f;
+
+            enemySpawnTimer = 0.0f;
+
+//            Raylib.StopMusicStream(assets.bgm);
+//            Raylib.PlayMusicStream(assets.bgm);
         }
 
         // ゲームの更新
@@ -202,37 +238,6 @@ namespace RaylibSideScrollerShooter
         {
             float delta = Raylib.GetFrameTime();
             Raylib.UpdateMusicStream(assets.bgm);
-            if (Raylib.IsKeyPressed(KeyboardKey.F11))
-            {
-                Raylib.ToggleFullscreen();
-            }
-
-            if (gameOver == 1)
-            {
-//                if (Raylib.IsKeyPressed(KeyboardKey.R))
-//                {
-//                    ResetGame();
-//                }
-//            }
-
-                if(!Raylib.IsKeyPressed(KeyboardKey.Space) && !Raylib.IsKeyPressed(KeyboardKey.Z) && !Raylib.IsKeyPressed(KeyboardKey.R) && !Raylib.IsKeyPressed(KeyboardKey.X) && !Raylib.IsKeyPressed(KeyboardKey.B))
-                {
-                    gameOver = 2;
-                }
-            }
-
-            if (gameOver == 2){
-                if (Raylib.IsKeyPressed(KeyboardKey.Space) || Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.R))
-                {
-                  easy_mode = false;
-                    ResetGame();
-                }
-                else if (Raylib.IsKeyPressed(KeyboardKey.X) || Raylib.IsKeyPressed(KeyboardKey.B))
-                {
-                  easy_mode = true; 
-                    ResetGame();
-                }
-            }
 
             // 星移動
             foreach (var s in stars)
@@ -244,6 +249,20 @@ namespace RaylibSideScrollerShooter
 //                    s.y = Raylib.GetRandomValue(0, ScreenHeight/Y_SCALE - 1);
                 }
             }
+
+	            if (gameOver == 1)
+	            {
+//	                if (Raylib.IsKeyPressed(KeyboardKey.R))
+//	                {
+//	                    ResetGame();
+//	                }
+//	            }
+	                if(!Raylib.IsKeyDown(KeyboardKey.Space) && !Raylib.IsKeyDown(KeyboardKey.Z) && !Raylib.IsKeyDown(KeyboardKey.R) && !Raylib.IsKeyDown(KeyboardKey.X) && !Raylib.IsKeyDown(KeyboardKey.B))
+	                {
+	                    gameOver = 2;
+	                }
+	            }
+
             if (gameOver != 0)
                 return;
 
@@ -895,43 +914,6 @@ namespace RaylibSideScrollerShooter
             Raylib.EndDrawing();
         }
 
-        void ResetGame()
-        {
-            player.X = 60f;
-            player.Y = 160f; // ScreenHeight / 2 - 30;
-//            if (score > highScore) highScore = score;
-            score = 0;
-            if (easy_mode == true)
-            {
-                lives = 3;
-            }
-            else
-            {
-                lives = 1;
-            }
-            gameOver = 0; // false;
-            bullets.Clear();
-            eBullets.Clear();
-            enemies.Clear();
-            options.Clear();
-            Items.Clear();
-            chain_items.Clear();
-            particles.Clear();
-
-            gametime = 0;
-		    option_cooldown = 10;
-			shield_active = false;
-		    bomb_active = false;
-	        bomb_stock = 0;
-		    key_b_flag = false;
-            chain_count = 0;
-            chain_timer = 0f;
-
-            enemySpawnTimer = 0.0f;
-
-            Raylib.StopMusicStream(assets.bgm);
-            Raylib.PlayMusicStream(assets.bgm);
-        }
 
         void CreateParticles(float x, float y, int count, int type = 0)
         {
@@ -1035,13 +1017,9 @@ namespace RaylibSideScrollerShooter
 
         static void Main(string[] args)
         {
-
-
             // 背景
             //        static float bgX = 0f;
             //        static Texture2D bgTexture;
-
-
             Raylib.SetConfigFlags(ConfigFlags.ResizableWindow | ConfigFlags.VSyncHint);
             Raylib.InitWindow(GameConfig.ScreenWidth, GameConfig.ScreenHeight, "Raylib C# 横スクロールシューティング");
             //            Raylib.SetTargetFPS(60);
@@ -1084,12 +1062,39 @@ namespace RaylibSideScrollerShooter
 
             //            ResetGame();
 
-            GameWorld game = new GameWorld(stars, assets, target);
+            GameWorld game = new GameWorld(stars, assets, target, false);
+            game.gameOver = 1;
 
             while (!Raylib.WindowShouldClose())
             {
-                //                if (gameOver == 0)
-                //                {
+	            if (Raylib.IsKeyPressed(KeyboardKey.F11))
+	            {
+	                Raylib.ToggleFullscreen();
+	            }
+
+	            if (game.gameOver == 2){
+					bool shouldReset = false;
+			        bool useEasyMode = false;
+	                if (Raylib.IsKeyPressed(KeyboardKey.Space) || Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.R))
+	                {
+						shouldReset = true;
+						useEasyMode = false;
+					}
+                    else if (Raylib.IsKeyPressed(KeyboardKey.X) || Raylib.IsKeyPressed(KeyboardKey.B))
+	                {
+						shouldReset = true;
+						useEasyMode = true;
+					}
+
+					if (shouldReset)
+					{
+//	                    ResetGame();
+                        game = new GameWorld(stars, assets, target, useEasyMode);
+                        Raylib.StopMusicStream(assets.bgm);
+                        Raylib.PlayMusicStream(assets.bgm);
+                    }
+                }
+
                 game.UpdateGame();
                 //                }
                 if ((game.gameOver != 0) && (game.score > high_score))
