@@ -16,7 +16,6 @@
 #define SCREEN_WIDTH  (256*2)
 #define SCREEN_HEIGHT (192*2)
 #define COUNT1S 60.0f
-//float COUNT1S;
 
 #define FONT_SIZE 32
 float X_SCALE = 2.0f;
@@ -30,13 +29,12 @@ Sound explosionSound;
 Music bgm;
 float scale;
 
-float m_deltaTime;// = 1.0f/COUNT1S; //0.0f;
+float m_deltaTime;
 
 // 構造体
 struct Bullet { float x, y; };
 struct Enemy { float x, y, shootTimer, nextShootTime; int type; float count, count2; int count_hp; bool count_flag; };
 struct eBullets { float x, y, vx=0.0f, vy=0.0f; };
-//struct Particle { float x, y, vx, vy; int life; };
 
 struct Option {
     float offset_y;     // 自機からの相対Y（-25 or +25 など）
@@ -48,32 +46,18 @@ struct Item { float x, y, timer; int type; };
 
 struct ChainItem {
     float x, y;
-    float timer;        // floatに変更推奨
+    float timer;
 };
 
-struct Star { float x, y, baseSpeed, speed, size;}; // ID2D1SolidColorBrush* brush = nullptr; };
+struct Star { float x, y, baseSpeed, speed, size;};
 
 struct Particle {
     float x, y;
     float vx, vy;
-    int life;           // 残りフレーム
+    float life;           // 残りフレーム
     int color_index;    // 0?4で星ブラシと同じ色を使う
     int type;           // 0=通常破片、1=大きな爆発など（後で拡張用）
 };
-
-// exeと同じフォルダの絶対パスを取得する関数
-#define MAX_PATH 256
-/*std::wstring GetExeDirectory() {
-    wchar_t path[MAX_PATH];
-    GetModuleFileName(NULL, path, MAX_PATH);
-    
-    // 最後の '\' までを残してファイル名を削除
-    wchar_t* lastSlash = wcsrchr(path, L'\\');
-    if (lastSlash) {
-        *lastSlash = L'\0';
-    }
-    return std::wstring(path) + L"\\";
-}*/
 
 std::wstring m_exeDir;
 
@@ -83,33 +67,12 @@ public:
     ShooterGame();
     ~ShooterGame();
 
-//    HRESULT Initialize();
-//    void RunMessageLoop();
-
     void GameUpdate();
     void OnRender();
 	void InitStars();
 	int gameOver = 0;
 
 private:
-/*    static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    LRESULT HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-    HRESULT CreateDeviceResources();
-    void DiscardDeviceResources();
-
-    HRESULT LoadBitmapFromFile(PCWSTR uri, ID2D1Bitmap** ppBitmap);
-    HRESULT LoadSound(const wchar_t* filename, SoundEffect& sound);
-    void PlaySound(const SoundEffect& sound);
-*/
-
-//    void PlayBGM(const wchar_t* filename);
-    bool PlayBGM(const wchar_t* filename);
-    void StopBGM();
-//    void CleanupVoices();
-    void ToggleFullscreen();
-    void UpdateInput();
-
     void StarUpdate();
     void CheckCollisions();
     void ResetGame();
@@ -123,64 +86,12 @@ private:
 
     void CreateParticles(float x, float y, int count, int type); // = 0);
 	void UseBomb();
-/*
-    HWND m_hwnd = NULL;
-    ID2D1Factory* m_pFactory = NULL;
-    IDWriteFactory* m_pDWFactory = NULL;
-    IDWriteTextFormat* m_pTextFormat = NULL;
-    ID2D1HwndRenderTarget* m_pRenderTarget = NULL;
-
-    ID2D1SolidColorBrush* m_pPlayerBrush = NULL;
-    ID2D1SolidColorBrush* m_pEnemyBrush = NULL;
-    ID2D1SolidColorBrush* m_pBulletBrush = NULL;
-    ID2D1SolidColorBrush* m_pTextBrush = NULL;
-
-    IWICImagingFactory* m_pWICFactory = NULL;
-//    ID2D1Bitmap* m_pPlayerBitmap = NULL;
-//    ID2D1Bitmap* m_pEnemyBitmap = NULL;
-    ID2D1Bitmap* m_pSpriteBitmap = NULL;
-    ID2D1Bitmap* m_pFontBitmap = NULL;
-
-    IXAudio2* m_pXAudio2 = NULL;
-    IXAudio2MasteringVoice* m_pMasterVoice = NULL;
-    IXAudio2SourceVoice* m_pBgmVoice = NULL;
-    BYTE* m_pBgmBuffer = NULL;
-
-    SoundEffect m_seLaser;
-    SoundEffect m_seExplosion;
-    std::vector<IXAudio2SourceVoice*> m_activeSounds;
-*/
-    bool g_IsFullscreen = true;
 
     int scrollX = 0;
-    bool keys[256] = {};
-
-/*    bool m_isFullscreen = false;
-    RECT m_windowedRect = {};   // ウィンドウモード時の位置・サイズを保存
-    bool m_f11Pressed = false;
-    bool m_altEnterPressed = false;
-    bool m_escPressed = false;
-
-    float m_scaleX = 1.0f;
-    float m_scaleY = 1.0f;
-    D2D1::Matrix3x2F m_transform = D2D1::Matrix3x2F::Identity();
-
-    ID2D1SolidColorBrush* m_starBrushes[5] = { nullptr };
-*/
-//    LARGE_INTEGER m_freq;
-//    LARGE_INTEGER m_lastTime;
 
     const float TARGET_FRAME_TIME = 1.0f / COUNT1S; // 60FPS目標
     float m_accumulator = 0.0f;
-/*
-    // FPS測定用
-    LARGE_INTEGER m_lastUpdateTime;
-    LARGE_INTEGER m_lastRenderTime;
-    int m_updateFrameCount = 0;
-    int m_renderFrameCount = 0;
-    float m_updateFPS = 0.0f;
-    float m_renderFPS = 0.0f;
-*/
+
     float m_gameTime = 0.0f;           // 経過時間（秒）
     float m_enemySpawnRate = 1.0f;     // 現在の敵生成頻度（小さいほど頻繁）
 
@@ -221,7 +132,6 @@ private:
 
 //	int play_time = 0;		  // 経過時間（フレーム）
 
-
 	int sx,sy,dx,dy,ex,ey,ph_x,ph_y,ph_w,ph_h;
 
 	int enemy_bullet_speed;
@@ -237,379 +147,12 @@ private:
     bool easy_mode = false;
 };
 
-//int sin_table[256 * 4];
-//SimpleBGM* bgm = nullptr;
-
-// 再生開始
-bool ShooterGame::PlayBGM(const wchar_t* filename)
-{
-//    bgm->Start();
-    return true;
-}
-
-// 停止
-void ShooterGame::StopBGM()
-{
-//    bgm->Stop();
-}
-
 ShooterGame::ShooterGame() {
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 }
 
 ShooterGame::~ShooterGame() {
-    StopBGM();
-/*    CleanupVoices();
-    delete[] m_pBgmBuffer;
-    DiscardDeviceResources();
-    SafeRelease(&m_pDWFactory);
-    SafeRelease(&m_pTextFormat);
-    SafeRelease(&m_pFactory);
-    SafeRelease(&m_pWICFactory);
-    SafeRelease(&m_pXAudio2);*/
 }
-
-void ShooterGame::ToggleFullscreen() {
-/*    if (!m_hwnd) return;
-
-    if (!m_isFullscreen) {
-        // ウィンドウモード → フルスクリーン
-        GetWindowRect(m_hwnd, &m_windowedRect);
-
-        SetWindowLongPtr(m_hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-        SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-        int screenW = GetSystemMetrics(SM_CXSCREEN);
-        int screenH = GetSystemMetrics(SM_CYSCREEN);
-
-        SetWindowPos(m_hwnd, HWND_TOPMOST, 0, 0, screenW, screenH,
-            SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
-
-        m_isFullscreen = true;
-    }
-    else {
-        // フルスクリーン → ウィンドウモード
-        SetWindowLongPtr(m_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-        SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, 0);
-
-        SetWindowPos(m_hwnd, HWND_NOTOPMOST,
-            m_windowedRect.left, m_windowedRect.top,
-            m_windowedRect.right - m_windowedRect.left,
-            m_windowedRect.bottom - m_windowedRect.top,
-            SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
-
-        m_isFullscreen = false;
-    }
-
-    // RenderTargetを確実にリサイズ
-    DiscardDeviceResources();
-    DiscardDeviceResources();  // これで次回のOnRenderでスケールが再計算される
-
-
-    // トグル後に少し間を空ける（連打防止）
-    Sleep(150);   // 150ms*/
-}
-
-// 初期化
-/*HRESULT ShooterGame::Initialize() {
-    HRESULT hr;
-
-    m_exeDir = GetExeDirectory();
-
-    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pFactory);
-    if (FAILED(hr)) return hr;
-
-    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&m_pDWFactory));
-    if (FAILED(hr)) return hr;
-
-    CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pWICFactory));
-    XAudio2Create(&m_pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
-    if (m_pXAudio2) m_pXAudio2->CreateMasteringVoice(&m_pMasterVoice);
-
-    m_pDWFactory->CreateTextFormat(L"Consolas", NULL, DWRITE_FONT_WEIGHT_NORMAL,
-        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 24.0f, L"ja-JP", &m_pTextFormat);
-
-    LoadSound((m_exeDir + L"laser.wav").c_str(), m_seLaser);
-    LoadSound((m_exeDir + L"explosion.wav").c_str(), m_seExplosion);
-
-    WNDCLASSEX wcex = {};
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = WndProc;
-    wcex.hInstance = HINST_THISCOMPONENT;
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.lpszClassName = L"Direct2DShooter";
-    RegisterClassEx(&wcex);
-
-    m_hwnd = CreateWindow(L"Direct2DShooter", L"Direct2D 横スクロールシューティング",
-//        WS_OVERLAPPEDWINDOW,
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2,   // ← ここを2倍くらいに
-        NULL, NULL, HINST_THISCOMPONENT, this);
-
-    ShowWindow(m_hwnd, SW_SHOWNORMAL);
-    UpdateWindow(m_hwnd);
-
-    gameOver = 1;
- 
-    QueryPerformanceFrequency(&m_freq);
-    QueryPerformanceCounter(&m_lastUpdateTime);
-    QueryPerformanceCounter(&m_lastRenderTime);
-
-    return S_OK;
-}*/
-
-
-void ShooterGame::UpdateInput() {
-    // ウィンドウがアクティブでない場合は入力を受け付けない
-/*    if (GetForegroundWindow() != m_hwnd) {
-        memset(keys, 0, sizeof(keys));
-        return;
-    }
-
-
-    keys[VK_LEFT] = ((GetAsyncKeyState(VK_LEFT) & 0x8000) != 0);
-    keys[VK_RIGHT] = (GetAsyncKeyState(VK_RIGHT) & 0x8000) != 0;
-    keys[VK_UP] = (GetAsyncKeyState(VK_UP) & 0x8000) != 0;
-    keys[VK_DOWN] = (GetAsyncKeyState(VK_DOWN) & 0x8000) != 0;
-    keys[VK_SPACE] = ((GetAsyncKeyState(VK_SPACE) & 0x8000) != 0) | ((GetAsyncKeyState('Z') & 0x8000) != 0);
-    keys['X'] = (GetAsyncKeyState('X') & 0x8000) != 0;
-    keys['R'] = (GetAsyncKeyState('R') & 0x8000) != 0;
-    keys['B'] = (GetAsyncKeyState('B') & 0x8000) != 0;
-
-    XINPUT_STATE state = {};
-    if (XInputGetState(0, &state) == ERROR_SUCCESS) {
-        auto& g = state.Gamepad;
-        if ((g.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) || g.sThumbLX < -10000) keys[VK_LEFT] = true;
-        if ((g.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) || g.sThumbLX > 10000) keys[VK_RIGHT] = true;
-        if ((g.wButtons & XINPUT_GAMEPAD_DPAD_UP) || g.sThumbLY > 10000) keys[VK_UP] = true;
-        if ((g.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) || g.sThumbLY < -10000) keys[VK_DOWN] = true;
-        if (g.wButtons & XINPUT_GAMEPAD_A) keys[VK_SPACE] = true;
-        if (g.wButtons & XINPUT_GAMEPAD_B) keys['X'] = true;
-        if (g.wButtons & XINPUT_GAMEPAD_START) keys['R'] = true;
-    }
-
-    // === フルスクリーン切り替え（改善版）===
-    static bool f11PressedLast = false;
-    bool f11Now = (GetAsyncKeyState(VK_F11) & 0x8000) != 0;
-
-    if (f11Now && !f11PressedLast) {
-        ToggleFullscreen();
-    }
-    f11PressedLast = f11Now;
-
-
-    // Alt + Enter
-    bool altPressed = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
-    bool enterPressed = (GetAsyncKeyState(VK_RETURN) & 0x8000) != 0;
-    bool altEnterNow = altPressed && enterPressed;
-
-    if (altEnterNow && !m_altEnterPressed) {
-        ToggleFullscreen();
-    }
-    m_altEnterPressed = altEnterNow;
-
-    static bool f12PressedLast = false;
-    bool f12Now = (GetAsyncKeyState(VK_F12) & 0x8000) != 0;
-    if (f12Now && !f12PressedLast) {
-        FPS_flag = !FPS_flag;
-    }
-    f12PressedLast = f12Now;
-
-    // ESCで終了
-    bool escNow = (GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0;
-    if (escNow && !m_escPressed) {
-        PostQuitMessage(0);
-    }
-    m_escPressed = escNow;*/
-}
-
-/*
-HRESULT ShooterGame::LoadBitmapFromFile(PCWSTR uri, ID2D1Bitmap** ppBitmap) {
-    if (!m_pWICFactory || !m_pRenderTarget) return E_FAIL;
-
-    IWICBitmapDecoder* pDecoder = NULL;
-    IWICBitmapFrameDecode* pSource = NULL;
-    IWICFormatConverter* pConverter = NULL;
-    HRESULT hr = m_pWICFactory->CreateDecoderFromFilename(uri, NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
-    if (SUCCEEDED(hr)) hr = pDecoder->GetFrame(0, &pSource);
-    if (SUCCEEDED(hr)) hr = m_pWICFactory->CreateFormatConverter(&pConverter);
-    if (SUCCEEDED(hr)) {
-        hr = pConverter->Initialize(pSource, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
-    }
-    if (SUCCEEDED(hr)) {
-        hr = m_pRenderTarget->CreateBitmapFromWicBitmap(pConverter, NULL, ppBitmap);
-    }
-    SafeRelease(&pDecoder);
-    SafeRelease(&pSource);
-    SafeRelease(&pConverter);
-    return hr;
-}
-
-HRESULT ShooterGame::LoadSound(const wchar_t* filename, SoundEffect& sound) {
-    HANDLE hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    if (hFile == INVALID_HANDLE_VALUE) return E_FAIL;
-
-    DWORD bytesRead;
-    char chunkId[4], format[4];
-    DWORD chunkSize;
-
-    ReadFile(hFile, chunkId, 4, &bytesRead, NULL);
-    ReadFile(hFile, &chunkSize, 4, &bytesRead, NULL);
-    ReadFile(hFile, format, 4, &bytesRead, NULL);
-
-    if (strncmp(chunkId, "RIFF", 4) != 0 || strncmp(format, "WAVE", 4) != 0) {
-        CloseHandle(hFile);
-        return E_FAIL;
-    }
-
-    while (true) {
-        char subChunkId[4];
-        if (!ReadFile(hFile, subChunkId, 4, &bytesRead, NULL) || bytesRead < 4) break;
-        ReadFile(hFile, &chunkSize, 4, &bytesRead, NULL);
-
-        if (strncmp(subChunkId, "fmt ", 4) == 0) {
-            DWORD readSize = min(chunkSize, sizeof(WAVEFORMATEX));
-            ReadFile(hFile, &sound.wfx, readSize, &bytesRead, NULL);
-            if (chunkSize > readSize) SetFilePointer(hFile, chunkSize - readSize, NULL, FILE_CURRENT);
-        }
-        else if (strncmp(subChunkId, "data", 4) == 0) {
-            sound.size = chunkSize;
-            sound.pData = new BYTE[chunkSize];
-            ReadFile(hFile, sound.pData, chunkSize, &bytesRead, NULL);
-            break;
-        }
-        else {
-            SetFilePointer(hFile, chunkSize, NULL, FILE_CURRENT);
-        }
-    }
-    CloseHandle(hFile);
-    return S_OK;
-}
-
-void ShooterGame::PlaySound(const SoundEffect& sound) {
-    if (!sound.pData || !m_pXAudio2) return;
-    IXAudio2SourceVoice* pVoice = nullptr;
-    if (SUCCEEDED(m_pXAudio2->CreateSourceVoice(&pVoice, &sound.wfx))) {
-        XAUDIO2_BUFFER buffer = {};
-        buffer.AudioBytes = sound.size;
-        buffer.pAudioData = sound.pData;
-        buffer.Flags = XAUDIO2_END_OF_STREAM;
-        pVoice->SubmitSourceBuffer(&buffer);
-        pVoice->Start(0);
-        m_activeSounds.push_back(pVoice);
-    }
-}
-
-void ShooterGame::CleanupVoices() {
-    for (auto it = m_activeSounds.begin(); it != m_activeSounds.end(); ) {
-        XAUDIO2_VOICE_STATE state;
-        (*it)->GetState(&state);
-        if (state.BuffersQueued == 0) {
-            (*it)->DestroyVoice();
-            it = m_activeSounds.erase(it);
-        }
-        else {
-            ++it;
-        }
-    }
-}*/
-
-
-/*
-HRESULT ShooterGame::CreateDeviceResources() {
-    if (m_pRenderTarget) return S_OK;
-
-    RECT rc;
-    GetClientRect(m_hwnd, &rc);
-    UINT clientW = rc.right;
-    UINT clientH = rc.bottom;
-
-    if (clientW == 0 || clientH == 0) return E_FAIL;
-
-    // DPIを正しく取得して補正
-    float dpi = static_cast<float>(GetDpiForWindow(m_hwnd));
-    float effectiveScale = dpi / 96.0f;
-
-    D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-        D2D1_RENDER_TARGET_TYPE_DEFAULT,
-        D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
-        dpi, dpi);
-
-    D2D1_SIZE_U size = D2D1::SizeU(clientW, clientH);
-
-    HRESULT hr = m_pFactory->CreateHwndRenderTarget(
-        props,
-        D2D1::HwndRenderTargetProperties(m_hwnd, size),
-        &m_pRenderTarget);
-
-    if (SUCCEEDED(hr)) {
-        // 仮想解像度に対するスケール（DPI補正込み）
-        m_scaleX = static_cast<float>(clientW) / (SCREEN_WIDTH * effectiveScale);
-        m_scaleY = static_cast<float>(clientH) / (SCREEN_HEIGHT * effectiveScale);
-
-        m_transform = D2D1::Matrix3x2F::Scale(m_scaleX, m_scaleY);
-
-        // ブラシ作成
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.0f, 0.8f, 1.0f), &m_pPlayerBrush);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 0.3f, 0.3f), &m_pEnemyBrush);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 0.9f, 0.2f), &m_pBulletBrush);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f), &m_pTextBrush);
-
-//        if (!m_pPlayerBitmap) LoadBitmapFromFile((m_exeDir + L"player.png").c_str(), &m_pPlayerBitmap);
-
-
-//        if (!m_pEnemyBitmap) LoadBitmapFromFile((m_exeDir + L"enemy.png").c_str(), &m_pEnemyBitmap);
-
-
-        if (!m_pSpriteBitmap) LoadBitmapFromFile((m_exeDir + L"yokosht.png").c_str(), &m_pSpriteBitmap);
-
-        if (!m_pFontBitmap) LoadBitmapFromFile((m_exeDir + L"FONTYOKO.png").c_str(), &m_pFontBitmap);
-    }
-    InitStars();
-    if (SUCCEEDED(hr)) {
-        // 星用の色ブラシを複数作成
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.9f, 0.9f, 1.0f), &m_starBrushes[0]); // 白
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.8f, 0.9f, 1.0f), &m_starBrushes[1]); // 薄青
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 0.95f, 0.7f), &m_starBrushes[2]); // 薄黄
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.7f, 0.8f, 1.0f), &m_starBrushes[3]); // 青白
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 0.8f, 0.8f), &m_starBrushes[4]); // 薄赤
-
-      for (auto& s : stars) {
-            if (s.brush == nullptr || s.brush == (ID2D1SolidColorBrush*)0xcccccccc || s.brush == (ID2D1SolidColorBrush*)0xdeadbeef) {
-                s.brush = m_starBrushes[rand() % 5];
-            }
-        }
-    }
-    return hr;
-}
-
-void ShooterGame::DiscardDeviceResources() {
-    SafeRelease(&m_pRenderTarget);
-    SafeRelease(&m_pPlayerBrush);
-    SafeRelease(&m_pEnemyBrush);
-    SafeRelease(&m_pBulletBrush);
-    SafeRelease(&m_pTextBrush);
-//    SafeRelease(&m_pPlayerBitmap);
-//    SafeRelease(&m_pEnemyBitmap);
-    SafeRelease(&m_pSpriteBitmap);
-    SafeRelease(&m_pFontBitmap);
-
-    for (int i = 0; i < 5; ++i) {
-        SafeRelease(&m_starBrushes[i]);
-    }
-    // スケールもリセット
-    m_scaleX = 1.0f;
-    m_scaleY = 1.0f;
-    m_transform = D2D1::Matrix3x2F::Identity();
-
-    // 星のブラシ参照もクリア（重要！）
-    for (auto& s : stars) {
-        s.brush = nullptr;
-    }
-}*/
-
 
 void ShooterGame::InitStars() {
     stars.clear();
@@ -620,12 +163,9 @@ void ShooterGame::InitStars() {
 		s.baseSpeed = 0.5f + static_cast<float>(rand() % 100) / 30.0f;
 		s.speed = s.baseSpeed;   // もし個別速度も欲しい場合
         s.size = (s.speed > 2.0f) ? 2.0f : 1.0f;
-//        s.brush = nullptr;                    // 最初はnullptrにしておく
         stars.push_back(s);
     }
 }
-
-
 
 // ゲームリセット
 void ShooterGame::ResetGame() {
@@ -654,10 +194,7 @@ void ShooterGame::ResetGame() {
 
 //	InitStars();
 
-//    StopBGM();
 	StopMusicStream(bgm);
-//    PlayBGM((m_exeDir + L"bgm.wav").c_str());
-//    PlayBGM((m_exeDir + L"bgm.mp3").c_str());
 	PlayMusicStream(bgm);
 }
 
@@ -665,43 +202,39 @@ void ShooterGame::ResetGame() {
 void ShooterGame::StarUpdate() {
     // 星移動
     for (auto& s : stars) {
-//        s.x -= s.speed * m_deltaTime * COUNT1S;   // COUNT1Sは基準FPS（調整用）
 		s.x -= s.baseSpeed * m_deltaTime * COUNT1S;   // これでFPSが60の時に元の速度と同じになる
         if (s.x < 0) {
             s.x = SCREEN_WIDTH; //800;
             s.y = static_cast<float>(rand() % SCREEN_HEIGHT); //600);
         }
     }
-//    m_updateFrameCount++;
-
-//    LARGE_INTEGER now;
-//    QueryPerformanceCounter(&now);
-//    float elapsed = static_cast<float>(now.QuadPart - m_lastUpdateTime.QuadPart) / m_freq.QuadPart;
-
-/*    if (elapsed >= 1.0f) {
-        m_updateFPS = m_updateFrameCount / elapsed;
-        m_updateFrameCount = 0;
-        m_lastUpdateTime = now;
-    }*/
 }
 
 void ShooterGame::ClampPlayer() {
     if (playerX < 0) playerX = 0;
     if (playerY < 0) playerY = 0;
-    if (playerX > SCREEN_WIDTH-40) playerX = SCREEN_WIDTH-40;//720;
-    if (playerY > SCREEN_HEIGHT-32) playerY = SCREEN_HEIGHT-32;//520;
+    if (playerX > SCREEN_WIDTH-40) playerX = SCREEN_WIDTH-40;
+    if (playerY > SCREEN_HEIGHT-32) playerY = SCREEN_HEIGHT-32;
 }
 
 // ゲーム進行
 void ShooterGame::GameUpdate() {
-    if (gameOver == 1)
-//        if(!keys[VK_SPACE] && !keys['R'] && !keys['X'] && !keys['B'])
-        if(!IsKeyDown(KEY_SPACE) && !IsKeyDown(KEY_Z) && !IsKeyDown(KEY_R) && !IsKeyDown(KEY_X) && !IsKeyDown(KEY_B))
-			gameOver = 2;
+	int gamepad = 0;
 
-	if (gameOver == 2)
-        if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || IsKeyDown(KEY_R)) { easy_mode = false; ResetGame(); }
-        else if (IsKeyDown(KEY_X) || IsKeyDown(KEY_B)) { easy_mode = true; ResetGame(); }
+    if (gameOver == 1){
+		if
+		(!((IsGamepadAvailable(gamepad) && (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) )
+         || (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || IsKeyDown(KEY_R) || IsKeyDown(KEY_X) || IsKeyDown(KEY_B))) ){
+			gameOver = 2;
+		}
+	}
+	if (gameOver == 2){
+        if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || IsKeyDown(KEY_R) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
+			easy_mode = false; ResetGame();
+        }else if (IsKeyDown(KEY_X) || IsKeyDown(KEY_B) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) {
+			easy_mode = true; ResetGame();
+		}
+	}
 
     StarUpdate();
     if (gameOver)
@@ -709,34 +242,26 @@ void ShooterGame::GameUpdate() {
 
     m_gameTime += m_deltaTime;
 
-//    CleanupVoices();
-/*	static float voiceCleanTimer = 0.0f;
-	voiceCleanTimer += m_deltaTime;
-	if (voiceCleanTimer > 0.5f) {     // 0.5秒ごとに掃除
-//	    CleanupVoices();
-	    voiceCleanTimer = 0.0f;
-	}*/
-
-    // 敵生成頻度を時間経過で徐々に上げる
-//    float progress = m_gameTime / 180.0f;           // 0.0 ~ 1.0（180秒で最大）
-//    if (progress > 1.0f) progress = 1.0f;
-
-    // 最初は敵が少なく、徐々に増える（0.8秒間隔 → 0.25秒間隔くらい）
-//    m_enemySpawnRate = 0.8f - (0.55f * progress);
-
 	float moveSpeed = 4.0f * COUNT1S * m_deltaTime;
 	float enemySpeed = 4.0f * COUNT1S * m_deltaTime;
 	float enemySpeed2 = 5.0f * COUNT1S * m_deltaTime;
-/*
-    if (keys[VK_LEFT])  playerX -= moveSpeed;
-    if (keys[VK_RIGHT]) playerX += moveSpeed;
-    if (keys[VK_UP])    playerY -= moveSpeed;
-    if (keys[VK_DOWN])  playerY += moveSpeed;
-*/
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))    playerY -= moveSpeed;
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))  playerY += moveSpeed;
-    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))  playerX -= moveSpeed;
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) playerX += moveSpeed;
+
+
+    // 1. ゲームパッドが接続されているかチェック
+	float axisX = 0;
+	float axisY = 0;
+    if (IsGamepadAvailable(gamepad))
+    {
+        // 2. アナログスティック（左スティック）の入力を取得
+        // 戻り値は -1.0f から 1.0f の間
+        axisX = GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_X);
+        axisY = GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_Y);
+	}
+
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W) || (axisY < -0.2f) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP))) playerY -= moveSpeed;
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S) || (axisY > 0.2f) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN)))  playerY += moveSpeed;
+    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A) || (axisX < -0.2f) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_LEFT)))  playerX -= moveSpeed;
+    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D) || (axisX > 0.2f) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_RIGHT))) playerX += moveSpeed;
 
     ClampPlayer();
 
@@ -745,14 +270,14 @@ void ShooterGame::GameUpdate() {
 //        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
 
         // 滑らかに追従
-        opt.x += ((playerX + 16) - opt.x) / 4;
-        opt.y += ((playerY + opt.offset_y) - opt.y) / 4;
+        opt.x += ((playerX + 16) - opt.x) / 4 * m_deltaTime * COUNT1S;
+        opt.y += ((playerY + opt.offset_y) - opt.y) / 4 * m_deltaTime * COUNT1S;
     }
 
 // 射撃クールタイムも時間ベースに
     static float shootTimer = 0.0f;
     shootTimer += m_deltaTime;
-    if ((IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z)) && shootTimer >= 8 / COUNT1S) {
+    if ((IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) && shootTimer >= 8 / COUNT1S) {
         playerBullets.push_back({ playerX + 32, playerY + 12 });
 
         // オプションからも発射
@@ -763,7 +288,7 @@ void ShooterGame::GameUpdate() {
     }
 
 	// GameUpdate()内がおすすめ
-	if ((IsKeyDown(KEY_X) || IsKeyDown(KEY_B)) && bomb_stock > 0 && !bomb_active) {
+	if ((IsKeyDown(KEY_X) || IsKeyDown(KEY_B) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) && bomb_stock > 0 && !bomb_active) {
         if (key_b_flag == false)
             UseBomb();
         key_b_flag = true;
@@ -908,11 +433,11 @@ void ShooterGame::GameUpdate() {
 
     // パーティクル更新
     for (auto it = particles.begin(); it != particles.end(); ) {
-        it->x += it->vx;
-        it->y += it->vy;
+        it->x += it->vx * m_deltaTime * COUNT1S;
+        it->y += it->vy * m_deltaTime * COUNT1S;
         it->vx *= 0.96f;      // 少し減速（空気抵抗）
         it->vy *= 0.96f;
-        it->life--;
+        it->life -=  m_deltaTime * COUNT1S;
 
         if (it->life <= 0) {
             it = particles.erase(it);
@@ -941,7 +466,6 @@ void ShooterGame::GameUpdate() {
             score += chain_count * 100;    // チェイン数に応じたボーナス
 
             it = chain_items.erase(it);
-//            PlaySound(m_seLaser);     // 取得音
 			PlaySound(laserSound);
             continue;
         }
@@ -1023,7 +547,6 @@ void ShooterGame::CheckCollisions() {
 				    }
 
                     eit = enemies.erase(eit);
-//                    PlaySound(m_seExplosion);
 					PlaySound(explosionSound);
                     score += 100;
 
@@ -1052,7 +575,6 @@ void ShooterGame::CheckCollisions() {
 	            lives--;
 	            if (lives <= 0) {
 	                gameOver = 1;
-//	                StopBGM();
 					StopMusicStream(bgm);
 	            }
 			}
@@ -1074,7 +596,6 @@ void ShooterGame::CheckCollisions() {
                 lives--;
                 if (lives <= 0) {
                     gameOver = 1;
-//                    StopBGM();
 					StopMusicStream(bgm);
                     return;
                 }
@@ -1118,7 +639,6 @@ void ShooterGame::CheckCollisions() {
 			    bomb_stock = std::min(3, bomb_stock + 1);
 			}
 
-//            PlaySound(m_seLaser);
 			PlaySound(laserSound);
 
             it = Items.erase(it);
@@ -1166,51 +686,34 @@ void ShooterGame::UseBomb() {
     }
 
     score += 200;
-//    PlaySound(m_seExplosion);   // ボム音（大きめの効果音を使う）
 	PlaySound(explosionSound);
 }
 
 
 bool ShooterGame::put_sprite(float x, float y, int pat_no) {
-/*    D2D1_RECT_F destrect = D2D1::RectF(x, y, x + 31, y + 31);
-    D2D1_RECT_F sourceRect = D2D1::RectF(32 * pat_no, 0, 32 * pat_no + 31, 31);
-    if (m_pSpriteBitmap) {
-        m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
-		return true;
-    }*/
-//    Rectangle Rect = { x * SCALE, y * SCALE, 32 * SCALE, 32 * SCALE };
-//    DrawRectangleRec(Rect, WHITE);           // 本体
 
 	float rotation = 0.0f;
 
     Rectangle destRect = {x * X_SCALE, y * Y_SCALE, 32 * X_SCALE - 1, 32 * Y_SCALE - 1};
     Rectangle sourceRect = {32.0f * pat_no, 0, 32.0f, 32.0f};
-	Vector2 origin = { 0, 0};//destRect.width/2, destRect.height/2 };
+	Vector2 origin = { 0, 0};
 
 	DrawTexturePro(chrTex, sourceRect, destRect, origin, rotation, WHITE);
 	return true;
-//	return false;
 }
 
 void ShooterGame::put_strings(float x, float y, wchar_t *text, int mode) {
 	int len=wcslen(text);
-/*
-    if (m_pFontBitmap && !mode) {*/
     if (!mode) {
-/*        D2D1_RECT_F destrect, sourceRect;
-*/		for(int i = 0; i < len; ++i){
+		for(int i = 0; i < len; ++i){
             if (text[i] != ' ') {
                 int pat_no = text[i] - '0';
-/*                destrect = D2D1::RectF(x, y, x + 15, y + 15);
-                sourceRect = D2D1::RectF(16 * (pat_no % 16), 16 * (pat_no / 16), 16 * (pat_no % 16) + 15, 16 * (pat_no / 16) + 15);
-                m_pRenderTarget->DrawBitmap(m_pFontBitmap, destrect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);*/
 
 				float rotation = 0.0f;
 
-//			    Rectangle destRect = {x * SCALE, y * SCALE, 16 * SCALE - 1, 16 * SCALE - 1};
 			    Rectangle destRect = {x, y, 16 * X_SCALE - 1, 16 * Y_SCALE - 1};
 			    Rectangle sourceRect = {16.0f * (pat_no % 16), 16.0f * (pat_no / 16), 16.0f, 16.0f};
-				Vector2 origin = { 0, 0};//destRect.width/2, destRect.height/2 };
+				Vector2 origin = { 0, 0};
 
 				DrawTexturePro(fontTex, sourceRect, destRect, origin, rotation, WHITE);
             }
@@ -1219,25 +722,6 @@ void ShooterGame::put_strings(float x, float y, wchar_t *text, int mode) {
 		}
 		return;
     }
-/*	{
-        m_pRenderTarget->DrawText(text, len, m_pTextFormat, 
-			D2D1::RectF(x, y, x+16*len, y+16), m_pTextBrush);
-	}*/
-
-
-// 必要なバッファサイズを取得
-/*    size_t sizeNeeded = 0;
-    wcstombs_s(&sizeNeeded, nullptr, 0, text, 0); // 安全なc11以降の関数（または単にwcstombs）
-
-    if (sizeNeeded == 0) return;
-
-    // バッファを確保して変換実行
-    std::vector<char> buffer(sizeNeeded);
-    wcstombs_s(&sizeNeeded, buffer.data(), buffer.size(), text, _TRUNCATE);
-
-    // const char* として使用
-    const char* cstr = buffer.data();
-    DrawText(cstr, x, y, FONT_SIZE, WHITE);*/
 }
 
 void ShooterGame::put_strings(float x, float y, wchar_t* text) {
@@ -1247,7 +731,6 @@ void ShooterGame::put_strings(float x, float y, wchar_t* text) {
 void ShooterGame::put_strings_num(float x, float y, wchar_t *str, int num, int digit, int mode) {
     wchar_t text[128];
     int len = wcslen(str), i = digit, j = num;
-//    swprintf_s(text, L"%s%d", str, num);
 	put_strings(x, y, str);
 
     while (i--) {
@@ -1269,7 +752,7 @@ void ShooterGame::CreateParticles(float x, float y, int count, int type = 0) {
         p.y = y;
         p.vx = (rand() % 100 - 50) * 0.12f;   // -6.0 ~ +6.0
         p.vy = (rand() % 100 - 50) * 0.12f;
-        p.life = 20 + (rand() % 25);
+        p.life = 20.0f + (rand() % 25);
         p.color_index = rand() % 5;
         p.type = type;
         particles.push_back(p);
@@ -1279,65 +762,20 @@ void ShooterGame::CreateParticles(float x, float y, int count, int type = 0) {
 
 // ゲーム表示
 void ShooterGame::OnRender() {
-//    BeginDrawing();
     ClearBackground(BLACK);
 
-/*    // 必ず最初にリソース作成を試みる
-    if (FAILED(CreateDeviceResources()) || !m_pRenderTarget) return;
-
-    // BeginDrawはvoidなので、HRESULTで受け取らない
-    m_pRenderTarget->BeginDraw();
-    m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black));
-
-    // スケール適用
-    m_pRenderTarget->SetTransform(m_transform);
-*/
-    // 描画FPS計算
-/*    static LARGE_INTEGER lastRender = {};
-    if (lastRender.QuadPart == 0) QueryPerformanceCounter(&lastRender);
-
-    m_renderFrameCount++;
-
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-    float elapsed = static_cast<float>(now.QuadPart - lastRender.QuadPart) / m_freq.QuadPart;
-
-    if (elapsed >= 1.0f) {
-        m_renderFPS = m_renderFrameCount / elapsed;
-        m_renderFrameCount = 0;
-        lastRender = now;
-    }*/
-
-    // 星背景（ブラシが有効なときだけ）
-/*    if (m_pTextBrush) {*/
+    // 星背景
         for (const auto& s : stars) {
-/*            D2D1_RECT_F rect = D2D1::RectF(s.x, s.y, s.x + s.size, s.y + s.size);
-
-            if (s.brush) {
-                m_pRenderTarget->FillRectangle(rect, s.brush);
-            }
-            else if (m_pTextBrush) {
-                m_pRenderTarget->FillRectangle(rect, m_pTextBrush);  // フォールバック
-            }
-*/
             DrawCircle(s.x * X_SCALE, s.y * Y_SCALE, 1.5f, WHITE);
         }
-//    }
 
 
-	// パーティクル描画（星の後くらいがおすすめ）
+	// パーティクル描画
 	if (!particles.empty()){ // && m_pTextBrush) {
 	    for (const auto& p : particles) {
 	        if (p.life > 0) {
-/*	            D2D1_RECT_F rect = D2D1::RectF(p.x, p.y, p.x + 3, p.y + 3);
-	            
-	            if (p.color_index < 5 && m_starBrushes[p.color_index]) {
-	                m_pRenderTarget->FillRectangle(rect, m_starBrushes[p.color_index]);
-	            } else {
-	                m_pRenderTarget->FillRectangle(rect, m_pTextBrush);
-	            }
-*/
-                DrawCircle(p.x * X_SCALE, p.y * Y_SCALE, 1.5f, YELLOW);
+                DrawCircle(p.x * X_SCALE, p.y * Y_SCALE, 1.5f*2, YELLOW);
+//	            put_sprite(p.x, p.y, 5);
 	        }
 	    }
 	}
@@ -1378,12 +816,7 @@ void ShooterGame::OnRender() {
         }
 
     // シールド描画
-        if (shield_active){ // && m_pSpriteBitmap) {
-            // 自機の周りにバリアを表示
-/*            D2D1_RECT_F rect = D2D1::RectF(playerX - 8, playerY - 8, playerX + 40, playerY + 40);
-            D2D1_RECT_F sourceRect = D2D1::RectF(32 * 6, 0, 32 * 7, 32);   // 6番パターンにシールド画像を入れる
-            m_pRenderTarget->DrawBitmap(m_pSpriteBitmap, rect, 0.7f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, sourceRect);
-*/
+        if (shield_active){
             put_sprite(playerX, playerY, 6);
         }
 
@@ -1391,18 +824,6 @@ void ShooterGame::OnRender() {
         put_sprite(playerX, playerY, 1);
 
     // UI
-    // FPS表示（右上に2段で表示）
-/*    if (m_pTextFormat && m_pTextBrush && (FPS_flag == true)) {
-        wchar_t text[64];
-
-        swprintf_s(text, L"UPDATE %.1f", m_updateFPS);
-		put_strings(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 32 - 16, text, 1);
-
-
-        swprintf_s(text, L"RENDER %.1f", m_renderFPS);
-		put_strings(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 16 - 16, text, 1);
-    }*/
-//    if (m_pTextFormat && m_pTextBrush) {
         if (score >= high_score)
             put_strings_num(0, 0, const_cast<wchar_t*>(L"HIGH  "), score, 7);
         else
@@ -1418,71 +839,15 @@ void ShooterGame::OnRender() {
         if (chain_count > 0) {
             put_strings_num(16 * FONT_SIZE, 1 * FONT_SIZE, const_cast<wchar_t *>(L"CHAIN "), chain_count, 3);
         }
-//    }
 
-    if (gameOver){// && m_pTextFormat && m_pEnemyBrush) {
+    if (gameOver){
 		put_strings(11 * FONT_SIZE, 12 * FONT_SIZE, const_cast<wchar_t *>(L"GAME OVER"));
         put_strings_num(7 * FONT_SIZE, 15 * FONT_SIZE, const_cast<wchar_t *>(L"HIGH SCORE "), high_score, 7);
 
-//        if (m_pTextBrush) {
 			put_strings(7 * FONT_SIZE, 18 * FONT_SIZE, const_cast<wchar_t *>(L"PRESS A TO RESTART"));
-//        }
     }
-//    EndDrawing();
-
-
-//    HRESULT hr = m_pRenderTarget->EndDraw();
-//    if (hr == D2DERR_RECREATE_TARGET){ //} || hr == D2DERR_DEVICE_LOST) {
-//        DiscardDeviceResources();
-//    }
 
 }
-
-/*
-void ShooterGame::RunMessageLoop() {
-    MSG msg = {};
-    LARGE_INTEGER freq, last, now;
-    QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&last);
-
-    while (msg.message != WM_QUIT) {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-        else {
-            QueryPerformanceCounter(&now);
-            m_deltaTime = static_cast<float>(now.QuadPart - last.QuadPart) / freq.QuadPart;
-            last = now;
-
-//            m_accumulator += m_deltaTime;
-
-//            while (m_accumulator >= TARGET_FRAME_TIME) {
-                UpdateInput();
-                GameUpdate();     // deltaTimeを使って更新
-//                m_accumulator -= TARGET_FRAME_TIME;
-//            }
-
-            OnRender();           // 描画は毎回呼ぶ（垂直同期に任せる）
-        }
-    }
-}
-
-
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-    // DPI Awareを最優先で設定
-    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
-    ShooterGame game;
-    if (SUCCEEDED(game.Initialize())) {
-        game.RunMessageLoop();
-    }
-    CoUninitialize();
-    return 0;
-}
-*/
 
 const int screenWidth = SCREEN_WIDTH * X_SCALE;
 const int screenHeight = SCREEN_HEIGHT * Y_SCALE;
@@ -1501,13 +866,6 @@ void UpdateDrawFrame(void)
         if (IsKeyPressed(KEY_F11)) {
             ToggleFullscreen();
         }
-/*		if (IsWindowFullscreen()) {
-			X_SCALE = static_cast<float>(width / screenWidth);
-			Y_SCALE = static_cast<float>(height / screenHeight);
-		}else{
-			X_SCALE = 2.0f;
-			Y_SCALE = 2.0f;
-		}*/
 
 		scale = std::min((float)GetScreenWidth() / screenWidth, (float)GetScreenHeight() / screenHeight);
 
@@ -1549,11 +907,9 @@ int main(void) {
 
 //	COUNT1S = GetMonitorRefreshRate(monitor);
 
-//	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
 
     InitWindow(screenWidth, screenHeight, "Raylib 横スクロールシューティング");
-//	InitWindow(width, height, "Raylib 横スクロールシューティング");
 
 	target = LoadRenderTexture(screenWidth, screenHeight);
 	SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);
@@ -1568,7 +924,6 @@ int main(void) {
     explosionSound = LoadSound("explosion.wav");
 	bgm  = LoadMusicStream("bgm.mp3");
 
-//	game.Initialize();
 	game.InitStars();
     game.gameOver = 1;
 
