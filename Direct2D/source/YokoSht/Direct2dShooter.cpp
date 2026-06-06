@@ -1,4 +1,5 @@
 ﻿// Direct2DShooter.cpp
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <d2d1.h>
 #include <d2d1helper.h>
@@ -16,9 +17,24 @@
 #include <string>     // std::wstring
 #include <shlwapi.h>  // Path系が必要なら
 
-#define SCREEN_WIDTH  (256*2)
-#define SCREEN_HEIGHT (192*2)
-#define COUNT1S 60.0f
+//#include <mmsystem.h>
+//#pragma comment(lib, "winmm.lib")
+
+#include <iostream>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Media.Playback.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Storage.h>
+#pragma comment(lib, "windowsapp") // 必要に応じて追加
+#include <winrt/Windows.Media.Core.h>
+#include <thread> // ★std::threadを使うために追加
+
+using namespace winrt;
+using namespace Windows::Media::Playback;
+using namespace Windows::Storage;
+using namespace Windows::Media::Core;
+
+MediaPlayer g_mediaPlayer = nullptr;
 
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "shcore.lib") 
@@ -27,6 +43,10 @@
 #pragma comment(lib, "windowscodecs.lib")
 #pragma comment(lib, "xaudio2.lib")
 #pragma comment(lib, "xinput.lib")
+
+#define SCREEN_WIDTH  (256*2)
+#define SCREEN_HEIGHT (192*2)
+#define COUNT1S 60.0f
 
 template<class Interface>
 inline void SafeRelease(Interface** ppInterfaceToRelease) {
@@ -65,7 +85,7 @@ struct Star { float x, y, baseSpeed, speed, size; ID2D1SolidColorBrush* brush = 
 struct Particle {
     float x, y;
     float vx, vy;
-    int life;           // 残りフレーム
+    float life;           // 残りフレーム
     int color_index;    // 0?4で星ブラシと同じ色を使う
     int type;           // 0=通常破片、1=大きな爆発など（後で拡張用）
 };
@@ -91,6 +111,105 @@ std::wstring GetExeDirectory() {
 
 std::wstring m_exeDir;
 
+// 実際に再生を行う中身（別スレッドで実行される）
+void AudioThreadWorker() {
+    // この新しいスレッドを「MTA（マルチスレッド）」として初期化する
+    winrt::init_apartment(winrt::apartment_type::multi_threaded);
+
+    try {
+        // パスは実際のファイルパスに書き換えてください
+        auto file = StorageFile::GetFileFromPathAsync(m_exeDir + L"bgm.mp3").get();
+
+        g_mediaPlayer = MediaPlayer();
+        g_mediaPlayer.Source(Windows::Media::Core::MediaSource::CreateFromStorageFile(file));
+
+        // ★ リピート再生を有効にする
+        g_mediaPlayer.IsLoopingEnabled(true);
+
+        g_mediaPlayer.Play();
+    }
+    catch (winrt::hresult_error const& ex) {
+        // エラー処理
+        OutputDebugString(ex.message().c_str());
+    }
+}
+
+// ボタンを押したときや、メイン処理から呼び出す関数
+void PlayMyMp3() {
+    // 音楽再生用のスレッドを立ち上げて、処理を丸投げする
+    std::thread t(AudioThreadWorker);
+
+    // スレッドの管理を切り離す（これで関数が終了してもバックグラウンドで再生が続く）
+    t.detach();
+}
+
+void StopMp3() {
+    if (g_mediaPlayer != nullptr) {
+        // 再生を一時停止
+        g_mediaPlayer.Pause();
+
+        // 再生位置を 0（曲の先頭）に戻す
+        g_mediaPlayer.Position(Windows::Foundation::TimeSpan::zero());
+    }
+}
+
+class SimpleBGM {
+    HWND hWnd;           // 通知を受け取るウィンドウハンドル
+    const wchar_t* filename =  + L"bgm.mp3";
+    UINT lastNotifyTime = 0;   // 連打防止用
+
+public:
+    bool isPlaying = false;
+
+    SimpleBGM(HWND hwnd) : hWnd(hwnd) {}
+
+    bool Start() {
+        PlayMyMp3();
+//        Stop();  // 念のため閉じる
+
+/*        char cmd[256];
+        sprintf_s(cmd, "open \"%ws\" type MPEGVideo alias bgm", (m_exeDir + filename).c_str());
+        if (mciSendStringA(cmd, NULL, 0, NULL) != 0) return false;
+
+        mciSendStringA("set bgm time format milliseconds", NULL, 0, NULL);
+        PlayOnce();  // 初回再生
+        isPlaying = true;*/
+        return true;
+    }
+
+//    void PlayOnce() {
+/*//        mciSendStringA("stop bgm", NULL, 0, NULL);
+        mciSendStringA("seek bgm to start", NULL, 0, NULL);
+//        mciSendStringA("play bgm notify", NULL, 0, hWnd);  // notifyで終了通知
+        mciSendStringA("play bgm repeat", NULL, 0, hWnd);*/
+//    }
+
+    void Stop() {
+        StopMp3();
+/*        mciSendStringA("stop bgm", NULL, 0, NULL);
+        mciSendStringA("close bgm", NULL, 0, NULL);*/
+//        isPlaying = false;
+    }
+
+    // ウィンドウプロシージャで呼ぶ
+/*    void HandleNotify() {
+//        if (isPlaying) {
+//            PlayOnce();  // 終わったら即再再生 → ループ
+//        }
+        if (!isPlaying) return;
+
+        UINT now = GetTickCount();
+
+        // 直近300ms以内の通知は無視（連打防止）
+        if (now - lastNotifyTime < 300) return;
+
+        lastNotifyTime = now;
+
+        // 再再生
+        mciSendStringA("play bgm notify", NULL, 0, hWnd);
+    }*/
+};
+
 class ShooterGame {
 public:
     ShooterGame();
@@ -109,7 +228,8 @@ private:
     HRESULT LoadBitmapFromFile(PCWSTR uri, ID2D1Bitmap** ppBitmap);
     HRESULT LoadSound(const wchar_t* filename, SoundEffect& sound);
     void PlaySound(const SoundEffect& sound);
-    void PlayBGM(const wchar_t* filename);
+//    void PlayBGM(const wchar_t* filename);
+    bool PlayBGM(const wchar_t* filename);
     void StopBGM();
     void CleanupVoices();
     void ToggleFullscreen();
@@ -234,7 +354,7 @@ private:
 	int score = 0, lives = 3, high_score=5000;
 	int gameOver = 0;
 
-	int play_time = 0;		  // 経過時間（フレーム）
+//	int play_time = 0;		  // 経過時間（フレーム）
 
 
 	int sx,sy,dx,dy,ex,ey,ph_x,ph_y,ph_w,ph_h;
@@ -252,8 +372,40 @@ private:
     bool easy_mode = false;
 };
 
-int sin_table[256 * 4];
+//int sin_table[256 * 4];
+SimpleBGM* bgm = nullptr;
 
+// 再生開始
+bool ShooterGame::PlayBGM(const wchar_t* filename)
+{
+/*    char command[512];
+
+    // まず閉じる（念のため）
+    mciSendStringA("close bgm", NULL, 0, NULL);
+
+    // ファイルを開く（MP3の場合 type MPEGVideo を明示的に指定しても良い）
+    sprintf_s(command, "open \"%ws\" type MPEGVideo alias bgm", filename);
+    if (mciSendStringA(command, NULL, 0, NULL) != 0) {
+        // 失敗した場合
+        return false;
+    }
+
+    // 時間をミリ秒単位に設定
+    mciSendStringA("set bgm time format milliseconds", NULL, 0, NULL);
+
+    // ループ再生（repeat）
+    mciSendStringA("play bgm repeat", NULL, 0, NULL);*/
+    bgm->Start();
+    return true;
+}
+
+// 停止
+void ShooterGame::StopBGM()
+{
+/*    mciSendStringA("stop bgm", NULL, 0, NULL);
+    mciSendStringA("close bgm", NULL, 0, NULL);*/
+    bgm->Stop();
+}
 
 ShooterGame::ShooterGame() {
     std::srand(static_cast<unsigned>(std::time(nullptr)));
@@ -316,7 +468,7 @@ void ShooterGame::ToggleFullscreen() {
 HRESULT ShooterGame::Initialize() {
     HRESULT hr;
 
-    m_exeDir = GetExeDirectory();
+//    m_exeDir = GetExeDirectory();
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pFactory);
     if (FAILED(hr)) return hr;
@@ -383,6 +535,8 @@ HRESULT ShooterGame::Initialize() {
     QueryPerformanceCounter(&m_lastUpdateTime);
     QueryPerformanceCounter(&m_lastRenderTime);
 
+//    bgm = new SimpleBGM(hwnd);
+
     return S_OK;
 }
 
@@ -391,6 +545,11 @@ LRESULT CALLBACK ShooterGame::WndProc(HWND hwnd, UINT message, WPARAM wParam, LP
     if (message == WM_CREATE) {
         pThis = reinterpret_cast<ShooterGame*>(((LPCREATESTRUCT)lParam)->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
+
+//        m_exeDir = GetExeDirectory();
+
+//        bgm = new SimpleBGM(hwnd);
+//        bgm->Start();
     }
     else {
         pThis = reinterpret_cast<ShooterGame*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
@@ -453,9 +612,31 @@ LRESULT ShooterGame::HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARA
             }
         }
         break;
+
+    case WM_CREATE:
+        bgm = new SimpleBGM(hwnd);
+        break;
+
+/*    case MM_MCINOTIFY:
+//        if (bgm) bgm->HandleNotify();
+        if (wParam == MCI_NOTIFY_SUCCESSFUL)
+        {
+            if (bgm->isPlaying) {
+                // すぐに再再生（通知連打対策は最小限に）
+//                mciSendStringA("play bgm notify", NULL, 0, hwnd);
+                bgm->PlayOnce();
+//                bgm->Start();
+                return  0;
+            }
+            else
+                return  0;
+        }
+        else if (wParam == MCI_NOTIFY_ABORTED) {
+            // stopなどで中断された場合は、何もせず無視する
+            return 0;
+        }
+        break;*/
     }
-
-
 
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
@@ -622,6 +803,7 @@ void ShooterGame::CleanupVoices() {
     }
 }
 
+/*
 void ShooterGame::PlayBGM(const wchar_t* filename) {
     if (!m_pXAudio2) return;
 
@@ -687,6 +869,7 @@ void ShooterGame::StopBGM() {
     delete[] m_pBgmBuffer;
     m_pBgmBuffer = NULL;
 }
+*/
 
 HRESULT ShooterGame::CreateDeviceResources() {
     if (m_pRenderTarget) return S_OK;
@@ -825,7 +1008,8 @@ void ShooterGame::ResetGame() {
 //	InitStars();
 
     StopBGM();
-    PlayBGM((m_exeDir + L"bgm.wav").c_str());
+//    PlayBGM((m_exeDir + L"bgm.wav").c_str());
+    PlayBGM((m_exeDir + L"bgm.mp3").c_str());
 }
 
 
@@ -905,8 +1089,8 @@ void ShooterGame::GameUpdate() {
 //        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
 
         // 滑らかに追従
-        opt.x += ((playerX + 16) - opt.x) / 4;
-        opt.y += ((playerY + opt.offset_y) - opt.y) / 4;
+        opt.x += ((playerX + 16) - opt.x) / 4 * m_deltaTime * COUNT1S;
+        opt.y += ((playerY + opt.offset_y) - opt.y) / 4 * m_deltaTime * COUNT1S;
     }
 
 // 射撃クールタイムも時間ベースに
@@ -1069,11 +1253,11 @@ void ShooterGame::GameUpdate() {
 
     // パーティクル更新
     for (auto it = particles.begin(); it != particles.end(); ) {
-        it->x += it->vx;
-        it->y += it->vy;
+        it->x += it->vx * m_deltaTime * COUNT1S;
+        it->y += it->vy * m_deltaTime * COUNT1S;
         it->vx *= 0.96f;      // 少し減速（空気抵抗）
         it->vy *= 0.96f;
-        it->life--;
+        it->life -= m_deltaTime * COUNT1S;
 
         if (it->life <= 0) {
             it = particles.erase(it);
@@ -1386,7 +1570,7 @@ void ShooterGame::CreateParticles(float x, float y, int count, int type = 0) {
         p.y = y;
         p.vx = (rand() % 100 - 50) * 0.12f;   // -6.0 ~ +6.0
         p.vy = (rand() % 100 - 50) * 0.12f;
-        p.life = 20 + (rand() % 25);
+        p.life = 20.0f + (rand() % 25);
         p.color_index = rand() % 5;
         p.type = type;
         particles.push_back(p);
@@ -1646,12 +1830,14 @@ void ShooterGame::RunMessageLoop() {
     }
 }
 
-
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // DPI Awareを最優先で設定
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    m_exeDir = GetExeDirectory();
+
 
     ShooterGame game;
     if (SUCCEEDED(game.Initialize())) {
