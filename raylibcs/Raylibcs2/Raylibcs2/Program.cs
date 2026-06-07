@@ -98,7 +98,7 @@ namespace RaylibSideScrollerShooter
     class Particle {
         public float X, Y;
         public float vx, vy;
-        public int life;           // 残りフレーム
+        public float life;           // 残りフレーム
         public int color_index;    // 0?4で星ブラシと同じ色を使う
         public int type;           // 0=通常破片、1=大きな爆発など（後で拡張用）
         public Particle(float initX, float initY, float initvx, float initvy, int initlife, int initcolor_index, int inittype)
@@ -287,8 +287,12 @@ namespace RaylibSideScrollerShooter
             foreach(var opt in options) {
 //              opt.angle += 0.08f * COUNT1S * delta;   // 回転速度
                 // 滑らかに追従
-                opt.X += ((player.X + 16) - opt.X) / 4;
-                opt.Y += ((player.Y + opt.offset_y) - opt.Y) / 4;
+//                opt.X += ((player.X + 16) - opt.X) / 4;
+//                opt.Y += ((player.Y + opt.offset_y) - opt.Y) / 4;
+
+				float t = 1.0f - MathF.Pow(1.0f - 0.25f, delta * COUNT1S);
+                opt.X = Single.Lerp(opt.X, player.X + 16, t);
+				opt.Y = Single.Lerp(opt.Y, player.Y + opt.offset_y, t);
             }
 
 
@@ -375,7 +379,7 @@ namespace RaylibSideScrollerShooter
                     if (e.count < 24)
                     {   // 1段階：超急接近
                         e.X -= 6 * 2 * delta * COUNT1S;
-                        e.Y += ((player.Y + 8 - e.Y) / 8) / 2;
+                        e.Y += ((player.Y + 8 - e.Y) / 8) / 2 * delta * COUNT1S;
                     }
                     else if (e.count < 49)  // 2段階：短くホバリング
                         e.X -= 0;
@@ -611,11 +615,14 @@ namespace RaylibSideScrollerShooter
             for (int i = particles.Count - 1; i >= 0; i--)
             {
                 Particle it = particles[i];
-                it.X += it.vx;
-                it.Y += it.vy;
-                it.vx *= 0.96f;      // 少し減速（空気抵抗）
-                it.vy *= 0.96f;
-                it.life--;
+                it.X += it.vx * COUNT1S * delta;
+                it.Y += it.vy * COUNT1S * delta;
+//                it.vx *= 0.96f;      // 少し減速（空気抵抗）
+//                it.vy *= 0.96f;
+				float damping = MathF.Pow(0.96f, delta * 60f); 
+				it.vx *= damping;
+				it.vy *= damping;
+                it.life -= COUNT1S * delta;
 
                 if (it.life <= 0)
                 {
@@ -771,7 +778,7 @@ namespace RaylibSideScrollerShooter
         // 描画
         public void DrawGame(int high_score)
         {
-            scale = Math.Min((float)Raylib.GetScreenWidth() / GameConfig.ScreenWidth, (float)Raylib.GetScreenHeight() / GameConfig.ScreenHeight);
+            scale = MathF.Min(Raylib.GetScreenWidth() / GameConfig.ScreenWidth, Raylib.GetScreenHeight() / GameConfig.ScreenHeight);
             //            X_SCALE = scale;
             //            Y_SCALE = scale;
             Rectangle destRec = new Rectangle(
@@ -800,7 +807,7 @@ namespace RaylibSideScrollerShooter
 //          if (!particles.empty()){ // && m_pTextBrush) {
                 foreach (var p in particles) {
                     if (p.life > 0) {
-                        Raylib.DrawCircle((int)p.X * GameConfig.X_SCALE, (int)p.Y * GameConfig.Y_SCALE, 1.5f, Color.Yellow);
+                        Raylib.DrawCircle((int)p.X * GameConfig.X_SCALE, (int)p.Y * GameConfig.Y_SCALE, 1.5f*2, Color.Yellow);
                     }
                 }
 //          }
