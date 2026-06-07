@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cwchar>
+#include <cmath>
 
 #define SCREEN_WIDTH  (256*2)
 #define SCREEN_HEIGHT (192*2)
@@ -272,6 +273,9 @@ void ShooterGame::GameUpdate() {
         // 滑らかに追従
         opt.x += ((playerX + 16) - opt.x) / 4 * m_deltaTime * COUNT1S;
         opt.y += ((playerY + opt.offset_y) - opt.y) / 4 * m_deltaTime * COUNT1S;
+//		float t = 1.0f - pow(1.0f - 0.25f, m_deltaTime * COUNT1S);
+//		opt.x = std::lerp(opt.x, playerX + 16, t);
+//		opt.y = std::lerp(opt.y, playerY + opt.offset_y, t);
     }
 
 // 射撃クールタイムも時間ベースに
@@ -330,7 +334,7 @@ void ShooterGame::GameUpdate() {
 //			static float dist_x = e.x - player_x;
             if (e.count < 24) {	// 1段階：超急接近
                  e.x -= 6 * 2 * m_deltaTime * COUNT1S;
-                e.y += ((playerY + 8 - e.y) / 8) / 2;
+                e.y += ((playerY + 8 - e.y) / 8) / 2  * m_deltaTime * COUNT1S;
             }
             else if (e.count < 49)	// 2段階：短くホバリング
                 e.x -= 0;
@@ -435,8 +439,13 @@ void ShooterGame::GameUpdate() {
     for (auto it = particles.begin(); it != particles.end(); ) {
         it->x += it->vx * m_deltaTime * COUNT1S;
         it->y += it->vy * m_deltaTime * COUNT1S;
-        it->vx *= 0.96f;      // 少し減速（空気抵抗）
-        it->vy *= 0.96f;
+//        it->vx *= 0.96f;      // 少し減速（空気抵抗）
+//        it->vy *= 0.96f;
+
+		float damping = pow(0.96f, m_deltaTime * COUNT1S); 
+		it->vx *= damping;
+		it->vy *= damping;
+
         it->life -=  m_deltaTime * COUNT1S;
 
         if (it->life <= 0) {

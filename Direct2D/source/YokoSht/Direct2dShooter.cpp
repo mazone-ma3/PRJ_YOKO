@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cwchar>
+#include <cmath>
 
 #include <shellscalingapi.h>
 #include <string>     // std::wstring
@@ -1089,8 +1090,11 @@ void ShooterGame::GameUpdate() {
 //        opt.angle += 0.08f * COUNT1S * m_deltaTime;   // 回転速度
 
         // 滑らかに追従
-        opt.x += ((playerX + 16) - opt.x) / 4 * m_deltaTime * COUNT1S;
-        opt.y += ((playerY + opt.offset_y) - opt.y) / 4 * m_deltaTime * COUNT1S;
+//        opt.x += ((playerX + 16) - opt.x) / 4 * m_deltaTime * COUNT1S;
+//        opt.y += ((playerY + opt.offset_y) - opt.y) / 4 * m_deltaTime * COUNT1S;
+		float t = 1.0f - pow(1.0f - 0.25f, m_deltaTime * COUNT1S);
+		opt.x = std::lerp(opt.x, playerX + 16, t);
+		opt.y = std::lerp(opt.y, playerY + opt.offset_y, t);
     }
 
 // 射撃クールタイムも時間ベースに
@@ -1149,8 +1153,8 @@ void ShooterGame::GameUpdate() {
 		else if(e.type == 1){	  // ヘリザコ - 勢いよく突っ込む
 //			static float dist_x = e.x - player_x;
             if (e.count < 24) {	// 1段階：超急接近
-                 e.x -= 6 * 2 * m_deltaTime * COUNT1S;
-                e.y += ((playerY + 8 - e.y) / 8) / 2;
+                e.x -= 6 * 2 * m_deltaTime * COUNT1S;
+                e.y += ((playerY + 8 - e.y) / 8) / 2 * m_deltaTime * COUNT1S;
             }
             else if (e.count < 49)	// 2段階：短くホバリング
                 e.x -= 0;
@@ -1255,8 +1259,13 @@ void ShooterGame::GameUpdate() {
     for (auto it = particles.begin(); it != particles.end(); ) {
         it->x += it->vx * m_deltaTime * COUNT1S;
         it->y += it->vy * m_deltaTime * COUNT1S;
-        it->vx *= 0.96f;      // 少し減速（空気抵抗）
-        it->vy *= 0.96f;
+//        it->vx *= 0.96f;      // 少し減速（空気抵抗）
+//        it->vy *= 0.96f;
+
+			float damping = pow(0.96f, m_deltaTime * COUNT1S); 
+			it->vx *= damping;
+			it->vy *= damping;
+
         it->life -= m_deltaTime * COUNT1S;
 
         if (it->life <= 0) {
