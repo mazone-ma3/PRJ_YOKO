@@ -223,16 +223,17 @@ void ShooterGame::GameUpdate() {
 	int gamepad = 0;
 
     if (gameOver == 1){
-		if
-		(!((IsGamepadAvailable(gamepad) && (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) )
-         || (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || IsKeyDown(KEY_R) || IsKeyDown(KEY_X) || IsKeyDown(KEY_B))) ){
+//		if
+//		(!((IsGamepadAvailable(gamepad) && (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) )
+//         || (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || IsKeyDown(KEY_R) || IsKeyDown(KEY_X) || IsKeyDown(KEY_B))) )
+		{
 			gameOver = 2;
 		}
 	}
 	if (gameOver == 2){
-        if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_Z) || IsKeyDown(KEY_R) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
+        if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_Z) || IsKeyPressed(KEY_R) || (IsGamepadAvailable(gamepad) && IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) {
 			easy_mode = false; ResetGame();
-        }else if (IsKeyDown(KEY_X) || IsKeyDown(KEY_B) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) {
+        }else if (IsKeyPressed(KEY_X) || IsKeyPressed(KEY_B) || (IsGamepadAvailable(gamepad) && IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) {
 			easy_mode = true; ResetGame();
 		}
 	}
@@ -292,7 +293,7 @@ void ShooterGame::GameUpdate() {
     }
 
 	// GameUpdate()内がおすすめ
-	if ((IsKeyDown(KEY_X) || IsKeyDown(KEY_B) || (IsGamepadAvailable(gamepad) && IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) && bomb_stock > 0 && !bomb_active) {
+	if ((IsKeyPressed(KEY_X) || IsKeyPressed(KEY_B) || (IsGamepadAvailable(gamepad) && IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) && bomb_stock > 0 && !bomb_active) {
         if (key_b_flag == false)
             UseBomb();
         key_b_flag = true;

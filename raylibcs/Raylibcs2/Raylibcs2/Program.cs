@@ -234,7 +234,7 @@ namespace RaylibSideScrollerShooter
         }
 
         // ゲームの更新
-        public void UpdateGame()
+        public void UpdateGame(int gamepad)
         {
             float delta = Raylib.GetFrameTime();
             Raylib.UpdateMusicStream(assets.bgm);
@@ -257,7 +257,7 @@ namespace RaylibSideScrollerShooter
 //	                    ResetGame();
 //	                }
 //	            }
-	                if(!Raylib.IsKeyDown(KeyboardKey.Space) && !Raylib.IsKeyDown(KeyboardKey.Z) && !Raylib.IsKeyDown(KeyboardKey.R) && !Raylib.IsKeyDown(KeyboardKey.X) && !Raylib.IsKeyDown(KeyboardKey.B))
+//	                if(!Raylib.IsKeyDown(KeyboardKey.Space) && !Raylib.IsKeyDown(KeyboardKey.Z) && !Raylib.IsKeyDown(KeyboardKey.R) && !Raylib.IsKeyDown(KeyboardKey.X) && !Raylib.IsKeyDown(KeyboardKey.B))
 	                {
 	                    gameOver = 2;
 	                }
@@ -268,14 +268,25 @@ namespace RaylibSideScrollerShooter
 
             gametime += delta;
 
+		    // 1. ゲームパッドが接続されているかチェック
+			float axisX = 0;
+			float axisY = 0;
+		    if (Raylib.IsGamepadAvailable(gamepad))
+		    {
+		        // 2. アナログスティック（左スティック）の入力を取得
+		        // 戻り値は -1.0f から 1.0f の間
+				        axisX = Raylib.GetGamepadAxisMovement(gamepad, GamepadAxis.LeftX);
+				        axisY = Raylib.GetGamepadAxisMovement(gamepad, GamepadAxis.LeftY);
+			}
+
             // プレイヤー移動（WASD or ↑↓）
-            if (Raylib.IsKeyDown(KeyboardKey.W) || Raylib.IsKeyDown(KeyboardKey.Up))
+            if (Raylib.IsKeyDown(KeyboardKey.W) || Raylib.IsKeyDown(KeyboardKey.Up) || (axisY < -0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceUp)))
                 player.Y -= playerSpeed * delta;
-            if (Raylib.IsKeyDown(KeyboardKey.S) || Raylib.IsKeyDown(KeyboardKey.Down))
+            if (Raylib.IsKeyDown(KeyboardKey.S) || Raylib.IsKeyDown(KeyboardKey.Down) || (axisY > 0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceDown)))
                 player.Y += playerSpeed * delta;
-            if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
+            if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left) || (axisX < -0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceLeft)))
                 player.X -= playerSpeed * delta * 0.7f;
-            if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right))
+            if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right) || (axisX > 0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceRight)))
                 player.X += playerSpeed * delta * 0.7f;
 
             // 画面内制限
@@ -298,7 +309,7 @@ namespace RaylibSideScrollerShooter
 
             // 射撃（Space）
             shootCooldown -= delta;
-            if ((Raylib.IsKeyDown(KeyboardKey.Space) || Raylib.IsKeyDown(KeyboardKey.Z)) && shootCooldown <= 0)
+            if ((Raylib.IsKeyDown(KeyboardKey.Space) || Raylib.IsKeyDown(KeyboardKey.Z) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.RightFaceDown))) && shootCooldown <= 0)
             {
                 bullets.Add(new Rectangle(player.X + player.Width, player.Y + player.Height, 20, 10));
 
@@ -311,7 +322,7 @@ namespace RaylibSideScrollerShooter
             }
 
 
-			if ((Raylib.IsKeyDown(KeyboardKey.X) || Raylib.IsKeyDown(KeyboardKey.B)) && bomb_stock > 0 && !bomb_active) {
+			if ((Raylib.IsKeyPressed(KeyboardKey.X) || Raylib.IsKeyPressed(KeyboardKey.B) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonPressed(gamepad, GamepadButton.RightFaceRight))) && bomb_stock > 0 && !bomb_active) {
 		        if (key_b_flag == false)
 		            UseBomb();
 		        key_b_flag = true;
@@ -1083,15 +1094,17 @@ namespace RaylibSideScrollerShooter
 	                Raylib.ToggleFullscreen();
 	            }
 
+                int gamepad = 0;
+
 	            if (game.gameOver == 2){
 					bool shouldReset = false;
 			        bool useEasyMode = false;
-	                if (Raylib.IsKeyPressed(KeyboardKey.Space) || Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.R))
+	                if (Raylib.IsKeyPressed(KeyboardKey.Space) || Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.R) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonPressed(gamepad, GamepadButton.RightFaceDown)))
 	                {
 						shouldReset = true;
 						useEasyMode = false;
 					}
-                    else if (Raylib.IsKeyPressed(KeyboardKey.X) || Raylib.IsKeyPressed(KeyboardKey.B))
+                    else if (Raylib.IsKeyPressed(KeyboardKey.X) || Raylib.IsKeyPressed(KeyboardKey.B) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonPressed(gamepad, GamepadButton.RightFaceRight)))
 	                {
 						shouldReset = true;
 						useEasyMode = true;
@@ -1106,7 +1119,7 @@ namespace RaylibSideScrollerShooter
                     }
                 }
 
-                game.UpdateGame();
+                game.UpdateGame(gamepad);
                 //                }
                 if ((game.gameOver != 0) && (game.score > high_score))
                     high_score = game.score;
