@@ -454,7 +454,7 @@ namespace RaylibSideScrollerShooter
                 // 自機 vs 敵 衝突判定（playerはRectangleなのでOK）
                 //                if (Raylib.CheckCollisionRecs(player, e))
                 if (e.X + 32 > player.X && e.X < player.X + 32 &&
-                    e.Y + 32 > player.Y + 6 && e.Y < player.Y + 6 + 32)
+                    e.Y + 32 > player.Y + 6 && e.Y < player.Y + 6 + 20)
                 {
                     if (shield_active)
                     {

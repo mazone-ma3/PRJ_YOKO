@@ -597,7 +597,7 @@ void ShooterGame::CheckCollisions() {
     // 敵 vs 自機
     for (auto it = enemies.begin(); it != enemies.end(); ) {
         if (it->x + 32 > playerX && it->x < playerX + 32 &&
-            it->y + 32 > playerY + 6 && it->y < playerY + 6 + 32) {
+            it->y + 32 > playerY + 6 && it->y < playerY + 6 + 20) {
             if (shield_active) {
                 shield_active = false;           // シールド消費
                 CreateParticles(playerX + 16, playerY + 16, 18, 1); // 大きな爆発
