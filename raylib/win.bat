@@ -1,0 +1,1 @@
+g++ main.cpp -o shooter.exe -lraylib -lopengl32 -lgdi32 -lwinmm -static -std=c++17 -Wl,--subsystem,windows

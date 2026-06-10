@@ -1,1 +1,3 @@
-c:\raylib\w64devkit\w64devkit
+@echo off
+path c:\raylib\w64devkit\bin;%path%
+cmd
