@@ -26,6 +26,8 @@ raylib gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb�
 
 raylibcs VC#+raylib-csによるWindows(x64)版。gcc版の移植。試作。(要.NET SDK 10 & raylib.dll) 
 
+raylibpy Pyxel版をraylibに移植した物。試作。
+
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
 ※TOWNS版は横長画面にしてるため、実機で液晶だと縞が出ることがあります。CRTの場合は不明です。
