@@ -448,7 +448,7 @@ namespace RaylibSideScrollerShooter
                     e.nextShootTime = shoot_interval;
 
                     e.shootTimer = 0.0f;
-                    e.count++;
+//                    e.count += delta * COUNT1S;
                 }
 //            }
 

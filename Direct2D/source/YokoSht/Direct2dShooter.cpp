@@ -1220,7 +1220,7 @@ void ShooterGame::GameUpdate() {
             e.nextShootTime = shoot_interval;
 
             e.shootTimer = 0.0f;
-            e.count++;
+//            e.count += m_deltaTime * COUNT1S;
         }
     }
 
