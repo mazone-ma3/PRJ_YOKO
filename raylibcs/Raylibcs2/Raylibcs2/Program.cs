@@ -790,7 +790,7 @@ namespace RaylibSideScrollerShooter
         // 描画
         public void DrawGame(int high_score)
         {
-            scale = MathF.Min(Raylib.GetScreenWidth() / GameConfig.ScreenWidth, Raylib.GetScreenHeight() / GameConfig.ScreenHeight);
+            scale = MathF.Min((float)Raylib.GetScreenWidth() / GameConfig.ScreenWidth, (float)Raylib.GetScreenHeight() / GameConfig.ScreenHeight);
             //            X_SCALE = scale;
             //            Y_SCALE = scale;
             Rectangle destRec = new Rectangle(

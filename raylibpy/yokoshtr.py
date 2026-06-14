@@ -1,11 +1,12 @@
 ﻿#import pyxel
-from pyray import *
+#from pyray import *
+import pyray
+import raylib
 
 import math
 import random
 import json
 import os
-#import x68k
 from binascii import unhexlify
 
 X_SCALE = 2
@@ -183,13 +184,13 @@ class App:
 
 		target = raylib.LoadRenderTexture(screenwidth, screenheight);
 
-		while not window_should_close():
+		while not pyray.window_should_close():
 			raylib.UpdateMusicStream(bgm);
 			delta = raylib.GetFrameTime()
 			self.delta = delta
 			self.update()
 
-			if (raylib.IsKeyPressed(KEY_F11)):
+			if (raylib.IsKeyPressed(raylib.KEY_F11)):
 				raylib.ToggleFullscreen()
 
 			# 描画開始
@@ -197,7 +198,7 @@ class App:
 			destRec = ((raylib.GetScreenWidth() - (screenwidth * scale)) * 0.5, (raylib.GetScreenHeight() - (screenheight * scale)) * 0.5, screenwidth * scale, screenheight * scale)
 			raylib.BeginTextureMode(target)
 #			begin_drawing()
-			clear_background(BLACK)
+			pyray.clear_background(raylib.BLACK)
 
 			self.draw()
 
@@ -303,7 +304,7 @@ class App:
 	def update(self):
 		gamepad = 0
 		if self.game_over:
-			if raylib.IsKeyPressed(KEY_R) or raylib.IsKeyPressed(KEY_Z) or raylib.IsKeyPressed(KEY_SPACE) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)):
+			if raylib.IsKeyPressed(raylib.KEY_R) or raylib.IsKeyPressed(raylib.KEY_Z) or raylib.IsKeyPressed(raylib.KEY_SPACE) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonPressed(gamepad, raylib.GAMEPAD_BUTTON_RIGHT_FACE_DOWN)):
 				self.reset()
 				self.game_over = False
 #				pyxel.play(0, 0, 0,True)
@@ -320,30 +321,30 @@ class App:
 		if raylib.IsGamepadAvailable(gamepad):
 			# 2. アナログスティック（左スティック）の入力を取得
 			# 戻り値は -1.0f から 1.0f の間
-			axisX = raylib.GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_X);
-			axisY = raylib.GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_Y);
+			axisX = raylib.GetGamepadAxisMovement(gamepad, raylib.GAMEPAD_AXIS_LEFT_X);
+			axisY = raylib.GetGamepadAxisMovement(gamepad, raylib.GAMEPAD_AXIS_LEFT_Y);
 
 		# 移動
-		if raylib.IsKeyDown(KEY_LEFT) or  (axisX < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_LEFT)):
-			 self.player_x -= self.player_speed
+		if raylib.IsKeyDown(raylib.KEY_LEFT) or  (axisX < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_LEFT)):
+			self.player_x -= self.player_speed
 
-		if raylib.IsKeyDown(KEY_RIGHT) or  (axisX > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)):
+		if raylib.IsKeyDown(raylib.KEY_RIGHT) or  (axisX > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_RIGHT)):
 			self.player_x += self.player_speed * COUNT1S * self.delta
-		if raylib.IsKeyDown(KEY_UP) or  (axisY < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP)):
+		if raylib.IsKeyDown(raylib.KEY_UP) or  (axisY < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_UP)):
 			self.player_y -= self.player_speed * COUNT1S * self.delta
-		if raylib.IsKeyDown(KEY_DOWN) or  (axisY > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN)):
+		if raylib.IsKeyDown(raylib.KEY_DOWN) or  (axisY > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_DOWN)):
 			self.player_y += self.player_speed * COUNT1S * self.delta
-		if raylib.IsKeyDown(KEY_A): self.player_x -= self.player_speed * COUNT1S * self.delta
-		if raylib.IsKeyDown(KEY_D): self.player_x += self.player_speed * COUNT1S * self.delta
-		if raylib.IsKeyDown(KEY_W): self.player_y -= self.player_speed * COUNT1S * self.delta
-		if raylib.IsKeyDown(KEY_S): self.player_y += self.player_speed * COUNT1S * self.delta
+		if raylib.IsKeyDown(raylib.KEY_A): self.player_x -= self.player_speed * COUNT1S * self.delta
+		if raylib.IsKeyDown(raylib.KEY_D): self.player_x += self.player_speed * COUNT1S * self.delta
+		if raylib.IsKeyDown(raylib.KEY_W): self.player_y -= self.player_speed * COUNT1S * self.delta
+		if raylib.IsKeyDown(raylib.KEY_S): self.player_y += self.player_speed * COUNT1S * self.delta
 
 		self.player_x = max(0, min(self.player_x, screenwidth / X_SCALE - 20*2))
 		self.player_y = max(0, min(self.player_y, screenheight / Y_SCALE - 16*2))
 
 		# 自機射撃
 		self.shoot_timer += 1
-		if (raylib.IsKeyDown(KEY_SPACE) or raylib.IsKeyDown(KEY_Z) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) and self.shoot_timer > 8:
+		if (raylib.IsKeyDown(raylib.KEY_SPACE) or raylib.IsKeyDown(raylib.KEY_Z) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) and self.shoot_timer > 8:
 			self.bullets.append([self.player_x + 16*2, self.player_y + 6*2])
 			for opt in self.options:
 				self.bullets.append([opt.x + 4*2, opt.y + 6*2])
@@ -351,7 +352,7 @@ class App:
 #			pyxel.play(0, 0)
 
 		# ボム使用
-		if (raylib.IsKeyPressed(KEY_B) or raylib.IsKeyPressed(KEY_X) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) and self.bomb_stock > 0:
+		if (raylib.IsKeyPressed(raylib.KEY_B) or raylib.IsKeyPressed(raylib.KEY_X) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonPressed(gamepad, raylib.GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) and self.bomb_stock > 0:
 			# or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_B))
 			self.use_bomb()
 
@@ -747,8 +748,8 @@ class App:
 #			pyxel.text(55, 120, "PRESS R or A TO RESTART", 7)
 
 
-raylib.SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT )
-init_window(screenwidth, screenheight, b"Raylib Python Simple Shmup")
+raylib.SetConfigFlags(raylib.FLAG_WINDOW_RESIZABLE | raylib.FLAG_VSYNC_HINT )
+pyray.init_window(screenwidth, screenheight, b"Raylib Python Simple Shmup")
 #set_target_fps(60)
 
 target = raylib.LoadRenderTexture(screenwidth*2, screenheight*2)
@@ -766,7 +767,7 @@ bgm = raylib.LoadMusicStream(b"bgm.mp3")
 App()
 
 # ウィンドウを閉じる
-close_window()
+pyray.close_window()
 
 
 #yokoshtr.py By maZone(m@3) with Grok 2026.

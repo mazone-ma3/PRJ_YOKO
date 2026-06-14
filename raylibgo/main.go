@@ -178,7 +178,7 @@ func main() {
 			rl.ToggleFullscreen()
 		}
 
-		scale := float32(min(rl.GetScreenWidth()/screenWidth, rl.GetScreenHeight()/screenHeight))
+		scale := float32(min(float32(rl.GetScreenWidth())/screenWidth, float32(rl.GetScreenHeight())/screenHeight))
 
 		destRec := rl.NewRectangle((float32(rl.GetScreenWidth())-(screenWidth*scale))*0.5, (float32(rl.GetScreenHeight())-(screenHeight*scale))*0.5, screenWidth*scale, screenHeight*scale)
 
@@ -294,8 +294,8 @@ func UseBomb() {
 
 	// 画面全体に破片を散らす
 	for i := 0; i < 60; i++ {
-		rx := float32(rand.Intn(screenWidth))
-		ry := float32(rand.Intn(screenHeight))
+		rx := float32(rand.Intn(screenWidth/X_SCALE))
+		ry := float32(rand.Intn(screenHeight/Y_SCALE))
 		CreateParticles(rx, ry, 6, 1)
 	}
 
@@ -432,7 +432,7 @@ func update() {
 	for i := range bullets {
 		if bullets[i].Active {
 			bullets[i].Pos.X += bullets[i].Speed * COUNT1S * delta
-			if bullets[i].Pos.X > screenWidth {
+			if bullets[i].Pos.X > screenWidth/X_SCALE {
 				bullets[i].Active = false
 			}
 		}
@@ -576,7 +576,7 @@ func update() {
 		}
 
 		//			e.Pos.X += e.Speed * COUNT1S * delta
-		if (e.Pos.X < -32) || (e.Pos.X > screenWidth) {
+		if (e.Pos.X < -32) || (e.Pos.X > screenWidth/X_SCALE) {
 			e.Active = false
 		}
 	}
@@ -711,7 +711,7 @@ func update() {
 			it.Pos.X += it.vx * delta * COUNT1S
 			it.Pos.Y += it.vy * delta * COUNT1S
 
-			if (it.Pos.X < -32) || (it.Pos.X > screenWidth) || (it.Pos.Y < 32) || (it.Pos.Y > screenHeight) {
+			if (it.Pos.X < -32) || (it.Pos.X > screenWidth/X_SCALE) || (it.Pos.Y < 32) || (it.Pos.Y > screenHeight/Y_SCALE) {
 				it.Active = false
 			}
 		}
