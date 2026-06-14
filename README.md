@@ -28,7 +28,7 @@ raylibcs VC#+raylib-csによるWindows(x64)版。gcc版の移植。試作。(要
 
 raylibpy Pyxel版をraylib-python-cffiに移植した物。試作。
 
-raylibgo Go+raylib-go版。gcc版の移植。試作。
+raylibgo gcc版をGo+raylib-goに移植した物。試作。
 
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
