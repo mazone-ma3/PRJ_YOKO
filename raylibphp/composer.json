@@ -1,0 +1,9 @@
+{
+    "require": {
+        "kingbes/raylib": "^0.0.7"
+    },
+    "require-dev": {
+        "phpacker/phpacker": "^0.6.4",
+        "nativephp/php-bin": "^1.2"
+    }
+}
