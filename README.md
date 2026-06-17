@@ -30,6 +30,12 @@ raylibpy Pyxel版をraylib-python-cffiに移植した物。試作。
 
 raylibgo gcc版をGo+raylib-goに移植した物。試作。
 
+raylibrust raylib-rsへの移植、作りかけ
+
+raylibphp php-raylibへの移植、作りかけ
+
+JavaScript 作りかけ
+
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
 ※TOWNS版は横長画面にしてるため、実機で液晶だと縞が出ることがあります。CRTの場合は不明です。
