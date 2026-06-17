@@ -16,7 +16,8 @@ const SCREEN_WIDTH = 256 * 2 * X_SCALE;
 const SCREEN_HEIGHT = 192 * 2 * Y_SCALE;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 20;
-const BULLET_SIZE = 16;
+const BULLET_WIDTH = 16;
+const BULLET_HEIGHT = 8;
 const ENEMY_WIDTH = 32;
 const ENEMY_HEIGHT = 32;
 
@@ -61,13 +62,17 @@ class Player
 	public $lives;
 	public $width;
 	public $height;
+	public $top;
+	public $left;
 
-    public function __construct($x, $y, $lives, $width, $height) {
+    public function __construct($x, $y, $lives, $width, $height, $left, $top) {
 		$this->x = $x;
 		$this->y = $y;
 		$this->lives = $lives;
 		$this->width = $width;
 		$this->height = $height;
+		$this->left = $left;
+		$this->top = $top;
 	}
 }
 
@@ -90,12 +95,16 @@ class Bullet
 	public $y;
 	public $width;
 	public $height;
+	public $top;
+	public $left;
 
-    public function __construct($x, $y, $width, $height) {
+    public function __construct($x, $y, $width, $height, $left, $top) {
 		$this->x = $x;
 		$this->y = $y;
 		$this->width = $width;
 		$this->height = $height;
+		$this->left = $left;
+		$this->top = $top;
 	}
 }
 
@@ -108,13 +117,17 @@ class Enemy
 	public $width;
 	public $height;
 	public $speed;
+	public $top;
+	public $left;
 
-    public function __construct($x, $y, $lives, $width, $height, $speed) {
+    public function __construct($x, $y, $lives, $width, $height, $left, $top, $speed) {
 		$this->x = $x;
 		$this->y = $y;
 		$this->lives = $lives;
 		$this->width = $width;
 		$this->height = $height;
+		$this->left = $left;
+		$this->top = $top;
 		$this->speed = $speed;
 	}
 }
@@ -230,7 +243,8 @@ class Game
 			(SCREEN_HEIGHT / Y_SCALE / 2 - PLAYER_HEIGHT / 2),
 			3,
 			PLAYER_WIDTH,
-			PLAYER_HEIGHT
+			PLAYER_HEIGHT,
+			0, 6
 		);
 /*		$this->player->x = 60;
 		$this->player->y =  SCREEN_HEIGHT / Y_SCALE / 2 - PLAYER_HEIGHT / 2;
@@ -427,6 +441,7 @@ class Game
 				1,
                 ENEMY_WIDTH,
                 ENEMY_HEIGHT,
+				0, 0,
                 ENEMY_SPEED + rand(-1, 3)
 			);
 /*			[
@@ -440,18 +455,18 @@ class Game
     }
 
     // ==================== 衝突判定関数 ====================
-    function checkCollision($a, $b) {
+/*    function checkCollision($a, $b) {
         return !($a['x'] + ($a['width'] ?? PLAYER_WIDTH) < $b['x'] ||
                  $a['x'] > $b['x'] + ($b['width'] ?? ENEMY_WIDTH) ||
                  $a['y'] + ($a['height'] ?? PLAYER_HEIGHT) < $b['y'] ||
                  $a['y'] > $b['y'] + ($b['height'] ?? ENEMY_HEIGHT));
     }
-
-    function checkCollision2($a, $b) {
-        return !($a->x + $a->width < $b->x ||
-                 $a->x > $b->x + $b->width ||
-                 $a->y + $a->height < $b->y ||
-                 $a->y > $b->y + $b->height);
+*/
+    function checkCollision($a, $b) {
+        return !($a->x + $a->left + $a->width < $b->x + $b->left ||
+                 $a->x + $a->left > $b->x + $b->left + $b->width ||
+                 $a->y + $a->top + $a->height < $b->y + $b->top ||
+                 $a->y + $a->top > $b->y + $b->top + $b->height);
 
 /*        return !($a->x + $a->width < $b['x'] ||
                  $a->x > $b['x'] + ($b['width'] ?? ENEMY_WIDTH) ||
@@ -495,8 +510,9 @@ class Game
                $this->bullets[] = new Bullet(
 					$this->player->x + 32, 
 					$this->player->y + 12, 
-					BULLET_SIZE * 2,
-					BULLET_SIZE
+					BULLET_WIDTH,
+					BULLET_HEIGHT,
+					0, 0
 				);
 /*                    'x' => $this->player->x + 32,
                     'y' => $this->player->y + 12,
@@ -549,7 +565,7 @@ class Game
             foreach ($this->bullets as $bi => $b) {
                 foreach ($this->enemies as $ei => $e) {
                     if (in_array($ei, $hitEnemies)) continue;
-                    if ($this->checkCollision2($b, $e)) {
+                    if ($this->checkCollision($b, $e)) {
 						$e->lives--;
                         $hitBullets[] = $bi;
 						if($e->lives <= 0) {
@@ -569,7 +585,7 @@ class Game
 
             // --- 衝突判定（プレイヤー と 敵）---
             foreach ($this->enemies as $ei => $e) {
-                if ($this->checkCollision2($this->player, $e)) {
+                if ($this->checkCollision($this->player, $e)) {
                     unset($this->enemies[$ei]);
                     $this->player->lives--;
                     if ($this->player->lives <= 0) {

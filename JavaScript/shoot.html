@@ -138,6 +138,8 @@
             y: 160,
             width: 32,
             height: 20,
+            left: 0,
+            top: 6,
             speed: 4
         };
 
@@ -264,7 +266,11 @@
             if ((keys[' '] || keys['z']) && now - lastShot > 150) {
                 bullets.push({
                     x: player.x + player.width,
-                    y: player.y + player.height/2
+                    y: player.y + player.height/2,
+                    width: 16,
+                    height: 8,
+                    left: 0,
+                    top: 0,
                 });
                 lastShot = now;
             }
@@ -280,8 +286,10 @@
                 enemies.push({
                     x: canvas.width + 50,
                     y: Math.random() * (canvas.height - 40),
-                    width: 40,
-                    height: 30,
+                    width: 32,
+                    height: 32,
+                    left: 0,
+                    top: 0,
                     speed: 3 + Math.random() * 2
                 });
             }
@@ -337,7 +345,7 @@
         }
 
         function checkCollision(a, b) {
-            if (!b.width) { // 弾の場合
+/*            if (!b.width) { // 弾の場合
                 return (
                     a.x < b.x + 20 &&
                     a.x + (a.width || 40) > b.x &&
@@ -350,8 +358,13 @@
                 a.x > b.x + b.width ||
                 a.y + (a.height || 30) < b.y ||
                 a.y > b.y + b.height
-            );
-        }
+            );*/
+            return !(
+                a.x + a.left + a.width < b.x + b.left ||
+                a.x + a.left > b.x + b.left + b.width ||
+                a.y + a.top + a.height < b.y + b.top ||
+                a.y + a.top > b.y + b.top + b.height
+            );        }
 
         function createExplosion(x, y) {
             for (let i = 0; i < 15; i++) {

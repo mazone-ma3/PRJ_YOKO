@@ -11,18 +11,31 @@ const COUNT1S: f32 = 60.0;
 
 const SCREEN_WIDTH: i32 = 256 * 2 * X_SCALE;
 const SCREEN_HEIGHT: i32 = 192 * 2 * Y_SCALE;
-const PLAYER_SPEED: f32 = 4.0 * COUNT1S * X_SCALE as f32;
-const BULLET_SPEED: f32 = 12.0 * COUNT1S * X_SCALE as f32;
-const ENEMY_SPEED: f32 = 4.0 * COUNT1S * X_SCALE as f32;
+const PLAYER_SPEED: f32 = 4.0;// * X_SCALE as f32;
+const BULLET_SPEED: f32 = 12.0;// * X_SCALE as f32;
+const ENEMY_SPEED: f32 = 4.0;// * X_SCALE as f32;
 
 #[derive(Clone)]
+
+struct Player {
+    pos: Vector2,
+    poswh:	Vector2,
+    poslt: Vector2,
+    lives: i32,
+}
+
 struct Bullet {
     pos: Vector2,
+    poswh:	Vector2,
+    poslt: Vector2,
     active: bool,
 }
 
 struct Enemy {
     pos: Vector2,
+    poswh:	Vector2,
+    poslt: Vector2,
+    lives: i32,
     active: bool,
 }
 
@@ -99,8 +112,8 @@ fn put_sprite(chr_tex: &Texture2D, d: &mut RaylibTextureMode<'_, '_, RaylibHandl
 
     // 各ライブラリのRectangleやVector2の構造体に合わせます
     let dest_rect = Rectangle::new(
-        x, 
-        y, 
+        x * X_SCALE as f32, 
+        y * Y_SCALE as f32, 
         32.0 * (X_SCALE as f32) - 1.0, 
         32.0 * (Y_SCALE as f32) - 1.0
     );
@@ -117,6 +130,13 @@ fn put_sprite(chr_tex: &Texture2D, d: &mut RaylibTextureMode<'_, '_, RaylibHandl
 
     // 描画関数の呼び出し
     d.draw_texture_pro(&chr_tex, source_rect, dest_rect, origin, rotation, Color::WHITE);
+}
+
+fn check_collision(a_pos: Vector2, a_poswh: Vector2, a_poslt: Vector2, b_pos: Vector2, b_poswh: Vector2, b_poslt: Vector2)  -> bool {
+    return !(a_pos.x + a_poslt.x + a_poswh.x < b_pos.x + b_poslt.x ||
+             a_pos.x + a_poslt.x > b_pos.x + b_poslt.x + b_poswh.x ||
+             a_pos.y + a_poslt.y + a_poswh.y < b_pos.y + b_poslt.y ||
+             a_pos.y + a_poslt.y > b_pos.y + b_poslt.y + b_poswh.y);
 }
 
 fn main() {
@@ -151,7 +171,12 @@ fn main() {
     // ★Raylib側のFPS制限はバグの原因になるため使わない
     println!("DEBUG: 初期化が完了しました。ループに入ります。");
 
-    let mut player_pos = Vector2::new(100.0, (SCREEN_HEIGHT / 2) as f32);
+    let mut player = Player {
+        pos: Vector2::new(60.0, 160.0), //, Vector2(32, 20, 0, 6, 3));
+        poswh: Vector2::new(32.0,20.0),
+        poslt: Vector2::new(0.0,6.0),
+        lives: 3,
+    };
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
     let mut stars: Vec<Star> = Vec::new();
@@ -207,27 +232,29 @@ fn main() {
 
             // --- プレイヤー操作 ---
             if rl.is_key_down(KeyboardKey::KEY_UP) || rl.is_key_down(KeyboardKey::KEY_W) {
-                player_pos.y -= PLAYER_SPEED * dt;
+                player.pos.y -= PLAYER_SPEED * rate;
             }
             if rl.is_key_down(KeyboardKey::KEY_DOWN) || rl.is_key_down(KeyboardKey::KEY_S) {
-                player_pos.y += PLAYER_SPEED * dt;
+                player.pos.y += PLAYER_SPEED * rate;
             }
             if rl.is_key_down(KeyboardKey::KEY_LEFT) || rl.is_key_down(KeyboardKey::KEY_A) {
-                player_pos.x -= PLAYER_SPEED * dt;
+                player.pos.x -= PLAYER_SPEED * rate;
             }
             if rl.is_key_down(KeyboardKey::KEY_RIGHT) || rl.is_key_down(KeyboardKey::KEY_D) {
-                player_pos.x += PLAYER_SPEED * dt;
+                player.pos.x += PLAYER_SPEED * rate;
             }
 
-            player_pos.y = player_pos.y.clamp(0.0, (SCREEN_HEIGHT - 32) as f32);
-            player_pos.x = player_pos.x.clamp(0.0, (SCREEN_WIDTH - 40) as f32);
+            player.pos.y = player.pos.y.clamp(0.0, (SCREEN_HEIGHT / X_SCALE - 32) as f32);
+            player.pos.x = player.pos.x.clamp(0.0, (SCREEN_WIDTH / Y_SCALE - 40) as f32);
 
             // --- 射撃 ---
             if (rl.is_key_down(KeyboardKey::KEY_SPACE) || rl.is_key_down(KeyboardKey::KEY_Z))
                 && now - last_shot > shot_cooldown
             {
                 bullets.push(Bullet {
-                    pos: Vector2::new(player_pos.x + 32.0*2.0, player_pos.y + 12.0*2.0),
+                    pos: Vector2::new(player.pos.x + 32.0, player.pos.y + 12.0),
+                    poswh: Vector2::new(16.0,8.0),
+                    poslt:  Vector2::new(0.0,0.0),
                     active: true,
                 });
                 last_shot = now;
@@ -237,9 +264,11 @@ fn main() {
             if rl.get_random_value::<i32>(0..=40) == 0 {
                 enemies.push(Enemy {
                     pos: Vector2::new(
-                        (SCREEN_WIDTH + 50) as f32,
-                        rl.get_random_value::<i32>(30..=(SCREEN_HEIGHT - 30)) as f32,
-                    ),
+                        (SCREEN_WIDTH / X_SCALE + 32) as f32,
+                        rl.get_random_value::<i32>(30..=(SCREEN_HEIGHT / Y_SCALE - 32)) as f32),
+                    poswh: Vector2::new(32.0, 32.0),
+                    poslt: Vector2::new(0.0,0.0),
+                    lives: 1,
                     active: true,
                 });
             }
@@ -247,7 +276,7 @@ fn main() {
             // --- 更新 ---
             for bullet in &mut bullets {
                 if bullet.active {
-                    bullet.pos.x += BULLET_SPEED * dt;
+                    bullet.pos.x += BULLET_SPEED * rate;
                     if bullet.pos.x > SCREEN_WIDTH as f32 + 20.0 {
                         bullet.active = false;
                     }
@@ -256,32 +285,42 @@ fn main() {
 
             for enemy in &mut enemies {
                 if enemy.active {
-                    enemy.pos.x -= ENEMY_SPEED * dt;
+                    enemy.pos.x -= ENEMY_SPEED * rate;
                     if enemy.pos.x < -30.0 {
                         enemy.active = false;
                     }
                 }
             }
 
-            // 当たり判定
+            // 自弾・敵 当たり判定
             for bullet in &mut bullets {
                 if !bullet.active { continue; }
                 for enemy in &mut enemies {
                     if !enemy.active { continue; }
-                    if bullet.pos.distance(enemy.pos) < 32.0 {
+//                    if bullet.pos.distance(enemy.pos) < 32.0 {
+                    if check_collision(bullet.pos,bullet.poswh, bullet.poslt, enemy.pos, enemy.poswh, enemy.poslt) {
                         bullet.active = false;
-                        enemy.active = false;
-                        score += 100;
-                        explosion_sound.play();
+                        enemy.lives -= 1;
+                        if(enemy.lives <= 0) {
+                            enemy.active = false;
+                            score += 100;
+                            explosion_sound.play();
+                        }
                     }
                 }
             }
+            enemies.retain(|e| e.active);
 
-            // 衝突
-            for enemy in &enemies {
-                if enemy.active && player_pos.distance(enemy.pos) < 32.0 {
-                    game_over = true;
-                    bgm.stop_stream();
+            // 自機・敵 衝突
+            for enemy in &mut enemies {
+//                if enemy.active &&  player.Pos.distance(enemy.pos) < 32.0 {//check_collision(player.pos,player.poswh,enemy.pos, enemy.poswh) {
+                if enemy.active &&  check_collision(player.pos,player.poswh, player.poslt, enemy.pos, enemy.poswh, enemy.poslt) {
+                    enemy.active = false;
+                    lives -= 1;
+                    if(lives <= 0) {
+                        game_over = true;
+                        bgm.stop_stream();
+                    }
                 }
             }
 
@@ -289,7 +328,9 @@ fn main() {
             enemies.retain(|e| e.active);
         } else {
             if rl.is_key_pressed(KeyboardKey::KEY_R) || rl.is_key_pressed(KeyboardKey::KEY_Z)  || rl.is_key_pressed(KeyboardKey::KEY_SPACE){
-                player_pos = Vector2::new(100.0, (SCREEN_HEIGHT / 2) as f32);
+//                player_pos = Vector2::new(100.0, (SCREEN_HEIGHT / 2) as f32);
+                player.pos.x = 60.0;
+                player.pos.y = 160.0;
                 bullets.clear();
                 enemies.clear();
                 score = 0;
@@ -330,7 +371,7 @@ fn main() {
         }
 
         // プレイヤー（三角機体）
-        if !game_over {
+//        if !game_over {
 /*             d.draw_triangle(
                 Vector2::new(player_pos.x + 30.0, player_pos.y),
                 Vector2::new(player_pos.x - 20.0, player_pos.y - 20.0),
@@ -338,8 +379,8 @@ fn main() {
                 Color::LIME,
             );
 */
-            put_sprite(&chr_tex, &mut d, player_pos.x, player_pos.y, 1);
-        }
+            put_sprite(&chr_tex, &mut d, player.pos.x, player.pos.y, 1);
+//        }
 
         // 弾
         for bullet in &bullets {
