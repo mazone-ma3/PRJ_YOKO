@@ -237,12 +237,13 @@ namespace RaylibSideScrollerShooter
         public void UpdateGame(int gamepad)
         {
             float delta = Raylib.GetFrameTime();
+            float rate = COUNT1S * delta;
             Raylib.UpdateMusicStream(assets.bgm);
 
             // 星移動
             foreach (var s in stars)
             {
-                s.x -= s.baseSpeed * delta * COUNT1S;   // これでFPSが60の時に元の速度と同じになる
+                s.x -= s.baseSpeed * rate;   // これでFPSが60の時に元の速度と同じになる
                 if (s.x < 0)
                 {
                     s.x = GameConfig.ScreenWidth / GameConfig.X_SCALE;
@@ -296,12 +297,12 @@ namespace RaylibSideScrollerShooter
 
             // オプション更新
             foreach(var opt in options) {
-//              opt.angle += 0.08f * COUNT1S * delta;   // 回転速度
+//              opt.angle += 0.08f * rate;   // 回転速度
                 // 滑らかに追従
 //                opt.X += ((player.X + 16) - opt.X) / 4;
 //                opt.Y += ((player.Y + opt.offset_y) - opt.Y) / 4;
 
-				float t = 1.0f - MathF.Pow(1.0f - 0.25f, delta * COUNT1S);
+				float t = 1.0f - MathF.Pow(1.0f - 0.25f, rate);
                 opt.X = Single.Lerp(opt.X, player.X + 16, t);
 				opt.Y = Single.Lerp(opt.Y, player.Y + opt.offset_y, t);
             }
@@ -373,14 +374,14 @@ namespace RaylibSideScrollerShooter
                     enemySpawnTimer = 0f; // (float)Raylib.GetRandomValue(60, 120) / 100f;
             }
 
-            float enemySpeed = 4.0f * COUNT1S * delta;
-            float enemySpeed2 = 5.0f * COUNT1S * delta;
+            float enemySpeed = 4.0f * rate;
+            float enemySpeed2 = 5.0f * rate;
 
             // 敵の更新
           for (int i = enemies.Count - 1; i >= 0; i--)
           {
                 Enemy e = enemies[i];
-                e.count += delta * COUNT1S;
+                e.count += rate;
 
                 if (e.type == 0){
                     e.X -= enemySpeed;
@@ -390,13 +391,13 @@ namespace RaylibSideScrollerShooter
 
                     if (e.count < 24)
                     {   // 1段階：超急接近
-                        e.X -= 6 * 2 * delta * COUNT1S;
-                        e.Y += ((player.Y + 8 - e.Y) / 8) / 2 * delta * COUNT1S;
+                        e.X -= 6 * 2 * rate;
+                        e.Y += ((player.Y + 8 - e.Y) / 8) / 2 * rate;
                     }
                     else if (e.count < 49)  // 2段階：短くホバリング
                         e.X -= 0;
                     else                            // 3段階：右へ全力逃走
-                        e.X += 6 * 2 * delta * COUNT1S;
+                        e.X += 6 * 2 * rate;
                 }
                 else if(e.type == 2)
                 {     // サインカーブ
@@ -448,7 +449,7 @@ namespace RaylibSideScrollerShooter
                     e.nextShootTime = shoot_interval;
 
                     e.shootTimer = 0.0f;
-//                    e.count += delta * COUNT1S;
+//                    e.count += rate;
                 }
 //            }
 
@@ -497,8 +498,8 @@ namespace RaylibSideScrollerShooter
                 //auto it = enemyBullets.begin(); it != enemyBullets.end();)
             {
                 eBullet it = eBullets[i];
-                it.X += it.vx * delta * COUNT1S;
-                it.Y += it.vy * delta * COUNT1S;
+                it.X += it.vx * rate;
+                it.Y += it.vy * rate;
 
                 if ((it.X < -32) || (it.X > GameConfig.ScreenWidth / GameConfig.X_SCALE) || (it.Y < 32) || (it.Y > GameConfig.ScreenHeight / GameConfig.Y_SCALE))
                 {
@@ -627,14 +628,14 @@ namespace RaylibSideScrollerShooter
             for (int i = particles.Count - 1; i >= 0; i--)
             {
                 Particle it = particles[i];
-                it.X += it.vx * COUNT1S * delta;
-                it.Y += it.vy * COUNT1S * delta;
+                it.X += it.vx * rate;
+                it.Y += it.vy * rate;
 //                it.vx *= 0.96f;      // 少し減速（空気抵抗）
 //                it.vy *= 0.96f;
 				float damping = MathF.Pow(0.96f, delta * 60f); 
 				it.vx *= damping;
 				it.vy *= damping;
-                it.life -= COUNT1S * delta;
+                it.life -= rate;
 
                 if (it.life <= 0)
                 {
@@ -661,13 +662,13 @@ namespace RaylibSideScrollerShooter
 			{
 				Item it = Items[i];
 		        if (it.type == 1) {
-		            it.X -= 2.0f * COUNT1S * delta;   // 左に流れる
+		            it.X -= 2.0f * rate;   // 左に流れる
 		        }
 		        else if (it.type == 2) {
-		            it.X -= 4.0f * COUNT1S * delta;   // 左に流れる
+		            it.X -= 4.0f * rate;   // 左に流れる
 		        }
 		        else if (it.type == 3) {
-		            it.X-= 4.0f * COUNT1S * delta;   // 左に流れる
+		            it.X-= 4.0f * rate;   // 左に流れる
 		        }
 		        it.timer -= delta;
 
@@ -715,7 +716,7 @@ namespace RaylibSideScrollerShooter
 		    for (int i = chain_items.Count() - 1; i >= 0; i--)// { auto it = chain_items.begin(); it != chain_items.end(); ) {
 			{
 				ChainItem it = chain_items[i];
-		        it.X -= 4f * delta * COUNT1S;   // 左に流れる
+		        it.X -= 4f * rate;   // 左に流れる
 		        it.timer -= delta;
 
                 // 自機取得判定
