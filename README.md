@@ -30,9 +30,9 @@ raylibpy Pyxel版をraylib-python-cffiに移植した物。試作。
 
 raylibgo gcc版をGo+raylib-goに移植した物。試作。
 
-raylibrust raylib-rsへの移植、作りかけ
+raylibrust raylib-rsへの移植、作りかけ/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
 
-raylibphp php-raylibへの移植、作りかけ
+raylibphp php-raylib(composerで入れてください)への移植、作りかけ
 
 JavaScript 作りかけ
 
