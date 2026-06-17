@@ -54,6 +54,72 @@ define('KEY_F11', 300);
 
 // ==================== 初期化 ====================
 
+class Player
+{
+	public $x;
+	public $y;
+	public $lives;
+	public $width;
+	public $height;
+
+    public function __construct($x, $y, $lives, $width, $height) {
+		$this->x = $x;
+		$this->y = $y;
+		$this->lives = $lives;
+		$this->width = $width;
+		$this->height = $height;
+	}
+}
+
+class Star
+{
+	public $x;
+	public $y;
+	public $speed;
+
+    public function __construct($x, $y, $speed) {
+		$this->x = $x;
+		$this->y = $y;
+		$this->speed = $speed;
+	}
+}
+
+class Bullet
+{
+	public $x;
+	public $y;
+	public $width;
+	public $height;
+
+    public function __construct($x, $y, $width, $height) {
+		$this->x = $x;
+		$this->y = $y;
+		$this->width = $width;
+		$this->height = $height;
+	}
+}
+
+
+class Enemy
+{
+	public $x;
+	public $y;
+	public $lives;
+	public $width;
+	public $height;
+	public $speed;
+
+    public function __construct($x, $y, $lives, $width, $height, $speed) {
+		$this->x = $x;
+		$this->y = $y;
+		$this->lives = $lives;
+		$this->width = $width;
+		$this->height = $height;
+		$this->speed = $speed;
+	}
+}
+
+
 class Game
 {
     public $se;
@@ -126,26 +192,52 @@ class Game
 
         $this->scrollOffset = 0;
         $this->stars = [];
-
+/*
         for ($i = 0; $i < 80; $i++) {
             $this->stars[] = [
                 'x' => rand(0, SCREEN_WIDTH),
                 'y' => rand(0, SCREEN_HEIGHT),
                 'speed' => rand(1, 3) * X_SCALE
             ];
-        }
+        }*/
+
+        for ($i = 0; $i < 80; $i++) {
+			$this->stars[] = new Star(
+				rand(0, SCREEN_WIDTH),
+            	rand(0, SCREEN_HEIGHT),
+            	rand(1, 3) * X_SCALE
+			);
+		}
+/*        foreach ($this->stars as $star) {
+			$star->x = rand(0, SCREEN_WIDTH);
+            $star->y =rand(0, SCREEN_HEIGHT);
+            $star->speed = rand(1, 3) * X_SCALE;
+		}*/
 
         $this->reset();
     }
 
     function reset() {
         // ゲーム全体で使う変数
-        $this->player = [
+/*        $this->player = [
             'x' => 60,
             'y' => SCREEN_HEIGHT / Y_SCALE / 2 - PLAYER_HEIGHT / 2,
             'lives' => 3
-        ];
+        ];*/
 
+		$this->player = new Player(
+			60,
+			(SCREEN_HEIGHT / Y_SCALE / 2 - PLAYER_HEIGHT / 2),
+			3,
+			PLAYER_WIDTH,
+			PLAYER_HEIGHT
+		);
+/*		$this->player->x = 60;
+		$this->player->y =  SCREEN_HEIGHT / Y_SCALE / 2 - PLAYER_HEIGHT / 2;
+		$this->player->lives = 3;
+		$this->player->width = PLAYER_WIDTH;
+		$this->player->height = PLAYER_HEIGHT;
+*/
         $this->bullets = [];
         $this->enemies = [];
         $this->score = 0;
@@ -329,13 +421,21 @@ class Game
         // 1回につき1?2体を同時に生成して配列に追加する
         $count = 1; //rand(1, 2);
         for ($i = 0; $i < $count; $i++) {
-            $enemies[] = [
+            $enemies[] = new Enemy(
+                SCREEN_WIDTH / X_SCALE + rand(10, 100),
+                rand(40, SCREEN_HEIGHT / Y_SCALE - 80),
+				1,
+                ENEMY_WIDTH,
+                ENEMY_HEIGHT,
+                ENEMY_SPEED + rand(-1, 3)
+			);
+/*			[
                 'x' => SCREEN_WIDTH / X_SCALE + rand(10, 100),
                 'y' => rand(40, SCREEN_HEIGHT / Y_SCALE - 80),
                 'width' => ENEMY_WIDTH,
                 'height' => ENEMY_HEIGHT,
                 'speed' => ENEMY_SPEED + rand(-1, 3)
-            ];
+            ];*/
         }
     }
 
@@ -345,6 +445,18 @@ class Game
                  $a['x'] > $b['x'] + ($b['width'] ?? ENEMY_WIDTH) ||
                  $a['y'] + ($a['height'] ?? PLAYER_HEIGHT) < $b['y'] ||
                  $a['y'] > $b['y'] + ($b['height'] ?? ENEMY_HEIGHT));
+    }
+
+    function checkCollision2($a, $b) {
+        return !($a->x + $a->width < $b->x ||
+                 $a->x > $b->x + $b->width ||
+                 $a->y + $a->height < $b->y ||
+                 $a->y > $b->y + $b->height);
+
+/*        return !($a->x + $a->width < $b['x'] ||
+                 $a->x > $b['x'] + ($b['width'] ?? ENEMY_WIDTH) ||
+                 $a->y + $a->height < $b['y'] ||
+                 $a->y > $b['y'] + ($b['height'] ?? ENEMY_HEIGHT));*/
     }
 
     // ==================== メインループ ====================
@@ -361,26 +473,38 @@ class Game
             $this->gameTime += $delta;
 
             // --- プレイヤー移動 ---
-            if (Core::isKeyDown(KEY_UP)) $this->player['y'] -= PLAYER_SPEED * $rate;
-            if (Core::isKeyDown(KEY_DOWN)) $this->player['y'] += PLAYER_SPEED * $rate;
-            if (Core::isKeyDown(KEY_LEFT)) $this->player['x'] -= PLAYER_SPEED * $rate;
-            if (Core::isKeyDown(KEY_RIGHT)) $this->player['x'] += PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_UP)) $this->player->y -= PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_DOWN)) $this->player->y += PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_LEFT)) $this->player->x -= PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_RIGHT)) $this->player->x += PLAYER_SPEED * $rate;
 
             // 画面端制限
-            $this->player['x'] = max(0, min($this->player['x'], SCREEN_WIDTH - 40));
-            $this->player['y'] = max(0, min($this->player['y'], SCREEN_HEIGHT - 32));
+            $this->player->x = max(0, min($this->player->x, SCREEN_WIDTH - 40));
+            $this->player->y = max(0, min($this->player->y, SCREEN_HEIGHT - 32));
 
             // --- 射撃（連射） ---
             $this->shootTimer += $rate;
             if ((Core::isKeyDown(KEY_SPACE) || Core::isKeyDown(KEY_Z)) && $this->shootTimer > FIRE_RATE) {
                 // 弾を配列に「追加（push）」していく（複数表示を可能にする）
-                $this->bullets[] = [
-                    'x' => $this->player['x'] + 32,
-                    'y' => $this->player['y'] + 12,
+/*                $this->bullets[] = [
+                    'x' => $this->player->x + 32,
+                    'y' => $this->player->y + 12,
                     'width' => BULLET_SIZE * 2,
                     'height' => BULLET_SIZE
-                ];
-                $this->shootTimer = 0;
+                ];*/
+               $this->bullets[] = new Bullet(
+					$this->player->x + 32, 
+					$this->player->y + 12, 
+					BULLET_SIZE * 2,
+					BULLET_SIZE
+				);
+/*                    'x' => $this->player->x + 32,
+                    'y' => $this->player->y + 12,
+                    'width' => BULLET_SIZE * 2,
+                    'height' => BULLET_SIZE
+                ];*/
+  
+               $this->shootTimer = 0;
             }
 
             // --- 敵生成タイムカウント ---
@@ -391,20 +515,31 @@ class Game
             }
 
             // --- 子弾の移動と画面外削除 ---
-            foreach ($this->bullets as $i => $b) {
+/*            foreach ($this->bullets as $i => $b) {
                 $this->bullets[$i]['x'] += BULLET_SPEED * $rate;
                 if ($this->bullets[$i]['x'] > SCREEN_WIDTH + 20) {
                     unset($this->bullets[$i]);
                 }
+            }*/
+            foreach ($this->bullets as $i => $b) {
+                $b->x += BULLET_SPEED * $rate;
+                if ($b->x > SCREEN_WIDTH + 20) {
+                    unset($this->bullets[$i]);
+                }
             }
+
             $this->bullets = array_values($this->bullets);
 
             // --- 敵の移動と画面外削除 ---
             foreach ($this->enemies as $i => $e) {
-                $this->enemies[$i]['x'] -= $e['speed'] * $rate;
-                if ($this->enemies[$i]['x'] < -60) {
+//                $this->enemies[$i]['x'] -= $e['speed'] * $rate;
+				$e->x -= $e->speed * $rate;
+//                if ($this->enemies[$i]['x'] < -60) {
+                if ($e->x < -60) {
                     unset($this->enemies[$i]);
-                }
+                }else{
+//					$this->enemies[$i]->x = $e->x;
+				}
             }
             $this->enemies = array_values($this->enemies);
 
@@ -414,11 +549,14 @@ class Game
             foreach ($this->bullets as $bi => $b) {
                 foreach ($this->enemies as $ei => $e) {
                     if (in_array($ei, $hitEnemies)) continue;
-                    if ($this->checkCollision($b, $e)) {
+                    if ($this->checkCollision2($b, $e)) {
+						$e->lives--;
                         $hitBullets[] = $bi;
-                        $hitEnemies[] = $ei;
-                        $this->score += 100;
-                        Audio::PlaySound($this->se);
+						if($e->lives <= 0) {
+	                        $hitEnemies[] = $ei;
+	                        $this->score += 100;	
+	                        Audio::PlaySound($this->se);
+						}
                         break; // この弾のチェックを終えて次の弾へ
                     }
                 }
@@ -431,10 +569,10 @@ class Game
 
             // --- 衝突判定（プレイヤー と 敵）---
             foreach ($this->enemies as $ei => $e) {
-                if ($this->checkCollision($this->player, $e)) {
+                if ($this->checkCollision2($this->player, $e)) {
                     unset($this->enemies[$ei]);
-                    $this->player['lives']--;
-                    if ($this->player['lives'] <= 0) {
+                    $this->player->lives--;
+                    if ($this->player->lives <= 0) {
                         $this->gameOver = true;
                         Audio::StopMusicStream($this->bgm);
                     }
@@ -448,7 +586,8 @@ class Game
             // --- ゲームオーバー状態（Rキーでリセット） ---
             if (Core::isKeyPressed(KEY_R) || Core::isKeyPressed(KEY_Z)) {
                 $this->reset();
-                $this->player['lives'] = 3;
+//                $this->player->lives = 3;
+                $this->player->lives = 3;
                 $this->easy_mode = true; //false;
 
                 $this->gameOver = false;
@@ -463,6 +602,15 @@ class Game
         Core::clearBackground($this->bgColor);
 
         // 星空背景
+        foreach ($this->stars as $star) {
+            Shapes::drawCircle($star->x, $star->y, 1.5, Utils::color(255, 255, 255, 255));
+			$star->x -= $star->speed;
+			if ($star->x < 0) {
+				$star->x = SCREEN_WIDTH;
+			}
+		}
+
+/*
         for ($i = 0; $i < 80; $i++) {
             $x = $this->stars[$i]['x'];//($i * 37 + $scrollOffset) % (SCREEN_WIDTH + 100) - 50;
             $y = $this->stars[$i]['y'];//($i * 23) % SCREEN_HEIGHT;
@@ -472,19 +620,21 @@ class Game
                 $x = SCREEN_WIDTH;
             }
             $this->stars[$i]['x'] = $x;
-        }
+        }*/
 
 
         // 子弾の描画（配列にある分だけすべてループ描画）
         foreach ($this->bullets as $b) {
 //          Shapes::drawRectangle($b['x'], $b['y'], BULLET_SIZE * 2, BULLET_SIZE, $bulletColor);
-            $this->put_sprite($b['x'], $b['y'], 4);
+//            $this->put_sprite($b['x'], $b['y'], 4);
+            $this->put_sprite($b->x, $b->y, 4);
         }
 
         // 敵の描画（配列にある分だけすべてループ描画）
         foreach ($this->enemies as $e) {
 //          Shapes::drawRectangle($e['x'], $e['y'], $e['width'], $e['height'], $enemyColor);
-            $this->put_sprite($e['x'], $e['y'], 2);
+//            $this->put_sprite($e['x'], $e['y'], 2);
+            $this->put_sprite($e->x, $e->y, 2);
         }
 
         // プレイヤー機体
@@ -495,7 +645,8 @@ class Game
         Utils::vector2($player['x'] + 10, $player['y'] + PLAYER_SIZE),
         $playerColor
     );*/
-        $this->put_sprite($this->player['x'], $this->player['y'], 1);
+//        $this->put_sprite($this->player->x, $this->player->y, 1);
+        $this->put_sprite($this->player->x, $this->player->y, 1);
 
 
         // UI表示
@@ -511,7 +662,8 @@ class Game
             $this->put_strings_num(0, 0, "SCORE ", $this->score, 7);
         }
         if ($this->easy_mode == true) {
-            $this->put_strings_num(0, 2*FONT_SIZE, "LIVES ", $this->player['lives'], 1);
+//            $this->put_strings_num(0, 2*FONT_SIZE, "LIVES ", $this->player->lives, 1);
+            $this->put_strings_num(0, 2*FONT_SIZE, "LIVES ", $this->player->lives, 1);
         }
         $this->put_strings_num(0, 1*FONT_SIZE, "BOMB  ", $this->bomb_stock, 1);
 
@@ -551,3 +703,4 @@ $game = new Game();
 $game->main();
 
 ?>
+
