@@ -39,6 +39,12 @@ struct Enemy {
     active: bool,
 }
 
+struct Particle {
+    pos: Vector2,
+    vpos: Vector2,
+    life: f32,
+}
+
 struct Star {
     pos: Vector2,
     speed: f32,
@@ -132,6 +138,16 @@ fn put_sprite(chr_tex: &Texture2D, d: &mut RaylibTextureMode<'_, '_, RaylibHandl
     d.draw_texture_pro(&chr_tex, source_rect, dest_rect, origin, rotation, Color::WHITE);
 }
 
+fn  create_particles(particles: &mut Vec<Particle>, rl : &RaylibHandle, x: f32, y: f32, count: i32) {
+    for _ in 0..count {
+        particles.push(Particle {
+            pos: Vector2::new(x, y),
+            vpos: Vector2::new((rl.get_random_value::<i32>(0..=100) as f32 - 50.0) * 0.12,(rl.get_random_value::<i32>(0..=100) as f32 - 50.0) * 0.12),
+            life: 20.0 + rl.get_random_value::<i32>(0..=25) as f32,
+        });
+    }
+}
+
 fn check_collision(a_pos: Vector2, a_poswh: Vector2, a_poslt: Vector2, b_pos: Vector2, b_poswh: Vector2, b_poslt: Vector2)  -> bool {
     return !(a_pos.x + a_poslt.x + a_poswh.x < b_pos.x + b_poslt.x ||
              a_pos.x + a_poslt.x > b_pos.x + b_poslt.x + b_poswh.x ||
@@ -179,7 +195,9 @@ fn main() {
     };
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
+    let mut particles: Vec<Particle> = Vec::new();
     let mut stars: Vec<Star> = Vec::new();
+
     let mut score = 0;
     let mut high_score = 5000;
     let mut lives = 3;
@@ -301,7 +319,8 @@ fn main() {
                     if check_collision(bullet.pos,bullet.poswh, bullet.poslt, enemy.pos, enemy.poswh, enemy.poslt) {
                         bullet.active = false;
                         enemy.lives -= 1;
-                        if(enemy.lives <= 0) {
+                        create_particles(&mut particles, &rl, enemy.pos.x, enemy.pos.y, 8);
+                        if enemy.lives <= 0 {
                             enemy.active = false;
                             score += 100;
                             explosion_sound.play();
@@ -317,7 +336,7 @@ fn main() {
                 if enemy.active &&  check_collision(player.pos,player.poswh, player.poslt, enemy.pos, enemy.poswh, enemy.poslt) {
                     enemy.active = false;
                     lives -= 1;
-                    if(lives <= 0) {
+                    if lives <= 0 {
                         game_over = true;
                         bgm.stop_stream();
                     }
@@ -362,13 +381,28 @@ fn main() {
         for star in &mut stars {
 //            let x = stars.x as f32;
 //            let y = stars.y as f32;
-            d.draw_pixel(star.pos.x as i32, star.pos.y as i32, Color::WHITE);
+            d.draw_circle(star.pos.x as i32, star.pos.y as i32, 1.5,Color::WHITE);
 //            x += stars.speed;
             star.pos.x -= star.speed * rate;
             if star.pos.x < 0.0 {
                 star.pos.x = SCREEN_WIDTH as f32;
             }
         }
+
+        for particle in &mut particles {
+            if particle.life <= 0.0 {
+                continue;
+            }
+            d.draw_circle(particle.pos.x as i32 * X_SCALE, particle.pos.y as i32 * Y_SCALE, 1.5 * 2.0, Color::YELLOW);
+
+            particle.pos.x += particle.vpos.x * rate;
+            particle.pos.y += particle.vpos.y * rate;
+            let dumping = f32::powf(0.96, rate);
+            particle.vpos.x *= dumping;
+            particle.vpos.y *= dumping;
+            particle.life -= rate;
+        }
+        particles.retain(|particle| particle.life > 0.0);
 
         // プレイヤー（三角機体）
 //        if !game_over {
