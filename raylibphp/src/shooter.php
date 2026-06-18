@@ -31,7 +31,7 @@ const ENEMY_SPAWN_RATE = 25; // ★値を25にして敵を多く出やすくし�
 
 const FLAG_WINDOW_RESIZABLE  = 0x4;
 const FLAG_WINDOW_UNDECORATED = 0x08;
-const  FLAG_WINDOW_TOPMOST = 0x00001000;
+const FLAG_WINDOW_TOPMOST = 0x00001000;
 const FLAG_FULLSCREEN_MODE    = 0x00000002;
 const FLAG_WINDOW_HIGHDPI     = 0x00002000;
 const FLAG_VSYNC_HINT = 0x40;
@@ -129,6 +129,24 @@ class Enemy
 		$this->left = $left;
 		$this->top = $top;
 		$this->speed = $speed;
+	}
+}
+
+class Particle
+{
+	public $x;
+	public $y;
+	public $vx;
+	public $vy;
+
+	public $lives;
+
+    public function __construct($x, $y, $vx, $vy, $lives) {
+		$this->x = $x;
+		$this->y = $y;
+		$this->vx = $vx;
+		$this->vy = $vy;
+		$this->lives = $lives;
 	}
 }
 
@@ -254,6 +272,8 @@ class Game
 */
         $this->bullets = [];
         $this->enemies = [];
+		$this->particles  = [];
+
         $this->score = 0;
         $this->high_score = 5000;
 
@@ -352,6 +372,17 @@ class Game
 
 //      $this->__destruct();
     }
+
+	function createParticles($x, $y, $count) {
+		for ($i = 0; $i < $count; $i++) {
+			$this->particles[] = new Particle(
+				$x, $y,
+				rand(-50, 50) * 0.12,
+				rand(-50, 50) * 0.12,
+				 20.0 + rand(0, 25)
+			);
+		}
+	}
 
     function put_strings(float $x, float $y, string $text): void 
     {
@@ -568,6 +599,7 @@ class Game
                     if ($this->checkCollision($b, $e)) {
 						$e->lives--;
                         $hitBullets[] = $bi;
+						$this->createParticles($e->x+16, $e->y+16, 8, 0); // 通常爆発
 						if($e->lives <= 0) {
 	                        $hitEnemies[] = $ei;
 	                        $this->score += 100;	
@@ -597,6 +629,20 @@ class Game
             }
             $this->enemies = array_values($this->enemies);
 
+			// パーティクル更新
+            foreach ($this->particles as $i => $p) {
+				if($p->lives <= 0) {
+                    unset($this->particles[$i]);
+				} else {
+	                $p->x += $p->vx * $rate;
+	                $p->y += $p->vy * $rate;
+					$damping = Pow(0.96, $rate);
+					$p->vx *= $damping;
+					$p->vy *= $damping;
+					$p->lives -= $rate;
+				}
+            }
+            $this->particlees = array_values($this->particles);
 
         } else {
             // --- ゲームオーバー状態（Rキーでリセット） ---
@@ -638,6 +684,10 @@ class Game
             $this->stars[$i]['x'] = $x;
         }*/
 
+		// パーティクル描画
+        foreach ($this->particles as $p) {
+            Shapes::drawCircle($p->x * X_SCALE, $p->y * Y_SCALE, 1.5*2, Utils::color( 253, 249, 0, 255));
+		}
 
         // 子弾の描画（配列にある分だけすべてループ描画）
         foreach ($this->bullets as $b) {
