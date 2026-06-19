@@ -26,9 +26,10 @@ class Particle:
 	def update(self, rate):
 		self.x += self.vx * rate
 		self.y += self.vy * rate
-#		self.vx *= 1 #0.92
-#		self.vy *= 1 #0.92
-		self.life -= 1
+		damping = math.pow(0.96, rate);
+		self.vx *= damping
+		self.vy *= damping
+		self.life -= rate
 
 	def draw(self):
 		raylib.DrawCircle(int(self.x * X_SCALE), int(self.y * Y_SCALE), 1.5 * 2, raylib.YELLOW)
@@ -456,7 +457,7 @@ class App:
 					if e[5] <= 0:
 						ex = e[0] # + 8
 						ey = e[1] # + 8
-						for _ in range(4):
+						for _ in range(8):
 							self.particles.append(Particle(ex, ey))
 
 						del self.enemies[e_idx]
@@ -480,7 +481,7 @@ class App:
 							self.bomb_items.append(BombItem(ex, ey, self))
 
 					else:
-						for _ in range(4):
+						for _ in range(8):
 							self.particles.append(Particle(e[0] + 8, e[1] + 8))
 
 					break
@@ -586,7 +587,9 @@ class App:
 	def use_bomb(self):
 		if self.bomb_stock <= 0: return
 		self.bomb_stock -= 1
-		for _ in range(60):
+		for _ in range(45):
+			self.particles.append(Particle(self.player_x + 16, self.player_y + 16))
+		for _ in range(360):
 			self.particles.append(Particle(random.randint(20*2, 236*2), random.randint(20*2, 172*2)))
 		self.enemies.clear()
 		self.enemy_bullets.clear()
