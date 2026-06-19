@@ -1,5 +1,6 @@
 ﻿<?php
 require dirname(__DIR__) . "/vendor/autoload.php";
+//$ffi = FFI::load("../vendor/Kingbes/Raylib/src/raylib.h");
 
 use Kingbes\Raylib\Core;
 use Kingbes\Raylib\Shapes;
@@ -51,7 +52,40 @@ define('KEY_SPACE', 32);
 define('KEY_Z', 90);
 define('KEY_X', 88);
 define('KEY_B', 66);
+define('KEY_W', 87);
+define('KEY_S', 83);
+define('KEY_A', 65);
+define('KEY_D', 68);
 define('KEY_F11', 300);
+
+enum GamePad:int {
+    case GAMEPAD_BUTTON_UNKNOWN = 0;         // Unknown button, for error checking
+    case GAMEPAD_BUTTON_LEFT_FACE_UP = 1;        // Gamepad left DPAD up button
+    case GAMEPAD_BUTTON_LEFT_FACE_RIGHT = 2;     // Gamepad left DPAD right button
+    case GAMEPAD_BUTTON_LEFT_FACE_DOWN = 3;      // Gamepad left DPAD down button
+    case GAMEPAD_BUTTON_LEFT_FACE_LEFT = 4;      // Gamepad left DPAD left button
+    case GAMEPAD_BUTTON_RIGHT_FACE_UP = 5;       // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
+    case GAMEPAD_BUTTON_RIGHT_FACE_RIGHT = 6;    // Gamepad right button right (i.e. PS3: Circle, Xbox: B)
+    case GAMEPAD_BUTTON_RIGHT_FACE_DOWN = 7;     // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
+    case GAMEPAD_BUTTON_RIGHT_FACE_LEFT = 8;     // Gamepad right button left (i.e. PS3: Square, Xbox: X)
+    case GAMEPAD_BUTTON_LEFT_TRIGGER_1 = 9;      // Gamepad top/back trigger left (first), it could be a trailing button
+    case GAMEPAD_BUTTON_LEFT_TRIGGER_2 = 10;      // Gamepad top/back trigger left (second), it could be a trailing button
+    case GAMEPAD_BUTTON_RIGHT_TRIGGER_1 = 11;     // Gamepad top/back trigger right (first), it could be a trailing button
+    case GAMEPAD_BUTTON_RIGHT_TRIGGER_2 = 12;     // Gamepad top/back trigger right (second), it could be a trailing button
+    case GAMEPAD_BUTTON_MIDDLE_LEFT = 13;         // Gamepad center buttons, left one (i.e. PS3: Select)
+    case GAMEPAD_BUTTON_MIDDLE = 14;              // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
+    case GAMEPAD_BUTTON_MIDDLE_RIGHT = 15;        // Gamepad center buttons, right one (i.e. PS3: Start)
+    case GAMEPAD_BUTTON_LEFT_THUMB = 16;          // Gamepad joystick pressed button left
+    case GAMEPAD_BUTTON_RIGHT_THUMB = 17;          // Gamepad joystick pressed button right
+}
+enum GamePadAxis:int {
+    case GAMEPAD_AXIS_LEFT_X = 0;       // Gamepad left stick X axis
+    case GAMEPAD_AXIS_LEFT_Y = 1;       // Gamepad left stick Y axis
+    case GAMEPAD_AXIS_RIGHT_X = 2;      // Gamepad right stick X axis
+    case GAMEPAD_AXIS_RIGHT_Y = 3;      // Gamepad right stick Y axis
+    case GAMEPAD_AXIS_LEFT_TRIGGER = 4; // Gamepad back trigger left, pressure level: [1..-1]
+    case GAMEPAD_AXIS_RIGHT_TRIGGER = 5; // Gamepad back trigger right, pressure level: [1..-1]
+}
 
 // ==================== 初期化 ====================
 
@@ -172,11 +206,17 @@ class Game
 
     public $bullets;
     public $enemies;
+    public $enemybullets;
+
     public $score;
     public $high_score;
 
     public $easy_mode; //false;
+
     public $bomb_stock;
+	public $bomb_timer;
+	public $bomb_active;
+
     public $gameTime;
     public $chain_count;
 
@@ -189,6 +229,7 @@ class Game
     public $gameOver; // 起動時はゲームオーバー（タイトル画面代わり）
 
     public $isFullscreen;
+
 
     public function __construct() {
 
@@ -272,12 +313,17 @@ class Game
 */
         $this->bullets = [];
         $this->enemies = [];
+        $this->enemybullets = [];
+
 		$this->particles  = [];
 
         $this->score = 0;
         $this->high_score = 5000;
 
         $this->bomb_stock = 0;
+		$this->bomb_timer = 0;
+		$this->bomb_active = false;
+
         $this->gameTime = 0;
         $this->chain_count = 0;
 
@@ -505,24 +551,68 @@ class Game
                  $a->y > $b['y'] + ($b['height'] ?? ENEMY_HEIGHT));*/
     }
 
+	function usebomb() {
+		if ($this->bomb_stock <= 0 || $this->bomb_active) {
+			return;
+		}
+
+		$this->bomb_stock--;
+		$this->bomb_active = true;
+		//   game. bomb_timer = BOMB_DURATION
+
+		// 敵と敵弾を全滅
+/*		foreach( i = range game.enemies {
+			game.enemies[i].Active = false
+		}
+		for i = range game.enemybullets {
+			game.enemybullets[i].Active = false
+		}
+*/
+        $this->enemies = [];
+        $this->enemybullets = [];
+
+	// 大量の破片を発生
+		$this->CreateParticles($this->player->x + 16, $this->player->y + 16, 45, 1); // 大爆発
+
+	// 画面全体に破片を散らす
+		for($i = 0; $i < 60; $i++) {
+			$rx = rand(0, SCREEN_WIDTH / X_SCALE);
+			$ry = rand(0, SCREEN_HEIGHT / Y_SCALE);
+			$this->CreateParticles($rx, $ry, 6, 1);
+		}
+
+		$this->score += 200;
+		Audio::PlaySound($this->se);
+	}
+
     // ==================== メインループ ====================
     function update() {
-
-
         $delta = Core::GetFrameTime();
         $rate = COUNT1S * $delta;
 
+		$gamepad = 0;
+
         // 背景スクロール
-        $this->scrollOffset = ($this->scrollOffset + SCROLL_SPEED) % SCREEN_WIDTH;
+//        $this->scrollOffset = ($this->scrollOffset + SCROLL_SPEED) % SCREEN_WIDTH;
 
         if (!$this->gameOver) {
             $this->gameTime += $delta;
 
+			// 1. ゲームパッドが接続されているかチェック
+			$axisX = 0;
+			$axisY = 0;
+			if (Core::isGamepadAvailable($gamepad)) {
+				// 2. アナログスティック（左スティック）の入力を取得
+				// 戻り値は -1.0f から 1.0f の間
+				$axisX = Core::getGamepadAxisMovement($gamepad, GamePadAxis::GAMEPAD_AXIS_LEFT_X->value);
+				$axisY = Core::getGamepadAxisMovement($gamepad, GamePadAxis::GAMEPAD_AXIS_LEFT_Y->value);
+			}
+
             // --- プレイヤー移動 ---
-            if (Core::isKeyDown(KEY_UP)) $this->player->y -= PLAYER_SPEED * $rate;
-            if (Core::isKeyDown(KEY_DOWN)) $this->player->y += PLAYER_SPEED * $rate;
-            if (Core::isKeyDown(KEY_LEFT)) $this->player->x -= PLAYER_SPEED * $rate;
-            if (Core::isKeyDown(KEY_RIGHT)) $this->player->x += PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_UP) || Core::isKeyDown(KEY_W) || ($axisY < -0.2) || (Core::isGamepadAvailable($gamepad) && Core::isGamePadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_LEFT_FACE_UP->value))) $this->player->y -= PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_DOWN) || Core::isKeyDown(KEY_S) || ($axisY > 0.2) || (Core::isGamepadAvailable($gamepad) && Core::isGamePadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_LEFT_FACE_DOWN->value))) $this->player->y += PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_LEFT) || Core::isKeyDown(KEY_A) || ($axisX < -0.2) || (Core::isGamepadAvailable($gamepad) && Core::isGamePadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_LEFT_FACE_LEFT->value))) $this->player->x -= PLAYER_SPEED * $rate;
+            if (Core::isKeyDown(KEY_RIGHT) || Core::isKeyDown(KEY_D) || ($axisX > 0.2) || (Core::isGamepadAvailable($gamepad) && Core::isGamePadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_LEFT_FACE_RIGHT->value))) $this->player->x += PLAYER_SPEED * $rate;
 
             // 画面端制限
             $this->player->x = max(0, min($this->player->x, SCREEN_WIDTH - 40));
@@ -530,7 +620,7 @@ class Game
 
             // --- 射撃（連射） ---
             $this->shootTimer += $rate;
-            if ((Core::isKeyDown(KEY_SPACE) || Core::isKeyDown(KEY_Z)) && $this->shootTimer > FIRE_RATE) {
+            if ((Core::isKeyDown(KEY_SPACE) || Core::isKeyDown(KEY_Z) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_DOWN->value))) && $this->shootTimer > FIRE_RATE) {
                 // 弾を配列に「追加（push）」していく（複数表示を可能にする）
 /*                $this->bullets[] = [
                     'x' => $this->player->x + 32,
@@ -553,6 +643,10 @@ class Game
   
                $this->shootTimer = 0;
             }
+
+			if ((Core::isKeyPressed(KEY_X) || Core::isKeyPressed(KEY_B) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT->value))) && $this->bomb_stock > 0 && !$this->bomb_active) {
+				$this->usebomb();
+			}
 
             // --- 敵生成タイムカウント ---
             $this->spawnTimer += $rate;
@@ -644,18 +738,29 @@ class Game
             }
             $this->particlees = array_values($this->particles);
 
+			// ボム更新
+			if ($this->bomb_active) {
+				$this->bomb_timer -= $delta;
+				if ($this->bomb_timer <= 0.0) {
+					$this->bomb_active = false;
+				}
+			}
+
         } else {
             // --- ゲームオーバー状態（Rキーでリセット） ---
-            if (Core::isKeyPressed(KEY_R) || Core::isKeyPressed(KEY_Z)) {
+            if (Core::isKeyPressed(KEY_R) || Core::isKeyPressed(KEY_Z) || Core::isKeyPressed(KEY_SPACE) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_DOWN->value))) {
                 $this->reset();
-//                $this->player->lives = 3;
-                $this->player->lives = 3;
-                $this->easy_mode = true; //false;
-
+                $this->player->lives = 1;
+                $this->easy_mode = false;
                 $this->gameOver = false;
-
                 Audio::PlayMusicStream($this->bgm);
-            }
+            } else if (Core::isKeyPressed(KEY_X) || Core::isKeyPressed(KEY_B) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT->value))) {
+                $this->reset();
+                $this->player->lives = 3;
+                $this->easy_mode = true;
+                $this->gameOver = false;
+                Audio::PlayMusicStream($this->bgm);
+			}
         }
     }
 
