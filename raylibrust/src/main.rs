@@ -21,7 +21,7 @@ struct Player {
     pos: Vector2,
     poswh:	Vector2,
     poslt: Vector2,
-    lives: i32,
+//    lives: i32,
 }
 
 struct Bullet {
@@ -155,6 +155,41 @@ fn check_collision(a_pos: Vector2, a_poswh: Vector2, a_poslt: Vector2, b_pos: Ve
              a_pos.y + a_poslt.y > b_pos.y + b_poslt.y + b_poswh.y);
 }
 
+fn use_bomb(particles: &mut Vec<Particle>, rl : &RaylibHandle, explosion_sound : &Sound<'_> ,score: &mut i32, bomb_stock: &mut i32, bomb_active:&mut bool, enemies:&mut Vec<Enemy>, player:&mut Player) {
+	if bomb_stock <= &mut 0 || bomb_active == &mut true{
+		return;
+	}
+
+	*bomb_stock -= 1;
+	*bomb_active = true;
+	//   game. bomb_timer = BOMB_DURATION
+
+	// 敵と敵弾を全滅
+//    *enemies = Vec::new();
+    enemies.clear();
+
+    /* 	for i := range enemies {
+		enemies[i].Active = false;
+	}
+	for i := range enemybullets {
+		enemybullets[i].Active = false;
+	}
+*/
+	// 大量の破片を発生
+	create_particles(particles, &rl, player.pos.x+16.0, player.pos.y+16.0, 45); // 大爆発
+
+	// 画面全体に破片を散らす
+	for _ in 0..60 {
+		let rx = rl.get_random_value::<i32>(0..= SCREEN_WIDTH / X_SCALE) as f32;
+		let ry = rl.get_random_value::<i32>(0..= SCREEN_HEIGHT / Y_SCALE) as f32;
+		create_particles(particles, &rl,rx, ry, 6);
+	}
+
+	*score += 200;
+    explosion_sound.play();
+    return;    
+}
+
 fn main() {
     println!("DEBUG: 初期化を開始します...");
 
@@ -191,7 +226,7 @@ fn main() {
         pos: Vector2::new(60.0, 160.0), //, Vector2(32, 20, 0, 6, 3));
         poswh: Vector2::new(32.0,20.0),
         poslt: Vector2::new(0.0,6.0),
-        lives: 3,
+//        lives: 3,
     };
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
@@ -202,12 +237,16 @@ fn main() {
     let mut high_score = 5000;
     let mut lives = 3;
 
-    let mut easy_mode = true;
+    let mut easy_mode = false;
+
     let mut bomb_stock = 0;
+    let mut bomb_active = false;
+    let mut bomb_timer  = 0.0;
+
     let mut game_time: f32 = 0.0;
     let mut chain_count = 0;
 
-    let mut game_over = true;
+    let mut game_over = 1;
 
     let mut last_shot = rl.get_time();
     let shot_cooldown = 0.15;
@@ -244,21 +283,33 @@ fn main() {
         let dt = rl.get_frame_time(); //1.0 / 60.0;
         let now = rl.get_time();
         let rate = dt * COUNT1S;
+        let gamepad: i32 = 0;
 
-        if !game_over {
+        if game_over == 0 {
             game_time += dt;
 
+
+        	// 1. ゲームパッドが接続されているかチェック
+            let	mut axisx: f32 = 0.0;
+        	let mut axisy: f32 = 0.0;
+            	if rl.is_gamepad_available(gamepad) {
+		        // 2. アナログスティック（左スティック）の入力を取得
+		        // 戻り値は -1.0f から 1.0f の間
+		        axisx = rl.get_gamepad_axis_movement(gamepad, GamepadAxis::GAMEPAD_AXIS_LEFT_X);
+		        axisy = rl.get_gamepad_axis_movement(gamepad, GamepadAxis::GAMEPAD_AXIS_LEFT_Y);
+        	}
+
             // --- プレイヤー操作 ---
-            if rl.is_key_down(KeyboardKey::KEY_UP) || rl.is_key_down(KeyboardKey::KEY_W) {
+            if rl.is_key_down(KeyboardKey::KEY_UP) || rl.is_key_down(KeyboardKey::KEY_W) || (axisy < -0.2) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_UP)) {
                 player.pos.y -= PLAYER_SPEED * rate;
             }
-            if rl.is_key_down(KeyboardKey::KEY_DOWN) || rl.is_key_down(KeyboardKey::KEY_S) {
+            if rl.is_key_down(KeyboardKey::KEY_DOWN) || rl.is_key_down(KeyboardKey::KEY_S) || (axisy > 0.2) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_DOWN)) {
                 player.pos.y += PLAYER_SPEED * rate;
             }
-            if rl.is_key_down(KeyboardKey::KEY_LEFT) || rl.is_key_down(KeyboardKey::KEY_A) {
+            if rl.is_key_down(KeyboardKey::KEY_LEFT) || rl.is_key_down(KeyboardKey::KEY_A) || (axisx < -0.2) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_LEFT)){
                 player.pos.x -= PLAYER_SPEED * rate;
             }
-            if rl.is_key_down(KeyboardKey::KEY_RIGHT) || rl.is_key_down(KeyboardKey::KEY_D) {
+            if rl.is_key_down(KeyboardKey::KEY_RIGHT) || rl.is_key_down(KeyboardKey::KEY_D) || (axisx > 0.2) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_RIGHT)){
                 player.pos.x += PLAYER_SPEED * rate;
             }
 
@@ -266,7 +317,7 @@ fn main() {
             player.pos.x = player.pos.x.clamp(0.0, (SCREEN_WIDTH / Y_SCALE - 40) as f32);
 
             // --- 射撃 ---
-            if (rl.is_key_down(KeyboardKey::KEY_SPACE) || rl.is_key_down(KeyboardKey::KEY_Z))
+            if (rl.is_key_down(KeyboardKey::KEY_SPACE) || rl.is_key_down(KeyboardKey::KEY_Z) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN)))
                 && now - last_shot > shot_cooldown
             {
                 bullets.push(Bullet {
@@ -282,7 +333,7 @@ fn main() {
             if rl.get_random_value::<i32>(0..=40) == 0 {
                 enemies.push(Enemy {
                     pos: Vector2::new(
-                        (SCREEN_WIDTH / X_SCALE + 32) as f32,
+                        (SCREEN_WIDTH / X_SCALE) as f32,
                         rl.get_random_value::<i32>(30..=(SCREEN_HEIGHT / Y_SCALE - 32)) as f32),
                     poswh: Vector2::new(32.0, 32.0),
                     poslt: Vector2::new(0.0,0.0),
@@ -291,7 +342,11 @@ fn main() {
                 });
             }
 
-            // --- 更新 ---
+            if rl.is_key_pressed(KeyboardKey::KEY_X) || rl.is_key_pressed(KeyboardKey::KEY_B) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_pressed(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))  && bomb_stock > 0 && !bomb_active {
+                use_bomb(&mut particles, &rl, &explosion_sound, &mut score, &mut bomb_stock, &mut bomb_active, &mut enemies, &mut player);
+            }
+
+            // --- 自機弾更新 ---
             for bullet in &mut bullets {
                 if bullet.active {
                     bullet.pos.x += BULLET_SPEED * rate;
@@ -337,7 +392,7 @@ fn main() {
                     enemy.active = false;
                     lives -= 1;
                     if lives <= 0 {
-                        game_over = true;
+                        game_over = 1;
                         bgm.stop_stream();
                     }
                 }
@@ -345,22 +400,43 @@ fn main() {
 
             bullets.retain(|b| b.active);
             enemies.retain(|e| e.active);
+
+        	// ボム更新
+	        if bomb_active {
+		        bomb_timer -= dt;
+        		if bomb_timer <= 0.0 {
+		        	bomb_active = false;
+        		}
+        	}
+
+            if game_over != 0 && score > high_score {
+		        high_score = score;
+        	}
         } else {
-            if rl.is_key_pressed(KeyboardKey::KEY_R) || rl.is_key_pressed(KeyboardKey::KEY_Z)  || rl.is_key_pressed(KeyboardKey::KEY_SPACE){
+            // ゲームオーバー
+            if rl.is_key_pressed(KeyboardKey::KEY_R) || rl.is_key_pressed(KeyboardKey::KEY_Z) || rl.is_key_pressed(KeyboardKey::KEY_SPACE) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
 //                player_pos = Vector2::new(100.0, (SCREEN_HEIGHT / 2) as f32);
+                lives = 1;
+                easy_mode = false;
+                game_over = 2;
+
+            } else if rl.is_key_pressed(KeyboardKey::KEY_X) || rl.is_key_pressed(KeyboardKey::KEY_B)  || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)){
+//                player_pos = Vector2::new(100.0, (SCREEN_HEIGHT / 2) as f32);
+                lives = 3;
+                easy_mode = true;
+                game_over = 2;
+            }
+            if game_over == 2 {
                 player.pos.x = 60.0;
                 player.pos.y = 160.0;
                 bullets.clear();
                 enemies.clear();
                 score = 0;
-                lives = 3;
-
-                easy_mode = true;
                 bomb_stock = 0;
                 game_time = 0.0;
                 chain_count = 0;
-                game_over = false;
                 bgm.play_stream();
+                game_over = 0;
             }
         }
 
@@ -463,7 +539,7 @@ fn main() {
 			put_strings_num(&font_tex, &mut d,16*FONT_SIZE, 1*FONT_SIZE, "CHAIN ", chain_count, 3);
 		}
 
-        if game_over {
+        if game_over != 0 {
 //            d.draw_text("GAME OVER", SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2 - 30, 50, Color::RED);
 //            d.draw_text("PUSH R KEY TO RESTART", SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 + 30, 25, Color::WHITE);
 

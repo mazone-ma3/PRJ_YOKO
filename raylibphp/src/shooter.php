@@ -286,6 +286,7 @@ class Game
             $star->speed = rand(1, 3) * X_SCALE;
 		}*/
 
+        $this->high_score = 5000;
         $this->reset();
     }
 
@@ -318,7 +319,6 @@ class Game
 		$this->particles  = [];
 
         $this->score = 0;
-        $this->high_score = 5000;
 
         $this->bomb_stock = 0;
 		$this->bomb_timer = 0;
@@ -744,6 +744,10 @@ class Game
 				if ($this->bomb_timer <= 0.0) {
 					$this->bomb_active = false;
 				}
+			}
+
+			if ($this->gameOver != 0 && $this->score > $this->high_score) {
+				$this->high_score = $this->score;
 			}
 
         } else {
