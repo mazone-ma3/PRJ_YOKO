@@ -43,20 +43,20 @@ const FONT_SIZE = 16;
 const COUNT1S = 60;
 
 // キー番号の定義
-define('KEY_RIGHT', 262);
-define('KEY_LEFT', 263);
-define('KEY_DOWN', 264);
-define('KEY_UP', 265);
-define('KEY_R', 82);
-define('KEY_SPACE', 32);
-define('KEY_Z', 90);
-define('KEY_X', 88);
-define('KEY_B', 66);
-define('KEY_W', 87);
-define('KEY_S', 83);
-define('KEY_A', 65);
-define('KEY_D', 68);
-define('KEY_F11', 300);
+const KEY_RIGHT = 262;
+const KEY_LEFT = 263;
+const KEY_DOWN = 264;
+const KEY_UP = 265;
+const KEY_R = 82;
+const KEY_SPACE = 32;
+const KEY_Z = 90;
+const KEY_X = 88;
+const KEY_B = 66;
+const KEY_W = 87;
+const KEY_S = 83;
+const KEY_A = 65;
+const KEY_D = 68;
+const KEY_F11 = 300;
 
 enum GamePad:int {
     case GAMEPAD_BUTTON_UNKNOWN = 0;         // Unknown button, for error checking
@@ -147,17 +147,30 @@ class Enemy
 {
 	public $x;
 	public $y;
+	public $type;
 	public $lives;
+	public $count;
+	public $count2;
+	public $shootTimer;
+	public $nextShootTime;
+	public $speed;
 	public $width;
 	public $height;
-	public $speed;
 	public $top;
 	public $left;
 
-    public function __construct($x, $y, $lives, $width, $height, $left, $top, $speed) {
+    public function __construct($x, $y, $etype, $lives, $count, $count2, $shootTimer, $nextShootTime, $speed, $width, $height, $left, $top) {
 		$this->x = $x;
 		$this->y = $y;
+		$this->type = $etype;
 		$this->lives = $lives;
+
+		$this->$count = $count;
+		$this->$count2 = $count2;
+		$this->$shootTimer = $shootTimer;
+		$this->$nextShootTime = $nextShootTime;
+		$this->$speed = $speed;
+
 		$this->width = $width;
 		$this->height = $height;
 		$this->left = $left;
@@ -508,19 +521,25 @@ class Game
     }
 
     // ==================== 敵生成関数 ====================
-    function spawnEnemy(&$enemies) {
+    function spawnEnemy(&$enemies, &$etype, &$ehp) {
         // 1回につき1?2体を同時に生成して配列に追加する
         $count = 1; //rand(1, 2);
         for ($i = 0; $i < $count; $i++) {
             $enemies[] = new Enemy(
-                SCREEN_WIDTH / X_SCALE + rand(10, 100),
-                rand(40, SCREEN_HEIGHT / Y_SCALE - 80),
-				1,
+                SCREEN_WIDTH / X_SCALE, // + rand(10, 100),
+                rand(32, SCREEN_HEIGHT / Y_SCALE - 64),
+				$etype,
+				$ehp,
+				0,
+				rand(0, 30*2+SCREEN_HEIGHT/Y_SCALE-40*2) - 30*2,
+				0,
+				5.0 / COUNT1S,
+                ENEMY_SPEED + rand(-1, 3),
                 ENEMY_WIDTH,
                 ENEMY_HEIGHT,
-				0, 0,
-                ENEMY_SPEED + rand(-1, 3)
+				0, 0
 			);
+
 /*			[
                 'x' => SCREEN_WIDTH / X_SCALE + rand(10, 100),
                 'y' => rand(40, SCREEN_HEIGHT / Y_SCALE - 80),
@@ -615,8 +634,8 @@ class Game
             if (Core::isKeyDown(KEY_RIGHT) || Core::isKeyDown(KEY_D) || ($axisX > 0.2) || (Core::isGamepadAvailable($gamepad) && Core::isGamePadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_LEFT_FACE_RIGHT->value))) $this->player->x += PLAYER_SPEED * $rate;
 
             // 画面端制限
-            $this->player->x = max(0, min($this->player->x, SCREEN_WIDTH - 40));
-            $this->player->y = max(0, min($this->player->y, SCREEN_HEIGHT - 32));
+            $this->player->x = max(0, min($this->player->x, SCREEN_WIDTH / X_SCALE - 40));
+            $this->player->y = max(0, min($this->player->y, SCREEN_HEIGHT / Y_SCALE  - 32));
 
             // --- 射撃（連射） ---
             $this->shootTimer += $rate;
@@ -649,9 +668,29 @@ class Game
 			}
 
             // --- 敵生成タイムカウント ---
-            $this->spawnTimer += $rate;
-            if ($this->spawnTimer > ENEMY_SPAWN_RATE) {
-                $this->spawnEnemy($this->enemies);
+            $this->spawnTimer += $delta;
+
+			$baseInterval = (50.0 - ($this->score / 250.0)); // scoreが増えるほど短く
+			$spawnInterval = max((18.0)/COUNT1S, $baseInterval/COUNT1S); // フレーム→秒に変換
+
+//            if ($this->spawnTimer > ENEMY_SPAWN_RATE) {
+            if ($this->spawnTimer > $spawnInterval) {
+
+				$rand_num = rand(0, 100);
+				if ($rand_num < 60) {
+					$etype = 0;
+				} else if ($rand_num < 85) {
+					$etype = 1;
+				} else {
+					$etype = 2;
+				}
+				if ($etype == 0) {
+					$ehp = 1;
+				} else {
+					$ehp = 3;
+				}
+
+                $this->spawnEnemy($this->enemies, $etype, $ehp);
                 $this->spawnTimer = 0;
             }
 
@@ -671,10 +710,36 @@ class Game
 
             $this->bullets = array_values($this->bullets);
 
+			$enemySpeed = 4.0 * $rate;
             // --- 敵の移動と画面外削除 ---
             foreach ($this->enemies as $i => $e) {
 //                $this->enemies[$i]['x'] -= $e['speed'] * $rate;
-				$e->x -= $e->speed * $rate;
+
+				$e->count += $rate;
+
+				switch($e->type) {
+				case 0:
+					$e->x -= $enemySpeed;
+					break;
+
+				case 1:
+					if($e->count < 24){
+						$e->x -= 6 * 2 * $rate;
+						$e->y += (($this->player->y + 8 - $e->y) / 8) / 2 * $rate;
+					} else if ($e->count < 49) {
+						$e->x -= 0;
+					} else {
+						$e->x += 6 * 2 * $rate;
+					}
+					break;
+
+				case 2:
+					$e->x -= $enemySpeed;
+					$e->y = ($e->count2 + sin($e->count * 0.12) * 55 * 2);
+					break;
+				}
+//				$e->x -= $e->speed * $rate;
+
 //                if ($this->enemies[$i]['x'] < -60) {
                 if ($e->x < -60) {
                     unset($this->enemies[$i]);
