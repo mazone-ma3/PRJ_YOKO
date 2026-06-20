@@ -254,8 +254,8 @@
 
 
 		//   画面端制限
-		player.x =   Math.max(0,   Math.min(canvas.width -   player.width, player.x));
-		player.y =   Math.max(0,   Math.min(canvas.height  -	player.height,   player.y));
+		player.x =   Math.max(0,   Math.min(canvas.width -   player.width - 6, player.x));
+		player.y =   Math.max(0,   Math.min(canvas.height  -	player.height - 6,   player.y));
 
 		//   自動射撃（連射）
 		const  now  =	Date.now();
