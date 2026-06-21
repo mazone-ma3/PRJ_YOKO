@@ -291,17 +291,17 @@ fn main() {
                 let rand_num = rl.get_random_value::<i32>(0..=100);
 				let &mut etype;
 				if rand_num < 60 {
-					etype = 0
+					etype = 0;
 				} else if rand_num < 85 {
-					etype = 1
+					etype = 1;
 				} else {
-					etype = 2
+					etype = 2;
 				}
 				let &mut ehp;
 				if etype == 0 {
-					ehp = 1
+					ehp = 1;
 				} else {
-					ehp = 3
+					ehp = 3;
 				}
 
                 enemies.push(Enemy {
