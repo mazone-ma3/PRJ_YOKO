@@ -33,6 +33,11 @@ struct Enemy {
     poswh: Vector2,
     poslt: Vector2,
     lives: i32,
+    etype: i32,
+    count: f32,
+	count2: f32,
+	shoot_timer: f32,
+	next_shoot_time: f32,
     active: bool,
 }
 
@@ -204,6 +209,7 @@ fn main() {
 
     let mut last_shot = rl.get_time();
     let shot_cooldown = 0.15;
+    let mut enemy_spawn_timer = 0.0;
 
     for _ in 0..80 {
         stars.push(Star {
@@ -269,22 +275,51 @@ fn main() {
                     pos: Vector2::new(player.pos.x + 32.0, player.pos.y + 12.0),
                     poswh: Vector2::new(16.0, 8.0),
                     poslt:  Vector2::new(0.0, 0.0),
+
                     active: true,
                 });
                 last_shot = now;
             }
 
+        	enemy_spawn_timer += delta;
+	        let base_interval = (50.0 - (score as f32 / 250.0)) / COUNT1S;                   // scoreが増えるほど短く
+            let spawn_interval = base_interval.max(18.0/COUNT1S); // フレーム→秒に変換
+
             // 敵生成
-            if rl.get_random_value::<i32>(0..=40) == 0 {
+//            if rl.get_random_value::<i32>(0..=40) == 0 {
+            if enemy_spawn_timer >= spawn_interval {
+                let rand_num = rl.get_random_value::<i32>(0..=100);
+				let &mut etype;
+				if rand_num < 60 {
+					etype = 0
+				} else if rand_num < 85 {
+					etype = 1
+				} else {
+					etype = 2
+				}
+				let &mut ehp;
+				if etype == 0 {
+					ehp = 1
+				} else {
+					ehp = 3
+				}
+
                 enemies.push(Enemy {
                     pos: Vector2::new(
                         (SCREEN_WIDTH / X_SCALE) as f32,
                         rl.get_random_value::<i32>(30..=(SCREEN_HEIGHT / Y_SCALE - 32)) as f32),
                     poswh: Vector2::new(32.0, 32.0),
                     poslt: Vector2::new(0.0, 0.0),
-                    lives: 1,
+					lives: ehp,
+                    etype: etype,
+					count: 0.0,
+					count2: (rl.get_random_value::<i32>(30*2..=30*2+SCREEN_HEIGHT/Y_SCALE-40*2) - 30 * 2) as f32,
+					shoot_timer: 0.0,
+					next_shoot_time: 5.0 / COUNT1S,
+
                     active: true,
                 });
+                enemy_spawn_timer = 0.0;
             }
 
             // ボム使用
@@ -302,12 +337,42 @@ fn main() {
                 }
             }
 
+            let enemyspeed = ENEMY_SPEED * rate;
+
             // 敵機移動
-            for enemy in &mut enemies {
-                if enemy.active {
-                    enemy.pos.x -= ENEMY_SPEED * rate;
-                    if enemy.pos.x < -30.0 {
-                        enemy.active = false;
+            for e in &mut enemies {
+                if e.active {
+
+        		    e.count += rate;
+
+        	    	match e.etype {
+                 	    0 => { // 通常敵
+	             	    	e.pos.x -= enemyspeed;
+                        },
+
+        	        	1 => { // ヘリザコ - 勢いよく突っ込む
+	    		           //				static float dist_x = e.x - player_x
+		        	        if e.count < 24.0 { // 1段階：超急接近
+        		    	    	e.pos.x -= 6.0 * 2.0 * rate;
+		                		e.pos.y += ((player.pos.y + 8.0 - e.pos.y) / 8.0) / 2.0 * rate;
+			                } else if e.count < 49.0 { // 2段階：短くホバリング
+				                e.pos.x -= 0.0;
+    			            } else { // 3段階：右へ全力逃走
+        	    			    e.pos.x += 6.0 * 2.0 * rate;
+    	            		}
+                        },
+        	            2 => { // サインカーブ
+    	            	    e.pos.x -= enemyspeed;
+                            let rad = e.count*0.12;
+	                    	e.pos.y = e.count2 + rad.sin() * 55.0 * 2.0;
+                        },
+                        _=> {
+                        },
+                    }
+
+//                      enemy.pos.x -= ENEMY_SPEED * rate;
+                    if e.pos.x < -32.0 {
+                        e.active = false;
                     }
                 }
             }
