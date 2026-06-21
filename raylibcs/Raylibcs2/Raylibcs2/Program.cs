@@ -13,7 +13,7 @@ using Rectangle = Raylib_cs.Rectangle;
 namespace RaylibSideScrollerShooter
 {
 
-    class Enemy {
+    internal class Enemy {
         public float X = 0f;
         public float Y = 0f;
         public float shootTimer = 0f;
@@ -39,7 +39,7 @@ namespace RaylibSideScrollerShooter
             count_flag = initflag;
         }
     };
-    class eBullet {
+    internal class eBullet {
         public float X;
         public float Y;
         public float vx;
@@ -54,7 +54,7 @@ namespace RaylibSideScrollerShooter
         }
     };
 
-    class Option {
+    internal class Option {
         public float offset_y;
         public float X;
         public float Y;
@@ -67,7 +67,7 @@ namespace RaylibSideScrollerShooter
         }
     }
 
-    class Item {
+    internal class Item {
         public float X;
         public float Y;
         public float timer;
@@ -81,7 +81,7 @@ namespace RaylibSideScrollerShooter
         }
     }
 
-    class ChainItem {
+    internal class ChainItem {
         public float X;
         public float Y;
         public float timer;
@@ -95,7 +95,7 @@ namespace RaylibSideScrollerShooter
 
     public class Star { public float x, y, baseSpeed, speed, size; }; // ID2D1SolidColorBrush* brush = nullptr; };
 
-    class Particle {
+    internal class Particle {
         public float X, Y;
         public float vx, vy;
         public float life;           // 残りフレーム
@@ -129,59 +129,58 @@ namespace RaylibSideScrollerShooter
  
     public class GameWorld
     {
-        const float COUNT1S = 60f;
+        private const float COUNT1S = 60f;
 
-        float scale;
+        private float scale;
 
+        private int bomb_stock = 0;
+        private bool bomb_active = false;
+        private float bomb_timer = 0.0f;
+        private bool key_b_flag = false;
 
-        int bomb_stock = 0;
-        bool bomb_active = false;
-        float bomb_timer = 0.0f;
-        bool key_b_flag = false;
+        private bool shield_active = false;
 
-        bool shield_active = false;
+        private float gametime = 0;
+        private int option_cooldown = 0;
 
-        float gametime = 0;
-        int option_cooldown = 0;
+        private int chain_count = 0;
+        private float chain_timer = 0f;
 
-        int chain_count = 0;
-        float chain_timer = 0f;
-
-        bool easy_mode = false;
-        int lives = 0;
+        private bool easy_mode = false;
+        private int lives = 0;
 
         // プレイヤー
-        Rectangle player = new Rectangle(60f, 160f, 32f, 12f);//60, 50);
-        float playerSpeed = 4f * COUNT1S;
+        private Rectangle player = new Rectangle(60f, 160f, 32f, 12f);//60, 50);
+        private float playerSpeed = 4f * COUNT1S;
 
         // 自機弾
-        List<Rectangle> bullets = new List<Rectangle>();
-        float bulletSpeed = 12f * COUNT1S;
-        float shootCooldown = 0f;
+        private List<Rectangle> bullets = new List<Rectangle>();
+        private float bulletSpeed = 12f * COUNT1S;
+        private float shootCooldown = 0f;
 
         // 敵
         //        static List<Rectangle> enemies = new List<Rectangle>();
-        List<Enemy> enemies = new List<Enemy>();
-        float enemySpawnTimer = 0f;
+        private List<Enemy> enemies = new List<Enemy>();
+        private float enemySpawnTimer = 0f;
         //        static float enemySpeed = 200f;
 
         // 敵弾
-        List<eBullet> eBullets = new List<eBullet>();
+        private List<eBullet> eBullets = new List<eBullet>();
 
         // パーティクル
-        List<Particle> particles = new List<Particle>();
+        private List<Particle> particles = new List<Particle>();
 
 
-        List<ChainItem> chain_items = new List<ChainItem>();
-        List<Item> Items = new List<Item>();
-        List<Option> options = new List<Option>();
+        private List<ChainItem> chain_items = new List<ChainItem>();
+        private List<Item> Items = new List<Item>();
+        private List<Option> options = new List<Option>();
 
 
         // スコア
-        public int score = 0;
+        public int score { get; private set; } = 0;
 
         // ゲームオーバー
-        public int gameOver; // = 1;
+        public int gameOver { get; private set; } = 1; // = 1;
 
         public AssetManager assets;
 
@@ -190,12 +189,13 @@ namespace RaylibSideScrollerShooter
         public RenderTexture2D target;
         public List<Star> stars;
 
-        public GameWorld(List<Star> _stars, AssetManager _assets, RenderTexture2D _target, bool _easy_mode)
+        public GameWorld(List<Star> _stars, AssetManager _assets, RenderTexture2D _target, bool _easy_mode, int _gameover)
         {
             assets = _assets;
             target = _target;
             stars = _stars;
 			easy_mode = _easy_mode;
+            gameOver = _gameover;
 
             player.X = 60f;
             player.Y = 160f; // ScreenHeight / 2 - 30;
@@ -209,7 +209,7 @@ namespace RaylibSideScrollerShooter
             {
                 lives = 1;
             }
-            gameOver = 0; // false;
+//            gameOver = 0; // false;
             bullets.Clear();
             eBullets.Clear();
             enemies.Clear();
@@ -286,9 +286,9 @@ namespace RaylibSideScrollerShooter
             if (Raylib.IsKeyDown(KeyboardKey.S) || Raylib.IsKeyDown(KeyboardKey.Down) || (axisY > 0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceDown)))
                 player.Y += playerSpeed * delta;
             if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left) || (axisX < -0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceLeft)))
-                player.X -= playerSpeed * delta * 0.7f;
+                player.X -= playerSpeed * delta; // * 0.7f;
             if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right) || (axisX > 0.2f) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.LeftFaceRight)))
-                player.X += playerSpeed * delta * 0.7f;
+                player.X += playerSpeed * delta; // * 0.7f;
 
             // 画面内制限
             player.Y = Math.Clamp(player.Y, 0, GameConfig.ScreenHeight / GameConfig.X_SCALE - player.Height * 2);
@@ -761,7 +761,7 @@ namespace RaylibSideScrollerShooter
             //            if (bgX <= -bgTexture.Width) bgX = 0;
         }
 
-		void UseBomb() {
+        private void UseBomb() {
 		    if (bomb_stock <= 0 || bomb_active) return;
 
 		    bomb_stock--;
@@ -953,7 +953,7 @@ namespace RaylibSideScrollerShooter
             }
         }
 
-		void put_strings(float x, float y, string text) { //, int mode) {
+        private void put_strings(float x, float y, string text) { //, int mode) {
             int len = text.Count(); // wcslen(text);
             for (int i = 0; i < len; ++i)
             {
@@ -972,7 +972,7 @@ namespace RaylibSideScrollerShooter
             }
 		}
 
-		void put_strings_num(float x, float y, string str, int num, int digit){ //, int mode) {
+        private void put_strings_num(float x, float y, string str, int num, int digit){ //, int mode) {
 		    string text = ""; //[128];
             int len = str.Count(); // wcslen(str), i = digit, j = num;
             int i = digit;
@@ -1086,8 +1086,8 @@ namespace RaylibSideScrollerShooter
 
             //            ResetGame();
 
-            GameWorld game = new GameWorld(stars, assets, target, false);
-            game.gameOver = 1;
+            GameWorld game = new GameWorld(stars, assets, target, false, 1);
+//            game.gameOver = 1;
 
             while (!Raylib.WindowShouldClose())
             {
@@ -1115,7 +1115,7 @@ namespace RaylibSideScrollerShooter
 					if (shouldReset)
 					{
 //	                    ResetGame();
-                        game = new GameWorld(stars, assets, target, useEasyMode);
+                        game = new GameWorld(stars, assets, target, useEasyMode, 0);
                         Raylib.StopMusicStream(assets.bgm);
                         Raylib.PlayMusicStream(assets.bgm);
                     }

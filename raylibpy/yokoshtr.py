@@ -302,19 +302,15 @@ class App:
 
 		# 移動
 		movespeed = self.player_speed * rate
-		if raylib.IsKeyDown(raylib.KEY_LEFT) or  (axisX < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_LEFT)):
+		if raylib.IsKeyDown(raylib.KEY_A) or raylib.IsKeyDown(raylib.KEY_LEFT) or  (axisX < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_LEFT)):
 			self.player_x -= movespeed
 
-		if raylib.IsKeyDown(raylib.KEY_RIGHT) or  (axisX > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_RIGHT)):
+		if raylib.IsKeyDown(raylib.KEY_D) or raylib.IsKeyDown(raylib.KEY_RIGHT) or  (axisX > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_RIGHT)):
 			self.player_x += movespeed
-		if raylib.IsKeyDown(raylib.KEY_UP) or  (axisY < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_UP)):
+		if raylib.IsKeyDown(raylib.KEY_W) or raylib.IsKeyDown(raylib.KEY_UP) or  (axisY < -0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_UP)):
 			self.player_y -= movespeed
-		if raylib.IsKeyDown(raylib.KEY_DOWN) or  (axisY > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_DOWN)):
+		if raylib.IsKeyDown(raylib.KEY_S) or raylib.IsKeyDown(raylib.KEY_DOWN) or  (axisY > 0.2) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_LEFT_FACE_DOWN)):
 			self.player_y += movespeed
-		if raylib.IsKeyDown(raylib.KEY_A): self.player_x -= movespeed
-		if raylib.IsKeyDown(raylib.KEY_D): self.player_x += movespeed
-		if raylib.IsKeyDown(raylib.KEY_W): self.player_y -= movespeed
-		if raylib.IsKeyDown(raylib.KEY_S): self.player_y += movespeed
 
 		self.player_x = max(0, min(self.player_x, screenwidth / X_SCALE - 20*2))
 		self.player_y = max(0, min(self.player_y, screenheight / Y_SCALE - 16*2))
