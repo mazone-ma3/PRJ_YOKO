@@ -32,7 +32,7 @@ raylibgo gcc版をGo+raylib-goに移植した物。試作。
 
 raylibrust raylib-rsへの移植、作りかけ/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
 
-raylibphp php-raylib(composerで入れてください)への移植、作りかけ
+raylibphp php-raylib(composerで入れてください)への移植、作りかけ/exe化の予定なし
 
 JavaScript 作りかけ
 
