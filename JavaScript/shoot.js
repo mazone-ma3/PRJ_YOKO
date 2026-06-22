@@ -84,6 +84,11 @@
 	let	lastTime =   0;
 	let	rate =   0;
 
+	let spawnTimer = 0;
+	let etype = 0;
+	let ejp = 1;
+	let rand_num = 0;
+
 	//   プレイヤー
 	const  player =   {
 		x:   60,
@@ -254,7 +259,7 @@
 
 
 		//   画面端制限
-		player.x =   Math.max(0,   Math.min(canvas.width -   player.width - 6, player.x));
+		player.x =   Math.max(0,   Math.min(canvas.width -   player.width - 8, player.x));
 		player.y =   Math.max(0,   Math.min(canvas.height  -	player.height - 6,   player.y));
 
 		//   自動射撃（連射）
@@ -278,22 +283,75 @@
 		}
 
 		//   敵生成
-		if (Math.random()  <	0.03)  {
+		spawnTimer += deltaTime;
+		let baseInterval = (50.0 - (score / 250.0)); // scoreが増えるほど短く
+		let spawnInterval = Math.max((18.0)/COUNT1S, baseInterval/COUNT1S); // フレーム→秒に変換
+
+//		if (Math.random()  <	0.03)  {
+		if (spawnTimer > spawnInterval) {
+			rand_num = Math.random() * 100;
+			if (rand_num < 60) {
+				etype = 0;
+			} else if (rand_num < 85) {
+				etype = 1;
+			} else {
+				etype = 2;
+			}
+			if (etype == 0) {
+				ehp = 1;
+			} else {
+				ehp = 3;
+			}
+
 			enemies.push({
-				x:   canvas.width	+  50,
-				y:   Math.random() *   (canvas.height  -	40),
+				x:   canvas.width, //50,
+				y:   32 + Math.random() * (canvas.height  -	32-32-32),
 				width:   32,
 				height:	32,
 				left:  0,
 				top: 0,
-				speed:   3 +   Math.random() *   2
+				speed: 3 + Math.random() * 2,
+				type: etype,
+				life: ehp,
+				count: 0,
+				count2: Math.random() * (30*2+canvas.width-40*2) - 30*2,
+				shootTimer: 0,
+				nextShootTime: 5.0 / COUNT1S
 			});
+			spawnTimer = 0;
 		}
 
 		//   敵更新
-		for	(let i   = enemies.length	-  1; i   >=  0; i--)  {
+		let enemySpeed = 4.0 * rate;
+ 		for	(let i   = enemies.length	-  1; i   >=  0; i--)  {
 			const  e	=  enemies[i];
-			e.x	-=   e.speed;
+//			e.x	-=   e.speed;
+
+			e.count += rate;
+
+			switch(e.type) {
+			case 0:
+				e.x -= enemySpeed;
+				break;
+
+			case 1:
+				if(e.count < 24){
+					e.x -= 6 * 2 * rate;
+					e.y += ((player.y + 8 - e.y) / 8) / 2 * rate;
+				} else if (e.count < 49) {
+					e.x -= 0;
+				} else {
+					e.x += 6 * 2 * rate;
+				}
+				break;
+
+			case 2:
+				e.x -= enemySpeed;
+				e.y = (e.count2 + Math.sin(e.count * 0.12) * 55 * 2);
+				break;
+			}
+//			e.x -= e.speed * $rate;
+
 
 			//   プレイヤーと衝突
 			if (checkCollision(player,   e))   {
@@ -317,14 +375,17 @@
 			for	(let j   = enemies.length	-  1; j   >=  0; j--)  {
 				const  e	=  enemies[j];
 				if (checkCollision(b,  e))  {
-					score  += 100;
-					scoreEl.textContent	=  score;
+					e.life--;
 					createExplosion(e.x, e.y);
 					bullets.splice(i,  1);
-					enemies.splice(j,  1);
-					wav.pause();
-					wav.currentTime	=  0;
-					wav.play();
+					if(e.life <= 0){
+						score  += 100;
+						scoreEl.textContent	=  score;
+						enemies.splice(j,  1);
+						wav.pause();
+						wav.currentTime	=  0;
+						wav.play();
+					}
 					break;
 				}
 			}
