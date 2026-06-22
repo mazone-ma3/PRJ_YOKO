@@ -1,34 +1,36 @@
 This software includes code generated with the assistance of [Gemini & Grok], an AI developed by [Google & xAI].
 
-PyxelでGrokに作成させた横スクロールシューティングをレトロパソコンに移植しようとする実験。実機での動作は未保証です。
+PyxelでGrokに作成させた横スクロールシューティングをレトロパソコン及び各言語に移植しようとする実験。実機での動作は未保証です。
 
-MSX1 z88dkによる作りかけ。→部分アセンブラ化しました。(2026/5/5)
+キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
-X68K_MPY　Pyxel版を整数化してmicroPythonにテスト移植した物。(MPUノーウェイト推奨)
+MSX1 z88dkで作成。→部分アセンブラ化しました。(2026/5/5)
 
-X68K クラス化をやめて、elf2x68kに移植した物。
+X68K_MPY　Pyxel版を整数化してmicroPythonにテスト移植。(MPUノーウェイト推奨)。放棄。
 
-TOWNS FM TOWNS-gccクロスコンパイル開発環境+DJGPP12.2.0に移植した物。
+X68K クラス化をやめて、elf2x68kへ移植。
+
+TOWNS FM TOWNS-gccクロスコンパイル開発環境+DJGPP12.2.0への移植。横長画面にしてるため、実機で液晶だと縞が出ます。CRTの場合は不明です。
 
 PYXEL 逆にグラフィックを寄せた物。
 
-V9968 (MSX2++)X68K版のz88dk(2025/1/26以前の版)縮小移植。
+V9968 (MSX2++)X68K版のz88dk(2025/1/26以前の版)縮小移植。改造OpenMSX用。
 
 BMP 旧版の画像データファイル
 
-MSX2 MSX1版の移植。試作。
+MSX2 MSX1版の移植。
 
-MSX2ROM MSX2版をROM化した物。
+MSX2ROM MSX2版をROM化。
 
-Direct2D Windows(x64)版。VS2022での作りかけ。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
+Direct2D Windows(x64)版。VS2022→2026で作成。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
 
-raylib gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb版。試作。F11でフルスクリーン。
+raylib gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb版。F11でフルスクリーン。
 
-raylibcs VC#+raylib-csによるWindows(x64)版。gcc版の移植。試作。(要.NET SDK 10 & raylib.dll) 
+raylibcs VC#+raylib-csによるWindows(x64)版。gcc版の移植。(要.NET SDK 10 & raylib.dll) 
 
-raylibpy Pyxel版をraylib-python-cffiに移植した物。試作。
+raylibpy Pyxel版をraylib-python-cffiに移植。
 
-raylibgo gcc版をGo+raylib-goに移植した物。試作。
+raylibgo gcc版をGo+raylib-goに移植。
 
 raylibrust raylib-rsへの移植、作りかけ/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
 
@@ -36,9 +38,7 @@ raylibphp php-raylib(composerで入れてください)への移植、作りか�
 
 JavaScript 作りかけ
 
-キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
-
-※TOWNS版は横長画面にしてるため、実機で液晶だと縞が出ることがあります。CRTの場合は不明です。
+作りかけ3種は各.png/.mp3/.wavを他フォルダからコピーしてください。
 
 ↓Pyxel版を実行
 
