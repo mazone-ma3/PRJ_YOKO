@@ -65,7 +65,7 @@
 
 	const  audio	=  new  Audio('bgm.mp3');
 	audio.loop   = true;
-	audio.mute   = false;
+//	audio.mute   = false;
 	const  wav  =	new	Audio('explosion.wav');
 
 	sourceImage	=  document.getElementById("yokosht");
@@ -78,8 +78,12 @@
 
 	let	easy_mode  =	false;
 	let	bomb_stock   = 0;
+	let	bomb_timer = 0;
+	let	bomb_active = true;
 	let	gameTime =   0;
 	let	chain_count	=  0;
+
+	let shield_active = false;
 
 	let	lastTime =   0;
 	let	rate =   0;
@@ -88,6 +92,7 @@
 	let etype = 0;
 	let ejp = 1;
 	let rand_num = 0;
+
 
 	//   プレイヤー
 	const  player =   {
@@ -102,6 +107,7 @@
 
 	let	bullets	=  [];
 	let	enemies	=  [];
+	let enemy_bullets = [];
 	let	particles  =	[];	//   爆発エフェクト
 
 	let	keys =   {};
@@ -174,6 +180,10 @@
 		put_sprite(player.x,   player.y, 1);
 	}
 
+	function drawEnemyBullet(eb)  {
+		put_sprite(eb.x,  eb.y,   0);
+	}
+
 	function drawBullet(b)   {
 /*		  ctx.fillStyle	=  '#ff0';
 		ctx.fillRect(b.x,  b.y  -	3,   20,   6);*/
@@ -192,6 +202,35 @@
 		ctx.fill();*/
 //		  ctx.drawImage(sourceImage, 32*2,   0,  32,  32,  e.x,   e.y,	32,	32);
 		put_sprite(e.x,  e.y,   2);
+	}
+
+	function use_bomb() {
+		if (bomb_stock <= 0 || (bomb_active == true)) {
+			return;
+		}
+
+		bomb_stock--;
+		bomb_active = true;
+		bomb_timer = 1;//BOMB_DURATION;
+
+		// 敵と敵弾を全滅
+		enemies	=  [];
+		enemy_bullets	=  [];
+
+		// 大量の破片を発生
+		createExplosion(player.x+16, player.y+16, 0); // 大爆発
+
+		// 画面全体に破片を散らす
+		for (i = 0; i < 60; i++) {
+			let rx = Math.random() * canvas.width;
+			let ry = Math.random() * canvas.height;
+			createExplosion(rx, ry)
+		}
+
+		score += 200
+		wav.pause();
+		wav.currentTime	=  0;
+		wav.play();
 	}
 
 	function update()  {
@@ -264,7 +303,7 @@
 
 		//   自動射撃（連射）
 		const  now  =	Date.now();
-		if ((keys['	']   ||  keys['z']	||   (key	&  0x01)) &&	now	-  lastShot   > 150)  {
+		if ((keys['	']   ||  keys['z']	||  (key & 0x01)) &&	now	-  lastShot   > 150)  {
 			bullets.push({
 				x:   player.x	+  player.width,
 				y:   player.y	+  player.height/2,
@@ -274,6 +313,10 @@
 				top: 0,
 			});
 			lastShot =   now;
+		}
+
+		if ((keys['x']   ||  keys['b']	||  (key & 0x02)) && (bomb_stock > 0) && (bomb_active == false))  {
+			use_bomb();
 		}
 
 		//   弾更新
@@ -353,20 +396,75 @@
 //			e.x -= e.speed * $rate;
 
 
+			// 敵弾発射処理
+			e.shootTimer += deltaTime;
+
+			let difficulty = Math.min(1, gameTime/180); // * COUNT1S)))
+			let enemy_bullet_speed = (4 + difficulty*2);
+			let shoot_interval = ((82 - difficulty*36) - 5) / COUNT1S;
+
+			if (e.shootTimer >= e.nextShootTime) {
+
+				let dx = player.x - e.x;
+				let dy = player.y - e.y;
+
+				let dist = 0;
+				if (Math.abs(dx) > Math.abs(dy)) {
+					dist = Math.abs(dx);
+				} else {
+					dist = Math.abs(dy);
+				}
+				if (dist == 0) {
+					dist = 1;
+				}
+
+				// 弾を発射
+				let bulletSpeed = enemy_bullet_speed;
+
+				dx = (dx * bulletSpeed / dist);
+				dy = (dy * bulletSpeed / dist);
+				dx = Math.max(-3*2.0, dx);
+				dx = Math.min(dx, 4*2.0);
+				dy = Math.max(-4*2.0, dy);
+				dy = Math.min(dy, 4*2.0);
+
+				enemy_bullets.push({
+					x: e.x+16,
+					y: e.y+16,
+					vx:     dx, // * bulletSpeed - 1.0f*1,   // vx
+					vy:     dy, // * bulletSpeed     // vy
+					width:   8,
+					height:	8,
+					left:  0,
+					top: 0
+				});
+
+				// 次回の発射間隔を設定
+				e.nextShootTime = shoot_interval;
+
+				e.shootTimer = 0.0;
+			}
+
+
 			//   プレイヤーと衝突
 			if (checkCollision(player,   e))   {
-				life--;
-				lifeEl.textContent   = life;
-				createExplosion(e.x, e.y);
-				enemies.splice(i,  1);
+				if (shield_active) {
+					shield_active = false; // シールド消費
+					createExplosion(player.x+16, player.Pos.y+16); // 大きな爆発
+				}else{
+					life--;
+					lifeEl.textContent   = life;
+					createExplosion(e.x, e.y);
+					enemies.splice(i,  1);
 
-				if (life <=	0)   {
-					gameOver();
+					if (life <=	0)   {
+						gameOver();
+					}
 				}
 				continue;
 			}
 
-			if (e.x	<  -50)   enemies.splice(i, 1);
+			if ((e.x < -32) || (e.x > canvas.width))  enemies.splice(i, 1);
 		}
 
 		//   衝突判定（弾	vs   敵）
@@ -391,6 +489,40 @@
 			}
 		}
 
+		// 敵弾 vs 自機
+		for	(let i   = enemy_bullets.length  -	1;   i >=	0;   i--)	{
+			const  it	=  enemy_bullets[i];
+
+			if (checkCollision(player, it)) {
+				if (shield_active) {
+					shield_active = false; // シールド消費
+					createExplosion(player.x+16, player.Pos.y+16); // 大きな爆発
+				} else {
+					life--;
+					lifeEl.textContent   = life;
+					createExplosion(player.x, player.y);
+
+					if (life <=	0)   {
+						gameOver();
+					}
+				}
+				enemy_bullets.splice(i, 1);
+				break;
+			}
+		}
+
+		// 敵弾移動&画面範囲外判定
+		for	(let i   = enemy_bullets.length  -	1;   i >=	0;   i--)	{
+			const  it	=  enemy_bullets[i];
+			it.x += it.vx * rate;
+			it.y += it.vy * rate;
+
+			if ((it.x < -32) || (it.x > canvas.width) || (it.y < 32) || (it.y > canvas.height)) {
+				enemy_bullets.splice(i, 1);
+			}
+		}
+
+
 		//   パーティクル更新
 		for	(let i   = particles.length  -	1;   i >=	0;   i--)	{
 			const  p	=  particles[i];
@@ -399,6 +531,15 @@
 			p.life--;
 			if (p.life   <=  0) particles.splice(i, 1);
 		}
+
+		// ボム更新
+		if (bomb_active) {
+			bomb_timer -= deltaTime;
+			if (bomb_timer <= 0.0) {
+				bomb_active = false;
+			}
+		}
+
 	}
 
 	function checkCollision(a,   b)  {
@@ -452,20 +593,22 @@
 		}
 		ctx.globalAlpha	=  1;
 
-		//   オブジェクト描画
-		drawPlayer();
-
-		bullets.forEach(drawBullet);
-		enemies.forEach(drawEnemy);
-
 		//   パーティクル
 		for	(let p   of  particles) {
 			ctx.fillStyle  =	p.color;
 			ctx.globalAlpha	=  p.life /   30;
 			ctx.fillRect(p.x,  p.y,   4,  4);
 		}
-
 		ctx.globalAlpha	=  1;
+
+		//   オブジェクト描画
+
+		enemy_bullets.forEach(drawEnemyBullet);
+		bullets.forEach(drawBullet);
+		enemies.forEach(drawEnemy);
+
+		drawPlayer();
+
 
 //		put_strings(0,0,"0123");
 
@@ -508,11 +651,14 @@
 		lifeEl.textContent   = life;
 		bullets	=  [];
 		enemies	=  [];
+		enemy_bullets	=  [];
 		particles  =	[];
 		player.x =   60;
 		player.y =   160;
 
 		bomb_stock   = 0;
+		bomb_timer = 0;
+		bomb_active = true;
 		gameTime =   0;
 		chain_count	=  0;
 
@@ -520,6 +666,7 @@
 
 		easy_mode  =	true;
 		life =   3;
+		shield_active = false;
 
 		audio.play();
 	}
@@ -528,6 +675,7 @@
 		gameRunning	=  1;
 		audio.pause();		   //  ① 止める
 		audio.currentTime  =	0;   //  ② 頭出し（0秒に戻す）
+
 //		  alert(`ゲームオーバー！\n最終スコア:   ${score}`);
 //		  document.getElementById('start-screen').style.display	=  'block';
 //		startGame();
