@@ -41,6 +41,14 @@ struct Enemy {
     active: bool,
 }
 
+struct EnemyBullet {
+    pos: Vector2,
+    poswh: Vector2,
+    poslt: Vector2,
+    v: Vector2,
+    active: bool,
+}
+
 struct Particle {
     pos: Vector2,
     vpos: Vector2,
@@ -158,7 +166,7 @@ fn use_bomb(particles: &mut Vec<Particle>, rl: &RaylibHandle, explosion_sound: &
 }
 
 fn main() {
-    println!("DEBUG: 初期化を開始します...");
+//    println!("DEBUG: 初期化を開始します...");
 
     unsafe {
         let flags = ConfigFlags::FLAG_WINDOW_RESIZABLE as u32 | ConfigFlags::FLAG_VSYNC_HINT as u32;
@@ -189,6 +197,7 @@ fn main() {
     };
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
+    let mut enemy_bullets: Vec<EnemyBullet> = Vec::new();
     let mut particles: Vec<Particle> = Vec::new();
     let mut stars: Vec<Star> = Vec::new();
 
@@ -210,6 +219,8 @@ fn main() {
     let mut last_shot = rl.get_time();
     let shot_cooldown = 0.15;
     let mut enemy_spawn_timer = 0.0;
+
+    let mut shield_active = false;
 
     for _ in 0..80 {
         stars.push(Star {
@@ -370,12 +381,108 @@ fn main() {
                         },
                     }
 
-//                      enemy.pos.x -= ENEMY_SPEED * rate;
+
+            		// 敵弾発射処理
+            		e.shoot_timer += delta;
+
+            		let difficulty = (game_time/180.0).min(1.0); // * COUNT1S)))
+            		let enemy_bullet_speed = 4.0 + difficulty*2.0;
+            		let shoot_interval = ((82.0 - difficulty*36.0) - 5.0) as f32 / COUNT1S;
+
+            		if e.shoot_timer >= e.next_shoot_time {
+
+            			let dx = player.pos.x - e.pos.x;
+			            let dy = player.pos.y - e.pos.y;
+
+        			//	            dx -= 4.0f
+
+               			let mut dist:f32;
+            			if dx.abs() > dy.abs() {
+        	    			dist = dx.abs();
+		            	} else {
+				            dist = dy.abs();
+            			}
+	    	        	if dist == 0.0 {
+		    		        dist = 1.0;
+        	    		}
+
+            			// 弾を発射
+	    	        	let bullet_speed = enemy_bullet_speed;
+
+            			let mut dx = dx * bullet_speed / dist;
+		            	let mut dy = dy * bullet_speed / dist;
+		            	dx = dx.max(-3.0*2.0);
+			            dx = dx.min(4.0*2.0);
+			            dy = dy.max(-4.0*2.0);
+        			    dy = dy.min(4.0*2.0);
+
+//                        for bullet in &mut enemy_bullets {
+//            			for j := range game.enemybullets {
+//            				if bullet.active == false {
+
+        	    				enemy_bullets.push( EnemyBullet{
+		            				pos: Vector2::new(e.pos.x+16.0,
+				            			e.pos.y+16.0),
+                                    poswh: Vector2::new(8.0, 8.0),
+                                    poslt: Vector2::new(0.0, 0.0),
+						            v:   Vector2::new(dx, // * bulletSpeed - 1.0f*1,   // vx
+		        			    	     dy,), // * bulletSpeed     // vy
+        					    	active: true,
+            					});
+//	    	        			break;
+//		    		        }
+//        	    		}
+
+		            	// 次回の発射間隔を設定
+        			    e.next_shoot_time = shoot_interval;
+
+            			e.shoot_timer = 0.0;
+		        	//				e.count += rate
+        			//	            e.count++
+    		        }
+
+
+//                    enemy.pos.x -= ENEMY_SPEED * rate;
                     if e.pos.x < -32.0 {
                         e.active = false;
                     }
                 }
             }
+
+	        // 敵弾 vs 自機
+	        for e in &mut enemy_bullets {
+        		if !e.active {
+		        	continue;
+        		}
+                if check_collision(player.pos, player.poswh, player.poslt, e.pos, e.poswh, e.poslt) {
+        			if shield_active {
+		        		shield_active = false;                                    // シールド消費
+                        create_particles(&mut particles, &rl, player.pos.x, player.pos.y, 8);
+        			} else {
+                        lives -= 1;
+                        if lives <= 0 {
+                            game_over = 1;
+                            bgm.stop_stream();
+                        }
+        			}
+		        	e.active = false;
+        			break
+        		}
+            }
+
+        	// 敵弾移動&画面範囲外判定
+	        for e in &mut enemy_bullets {
+	        	if e.active {
+			        e.pos.x += e.v.x * rate;
+			        e.pos.y += e.v.y * rate;
+
+        			if (e.pos.x < -32.0) || (e.pos.x > SCREEN_WIDTH as f32/X_SCALE as f32) || (e.pos.y < 32.0) || (e.pos.y > SCREEN_HEIGHT as f32/Y_SCALE as f32) {
+		        		e.active = false;
+        			}
+		        }
+        	}
+
+            enemy_bullets.retain(|it| it.active);
 
             // 当たり判定 自弾&敵
             for bullet in &mut bullets {
@@ -400,10 +507,15 @@ fn main() {
             for enemy in &mut enemies {
                 if enemy.active && check_collision(player.pos, player.poswh, player.poslt, enemy.pos, enemy.poswh, enemy.poslt) {
                     enemy.active = false;
-                    lives -= 1;
-                    if lives <= 0 {
-                        game_over = 1;
-                        bgm.stop_stream();
+        			if shield_active {
+		        		shield_active = false;                                    // シールド消費
+                        create_particles(&mut particles, &rl, player.pos.x, player.pos.y, 8);
+                    } else {
+                        lives -= 1;
+                        if lives <= 0 {
+                            game_over = 1;
+                            bgm.stop_stream();
+                        }
                     }
                 }
             }
@@ -418,6 +530,17 @@ fn main() {
                     bomb_active = false;
                 }
             }
+
+            for particle in &mut particles {
+                particle.pos.x += particle.vpos.x * rate;
+                particle.pos.y += particle.vpos.y * rate;
+                let dumping = f32::powf(0.96, rate);
+                particle.vpos.x *= dumping;
+                particle.vpos.y *= dumping;
+                particle.life -= rate;
+            }
+            particles.retain(|particle| particle.life > 0.0);
+
 
             if game_over != 0 && score > high_score {
                 high_score = score;
@@ -438,12 +561,15 @@ fn main() {
                 player.pos.y = 160.0;
                 bullets.clear();
                 enemies.clear();
+                enemy_bullets.clear();
+                particles.clear();
                 score = 0;
                 bomb_stock = 0;
                 game_time = 0.0;
                 chain_count = 0;
                 bgm.play_stream();
                 game_over = 0;
+                shield_active = false;
             }
         }
 
@@ -464,21 +590,11 @@ fn main() {
                 continue;
             }
             d.draw_circle(particle.pos.x as i32 * X_SCALE, particle.pos.y as i32 * Y_SCALE, 1.5 * 2.0, Color::YELLOW);
-
-            particle.pos.x += particle.vpos.x * rate;
-            particle.pos.y += particle.vpos.y * rate;
-            let dumping = f32::powf(0.96, rate);
-            particle.vpos.x *= dumping;
-            particle.vpos.y *= dumping;
-            particle.life -= rate;
         }
-        particles.retain(|particle| particle.life > 0.0);
 
-        put_sprite(&chr_tex, &mut d, player.pos.x, player.pos.y, 1);
-
-        for bullet in &bullets {
-            if bullet.active {
-                put_sprite(&chr_tex, &mut d, bullet.pos.x, bullet.pos.y, 4);
+        for enemy_bullets in &enemy_bullets {
+            if enemy_bullets.active {
+                put_sprite(&chr_tex, &mut d, enemy_bullets.pos.x, enemy_bullets.pos.y, 0);
             }
         }
 
@@ -487,6 +603,14 @@ fn main() {
                 put_sprite(&chr_tex, &mut d, enemy.pos.x, enemy.pos.y, 2);
             }
         }
+
+        for bullet in &bullets {
+            if bullet.active {
+                put_sprite(&chr_tex, &mut d, bullet.pos.x, bullet.pos.y, 4);
+            }
+        }
+
+        put_sprite(&chr_tex, &mut d, player.pos.x, player.pos.y, 1);
 
         if score >= high_score {
             put_strings_num(&font_tex, &mut d, 0, 0, "HIGH  ", score, 7);
