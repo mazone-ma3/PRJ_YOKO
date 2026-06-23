@@ -179,6 +179,31 @@ class Enemy
 	}
 }
 
+class EnemyBullet
+{
+	public $x;
+	public $y;
+	public $vx;
+	public $vy;
+
+	public $width;
+	public $height;
+	public $top;
+	public $left;
+
+    public function __construct($x, $y, $vx, $vy, $width, $height, $left, $top) {
+		$this->x = $x;
+		$this->y = $y;
+		$this->vx = $vx;
+		$this->vy = $vy;
+
+		$this->width = $width;
+		$this->height = $height;
+		$this->left = $left;
+		$this->top = $top;
+	}
+}
+
 class Particle
 {
 	public $x;
@@ -336,6 +361,8 @@ class Game
         $this->bomb_stock = 0;
 		$this->bomb_timer = 0;
 		$this->bomb_active = false;
+
+		$this->shield_active = false;
 
         $this->gameTime = 0;
         $this->chain_count = 0;
@@ -533,7 +560,7 @@ class Game
 				0,
 				rand(0, 30*2+SCREEN_HEIGHT/Y_SCALE-40*2) - 30*2,
 				0,
-				5.0 / COUNT1S,
+				(int)(5.0 / COUNT1S),
                 ENEMY_SPEED + rand(-1, 3),
                 ENEMY_WIDTH,
                 ENEMY_HEIGHT,
@@ -675,7 +702,6 @@ class Game
 
 //            if ($this->spawnTimer > ENEMY_SPAWN_RATE) {
             if ($this->spawnTimer > $spawnInterval) {
-
 				$rand_num = rand(0, 100);
 				if ($rand_num < 60) {
 					$etype = 0;
@@ -694,7 +720,7 @@ class Game
                 $this->spawnTimer = 0;
             }
 
-            // --- 子弾の移動と画面外削除 ---
+            // --- 自機弾の移動と画面外削除 ---
 /*            foreach ($this->bullets as $i => $b) {
                 $this->bullets[$i]['x'] += BULLET_SPEED * $rate;
                 if ($this->bullets[$i]['x'] > SCREEN_WIDTH + 20) {
@@ -740,8 +766,70 @@ class Game
 				}
 //				$e->x -= $e->speed * $rate;
 
+
+				// 敵弾発射処理
+				$e->shootTimer += $delta;
+
+				$difficulty = min(1, ($this->gameTime/180)); // * COUNT1S)))
+				$enemy_bullet_speed = (4 + $difficulty*2);
+				$shoot_interval = (((82 - $difficulty*36) - 5) / COUNT1S);
+
+				if ($e->shootTimer >= $e->nextShootTime) {
+
+//				var_dump("生成");
+
+					$dx = $this->player->x - $e->x;
+					$dy = $this->player->y - $e->y;
+
+				//	            dx -= 4.0f
+
+					if (abs($dx) > abs($dy)) {
+						$dist = abs($dx);
+					} else {
+						$dist = abs($dy);
+					}
+					if ($dist == 0) {
+						$dist = 1;
+					}
+
+					// 弾を発射
+					$bulletSpeed = $enemy_bullet_speed;
+
+					$dx = ($dx * $bulletSpeed / $dist);
+					$dy = ($dy * $bulletSpeed / $dist);
+					$dx = max(-3*2.0, $dx);
+					$dx = min($dx, 4*2.0);
+					$dy = max(-4*2.0, $dy);
+					$dy = min($dy, 4*2.0);
+
+//					for j := range game.enemybullets {
+//						if game.enemybullets[j].Active == false {
+
+//					game.enemybullets[j] = EnemyBullet{
+					$this->enemybullets[] = new EnemyBullet(
+						$e->x+16,
+						$e->y+16,
+						$dx, // * bulletSpeed - 1.0f*1,   // vx
+						$dy, // * bulletSpeed     // vy
+						8, 8, 0, 0
+					);
+//					var_dump($e->x+16);
+//					break
+//				}
+//			}
+
+					// 次回の発射間隔を設定
+					$e->nextShootTime = $shoot_interval;
+
+					$e->shootTimer = 0.0;
+					//				e.count += rate
+					//	            e.count++
+				}
+
+
 //                if ($this->enemies[$i]['x'] < -60) {
-                if ($e->x < -60) {
+//                if ($e->x < -60) {
+				if (($e->x < -32) || ($e->x > SCREEN_WIDTH/X_SCALE)) {
                     unset($this->enemies[$i]);
                 }else{
 //					$this->enemies[$i]->x = $e->x;
@@ -749,7 +837,7 @@ class Game
             }
             $this->enemies = array_values($this->enemies);
 
-            // --- 衝突判定（子弾 と 敵）---
+            // --- 衝突判定（自機弾 と 敵）---
             $hitBullets = [];
             $hitEnemies = [];
             foreach ($this->bullets as $bi => $b) {
@@ -774,15 +862,57 @@ class Game
             $this->bullets = array_values($this->bullets);
             $this->enemies = array_values($this->enemies);
 
+
+			// 敵弾 vs 自機
+			foreach ($this->enemybullets as $i => $it){
+                if ($this->checkCollision($this->player, $it)) {
+
+					if ($this->shield_active) {
+						$this->shield_active = false;                                    // シールド消費
+						CreateParticles($this->player->x+16, $this->player->y+16, 18, 1); // 大きな爆発
+					} else {
+						$this->player->lives--;
+						if ($this->player->lives <= 0) {
+	                        $this->gameOver = true;
+	                        Audio::StopMusicStream($this->bgm);
+						}
+					}
+					unset($this->enemybullets[$i]);
+					break;
+				}
+			}
+
+
+			// 敵弾移動&画面範囲外判定
+			foreach ($this->enemybullets as $i => $it){
+				$it->x += $it->vx * $rate;
+				$it->y += $it->vy * $rate;
+
+				if (($it->x < -32) || ($it->x > SCREEN_WIDTH/X_SCALE+10) || ($it->y < 32) || ($it->y > SCREEN_HEIGHT/Y_SCALE)) {
+//					var_dump("削除");
+//					var_dump($it->x);
+					unset($this->enemybullets[$i]);
+				}
+			}
+            $this->enemybullets = array_values($this->enemybullets);
+
+
+
             // --- 衝突判定（プレイヤー と 敵）---
             foreach ($this->enemies as $ei => $e) {
                 if ($this->checkCollision($this->player, $e)) {
                     unset($this->enemies[$ei]);
-                    $this->player->lives--;
-                    if ($this->player->lives <= 0) {
-                        $this->gameOver = true;
-                        Audio::StopMusicStream($this->bgm);
-                    }
+
+					if ($this->shield_active) {
+						$this->shield_active = false;                                    // シールド消費
+						CreateParticles($this->player->x+16, $this->player->y+16, 18, 1); // 大きな爆発
+					}else{
+	                    $this->player->lives--;
+	                    if ($this->player->lives <= 0) {
+	                        $this->gameOver = true;
+	                        Audio::StopMusicStream($this->bgm);
+	                    }
+					}
                     break;
                 }
             }
@@ -863,11 +993,9 @@ class Game
             Shapes::drawCircle($p->x * X_SCALE, $p->y * Y_SCALE, 1.5*2, Utils::color( 253, 249, 0, 255));
 		}
 
-        // 子弾の描画（配列にある分だけすべてループ描画）
-        foreach ($this->bullets as $b) {
-//          Shapes::drawRectangle($b['x'], $b['y'], BULLET_SIZE * 2, BULLET_SIZE, $bulletColor);
-//            $this->put_sprite($b['x'], $b['y'], 4);
-            $this->put_sprite($b->x, $b->y, 4);
+        // 敵弾の描画（配列にある分だけすべてループ描画）
+        foreach ($this->enemybullets as $e) {
+            $this->put_sprite($e->x, $e->y, 0);
         }
 
         // 敵の描画（配列にある分だけすべてループ描画）
@@ -875,6 +1003,13 @@ class Game
 //          Shapes::drawRectangle($e['x'], $e['y'], $e['width'], $e['height'], $enemyColor);
 //            $this->put_sprite($e['x'], $e['y'], 2);
             $this->put_sprite($e->x, $e->y, 2);
+        }
+
+        // 自弾の描画（配列にある分だけすべてループ描画）
+        foreach ($this->bullets as $b) {
+//          Shapes::drawRectangle($b['x'], $b['y'], BULLET_SIZE * 2, BULLET_SIZE, $bulletColor);
+//            $this->put_sprite($b['x'], $b['y'], 4);
+            $this->put_sprite($b->x, $b->y, 4);
         }
 
         // プレイヤー機体
