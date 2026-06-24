@@ -35,9 +35,9 @@ struct Enemy {
     lives: i32,
     etype: i32,
     count: f32,
-	count2: f32,
-	shoot_timer: f32,
-	next_shoot_time: f32,
+    count2: f32,
+    shoot_timer: f32,
+    next_shoot_time: f32,
     active: bool,
 }
 
@@ -46,6 +46,28 @@ struct EnemyBullet {
     poswh: Vector2,
     poslt: Vector2,
     v: Vector2,
+    active: bool,
+}
+
+struct Option {
+    pos :Vector2,
+    offset_y :f32,
+}
+
+struct Item {
+    pos: Vector2,
+//    poswh: Vector2,
+//    poslt: Vector2,
+    timer: f32,
+    types:  i32,
+    active: bool,
+}
+
+struct ChainItem {
+    pos: Vector2,
+//    poswh: Vector2,
+//    poslt: Vector2,
+    timer: f32,
     active: bool,
 }
 
@@ -143,7 +165,7 @@ fn check_collision(a_pos: Vector2, a_poswh: Vector2, a_poslt: Vector2, b_pos: Ve
              a_pos.y + a_poslt.y > b_pos.y + b_poslt.y + b_poswh.y);
 }
 
-fn use_bomb(particles: &mut Vec<Particle>, rl: &RaylibHandle, explosion_sound: &Sound, score: &mut i32, bomb_stock: &mut i32, bomb_active: &mut bool, enemies: &mut Vec<Enemy>, player: &mut Player) {
+fn use_bomb(particles: &mut Vec<Particle>, rl: &RaylibHandle, explosion_sound: &Sound, score: &mut i32, bomb_stock: &mut i32, bomb_active: &mut bool, enemies: &mut Vec<Enemy>, enemy_bullets: &mut Vec<EnemyBullet>, player: &mut Player) {
     if *bomb_stock <= 0 || *bomb_active {
         return;
     }
@@ -152,6 +174,7 @@ fn use_bomb(particles: &mut Vec<Particle>, rl: &RaylibHandle, explosion_sound: &
     *bomb_active = true;
 
     enemies.clear();
+    enemy_bullets.clear();
 
     create_particles(particles, &rl, player.pos.x + 16.0, player.pos.y + 16.0, 45);
 
@@ -186,6 +209,7 @@ fn main() {
 
     let audio = RaylibAudio::init_audio_device().expect("audio init failed");
     let explosion_sound = audio.new_sound("explosion.wav").expect("sound load failed");
+    let laser_sound = audio.new_sound("laser.wav").expect("sound load failed");
     let bgm = audio.new_music("bgm.mp3").expect("music load failed");
 
 //    println!("DEBUG: 初期化が完了しました。ループに入ります。");
@@ -198,6 +222,9 @@ fn main() {
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
     let mut enemy_bullets: Vec<EnemyBullet> = Vec::new();
+    let mut options: Vec<Option> = Vec::new();
+    let mut items: Vec<Item> = Vec::new();
+    let mut chain_items: Vec<ChainItem> = Vec::new();
     let mut particles: Vec<Particle> = Vec::new();
     let mut stars: Vec<Star> = Vec::new();
 
@@ -221,6 +248,8 @@ fn main() {
     let mut enemy_spawn_timer = 0.0;
 
     let mut shield_active = false;
+    let mut option_cooldown = 10;
+    let mut chain_timer = 0.0;
 
     for _ in 0..80 {
         stars.push(Star {
@@ -278,6 +307,12 @@ fn main() {
             player.pos.y = player.pos.y.clamp(0.0, (SCREEN_HEIGHT / X_SCALE - 32) as f32);
             player.pos.x = player.pos.x.clamp(0.0, (SCREEN_WIDTH / Y_SCALE - 40) as f32);
 
+            // オプション更新
+            for opt in &mut options {
+                opt.pos.x += ((player.pos.x + 16.0) - opt.pos.x) / 4.0 * rate;
+                opt.pos.y += ((player.pos.y + opt.offset_y) - opt.pos.y) / 4.0 * rate;    
+            }
+
             // 自機射撃
             if (rl.is_key_down(KeyboardKey::KEY_SPACE) || rl.is_key_down(KeyboardKey::KEY_Z) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN)))
                 && now - last_shot > shot_cooldown
@@ -289,31 +324,41 @@ fn main() {
 
                     active: true,
                 });
+
+                for j in &options {
+                    bullets.push(Bullet {
+                        pos: Vector2::new(j.pos.x + 8.0, j.pos.y + 12.0),
+                        poswh: Vector2::new(16.0, 8.0),
+                        poslt:  Vector2::new(0.0, 0.0),
+
+                        active: true,
+                    });
+                }
                 last_shot = now;
             }
 
-        	enemy_spawn_timer += delta;
-	        let base_interval = (50.0 - (score as f32 / 250.0)) / COUNT1S;                   // scoreが増えるほど短く
+            enemy_spawn_timer += delta;
+            let base_interval = (50.0 - (score as f32 / 250.0)) / COUNT1S;                   // scoreが増えるほど短く
             let spawn_interval = base_interval.max(18.0/COUNT1S); // フレーム→秒に変換
 
             // 敵生成
 //            if rl.get_random_value::<i32>(0..=40) == 0 {
             if enemy_spawn_timer >= spawn_interval {
                 let rand_num = rl.get_random_value::<i32>(0..=100);
-				let &mut etype;
-				if rand_num < 60 {
-					etype = 0;
-				} else if rand_num < 85 {
-					etype = 1;
-				} else {
-					etype = 2;
-				}
-				let &mut ehp;
-				if etype == 0 {
-					ehp = 1;
-				} else {
-					ehp = 3;
-				}
+                let &mut etype;
+                if rand_num < 60 {
+                    etype = 0;
+                } else if rand_num < 85 {
+                    etype = 1;
+                } else {
+                    etype = 2;
+                }
+                let &mut ehp;
+                if etype == 0 {
+                    ehp = 1;
+                } else {
+                    ehp = 3;
+                }
 
                 enemies.push(Enemy {
                     pos: Vector2::new(
@@ -321,12 +366,12 @@ fn main() {
                         rl.get_random_value::<i32>(30..=(SCREEN_HEIGHT / Y_SCALE - 32)) as f32),
                     poswh: Vector2::new(32.0, 32.0),
                     poslt: Vector2::new(0.0, 0.0),
-					lives: ehp,
+                    lives: ehp,
                     etype: etype,
-					count: 0.0,
-					count2: (rl.get_random_value::<i32>(30*2..=30*2+SCREEN_HEIGHT/Y_SCALE-40*2) - 30 * 2) as f32,
-					shoot_timer: 0.0,
-					next_shoot_time: 5.0 / COUNT1S,
+                    count: 0.0,
+                    count2: (rl.get_random_value::<i32>(30*2..=30*2+SCREEN_HEIGHT/Y_SCALE-40*2) - 30 * 2) as f32,
+                    shoot_timer: 0.0,
+                    next_shoot_time: 5.0 / COUNT1S,
 
                     active: true,
                 });
@@ -335,7 +380,7 @@ fn main() {
 
             // ボム使用
             if (rl.is_key_pressed(KeyboardKey::KEY_X) || rl.is_key_pressed(KeyboardKey::KEY_B) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_pressed(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))) && bomb_stock > 0 && !bomb_active {
-                use_bomb(&mut particles, &rl, &explosion_sound, &mut score, &mut bomb_stock, &mut bomb_active, &mut enemies, &mut player);
+                use_bomb(&mut particles, &rl, &explosion_sound, &mut score, &mut bomb_stock, &mut bomb_active, &mut enemies, &mut enemy_bullets, &mut player);
             }
 
             // 自弾移動
@@ -354,92 +399,92 @@ fn main() {
             for e in &mut enemies {
                 if e.active {
 
-        		    e.count += rate;
+                    e.count += rate;
 
-        	    	match e.etype {
-                 	    0 => { // 通常敵
-	             	    	e.pos.x -= enemyspeed;
+                    match e.etype {
+                        0 => { // 通常敵
+                            e.pos.x -= enemyspeed;
                         },
 
-        	        	1 => { // ヘリザコ - 勢いよく突っ込む
-	    		           //				static float dist_x = e.x - player_x
-		        	        if e.count < 24.0 { // 1段階：超急接近
-        		    	    	e.pos.x -= 6.0 * 2.0 * rate;
-		                		e.pos.y += ((player.pos.y + 8.0 - e.pos.y) / 8.0) / 2.0 * rate;
-			                } else if e.count < 49.0 { // 2段階：短くホバリング
-				                e.pos.x -= 0.0;
-    			            } else { // 3段階：右へ全力逃走
-        	    			    e.pos.x += 6.0 * 2.0 * rate;
-    	            		}
+                        1 => { // ヘリザコ - 勢いよく突っ込む
+                           //               static float dist_x = e.x - player_x
+                            if e.count < 24.0 { // 1段階：超急接近
+                                e.pos.x -= 6.0 * 2.0 * rate;
+                                e.pos.y += ((player.pos.y + 8.0 - e.pos.y) / 8.0) / 2.0 * rate;
+                            } else if e.count < 49.0 { // 2段階：短くホバリング
+                                e.pos.x -= 0.0;
+                            } else { // 3段階：右へ全力逃走
+                                e.pos.x += 6.0 * 2.0 * rate;
+                            }
                         },
-        	            2 => { // サインカーブ
-    	            	    e.pos.x -= enemyspeed;
+                        2 => { // サインカーブ
+                            e.pos.x -= enemyspeed;
                             let rad = e.count*0.12;
-	                    	e.pos.y = e.count2 + rad.sin() * 55.0 * 2.0;
+                            e.pos.y = e.count2 + rad.sin() * 55.0 * 2.0;
                         },
                         _=> {
                         },
                     }
 
 
-            		// 敵弾発射処理
-            		e.shoot_timer += delta;
+                    // 敵弾発射処理
+                    e.shoot_timer += delta;
 
-            		let difficulty = (game_time/180.0).min(1.0); // * COUNT1S)))
-            		let enemy_bullet_speed = 4.0 + difficulty*2.0;
-            		let shoot_interval = ((82.0 - difficulty*36.0) - 5.0) as f32 / COUNT1S;
+                    let difficulty = (game_time/180.0).min(1.0); // * COUNT1S)))
+                    let enemy_bullet_speed = 4.0 + difficulty*2.0;
+                    let shoot_interval = ((82.0 - difficulty*36.0) - 5.0) as f32 / COUNT1S;
 
-            		if e.shoot_timer >= e.next_shoot_time {
+                    if e.shoot_timer >= e.next_shoot_time {
 
-            			let dx = player.pos.x - e.pos.x;
-			            let dy = player.pos.y - e.pos.y;
+                        let dx = player.pos.x - e.pos.x;
+                        let dy = player.pos.y - e.pos.y;
 
-        			//	            dx -= 4.0f
+                    //              dx -= 4.0f
 
-               			let mut dist:f32;
-            			if dx.abs() > dy.abs() {
-        	    			dist = dx.abs();
-		            	} else {
-				            dist = dy.abs();
-            			}
-	    	        	if dist == 0.0 {
-		    		        dist = 1.0;
-        	    		}
+                        let mut dist:f32;
+                        if dx.abs() > dy.abs() {
+                            dist = dx.abs();
+                        } else {
+                            dist = dy.abs();
+                        }
+                        if dist == 0.0 {
+                            dist = 1.0;
+                        }
 
-            			// 弾を発射
-	    	        	let bullet_speed = enemy_bullet_speed;
+                        // 弾を発射
+                        let bullet_speed = enemy_bullet_speed;
 
-            			let mut dx = dx * bullet_speed / dist;
-		            	let mut dy = dy * bullet_speed / dist;
-		            	dx = dx.max(-3.0*2.0);
-			            dx = dx.min(4.0*2.0);
-			            dy = dy.max(-4.0*2.0);
-        			    dy = dy.min(4.0*2.0);
+                        let mut dx = dx * bullet_speed / dist;
+                        let mut dy = dy * bullet_speed / dist;
+                        dx = dx.max(-3.0*2.0);
+                        dx = dx.min(4.0*2.0);
+                        dy = dy.max(-4.0*2.0);
+                        dy = dy.min(4.0*2.0);
 
 //                        for bullet in &mut enemy_bullets {
-//            			for j := range game.enemybullets {
-//            				if bullet.active == false {
+//                      for j := range game.enemybullets {
+//                          if bullet.active == false {
 
-        	    				enemy_bullets.push( EnemyBullet{
-		            				pos: Vector2::new(e.pos.x+16.0,
-				            			e.pos.y+16.0),
+                                enemy_bullets.push( EnemyBullet{
+                                    pos: Vector2::new(e.pos.x+16.0,
+                                        e.pos.y+16.0),
                                     poswh: Vector2::new(8.0, 8.0),
                                     poslt: Vector2::new(0.0, 0.0),
-						            v:   Vector2::new(dx, // * bulletSpeed - 1.0f*1,   // vx
-		        			    	     dy,), // * bulletSpeed     // vy
-        					    	active: true,
-            					});
-//	    	        			break;
-//		    		        }
-//        	    		}
+                                    v:   Vector2::new(dx, // * bulletSpeed - 1.0f*1,   // vx
+                                         dy,), // * bulletSpeed     // vy
+                                    active: true,
+                                });
+//                              break;
+//                          }
+//                      }
 
-		            	// 次回の発射間隔を設定
-        			    e.next_shoot_time = shoot_interval;
+                        // 次回の発射間隔を設定
+                        e.next_shoot_time = shoot_interval;
 
-            			e.shoot_timer = 0.0;
-		        	//				e.count += rate
-        			//	            e.count++
-    		        }
+                        e.shoot_timer = 0.0;
+                    //              e.count += rate
+                    //              e.count++
+                    }
 
 
 //                    enemy.pos.x -= ENEMY_SPEED * rate;
@@ -449,38 +494,38 @@ fn main() {
                 }
             }
 
-	        // 敵弾 vs 自機
-	        for e in &mut enemy_bullets {
-        		if !e.active {
-		        	continue;
-        		}
+            // 敵弾 vs 自機
+            for e in &mut enemy_bullets {
+                if !e.active {
+                    continue;
+                }
                 if check_collision(player.pos, player.poswh, player.poslt, e.pos, e.poswh, e.poslt) {
-        			if shield_active {
-		        		shield_active = false;                                    // シールド消費
+                    if shield_active {
+                        shield_active = false;                                    // シールド消費
                         create_particles(&mut particles, &rl, player.pos.x, player.pos.y, 8);
-        			} else {
+                    } else {
                         lives -= 1;
                         if lives <= 0 {
                             game_over = 1;
                             bgm.stop_stream();
                         }
-        			}
-		        	e.active = false;
-        			break
-        		}
+                    }
+                    e.active = false;
+                    break
+                }
             }
 
-        	// 敵弾移動&画面範囲外判定
-	        for e in &mut enemy_bullets {
-	        	if e.active {
-			        e.pos.x += e.v.x * rate;
-			        e.pos.y += e.v.y * rate;
+            // 敵弾移動&画面範囲外判定
+            for e in &mut enemy_bullets {
+                if e.active {
+                    e.pos.x += e.v.x * rate;
+                    e.pos.y += e.v.y * rate;
 
-        			if (e.pos.x < -32.0) || (e.pos.x > SCREEN_WIDTH as f32/X_SCALE as f32) || (e.pos.y < 32.0) || (e.pos.y > SCREEN_HEIGHT as f32/Y_SCALE as f32) {
-		        		e.active = false;
-        			}
-		        }
-        	}
+                    if (e.pos.x < -32.0) || (e.pos.x > SCREEN_WIDTH as f32/X_SCALE as f32) || (e.pos.y < 32.0) || (e.pos.y > SCREEN_HEIGHT as f32/Y_SCALE as f32) {
+                        e.active = false;
+                    }
+                }
+            }
 
             enemy_bullets.retain(|it| it.active);
 
@@ -494,6 +539,50 @@ fn main() {
                         enemy.lives -= 1;
                         create_particles(&mut particles, &rl, enemy.pos.x, enemy.pos.y, 8);
                         if enemy.lives <= 0 {
+                            // アイテム生成
+                            if option_cooldown == 0 {
+                                items.push( Item{
+                                    pos: Vector2 { x: (enemy.pos.x), y: (enemy.pos.y) },
+//                                    poswh: Vector2 { x: (28.0), y: (28.0) },
+//                                    poslt: Vector2 { x: (0.0), y: (0.0) },
+                                    timer: 300.0,
+                                    types: 1,
+                                    active: true,
+                                });
+                                option_cooldown = 10;
+                            }else{
+                                option_cooldown-=1;
+                            }
+                            if rl.get_random_value::<i32>(0..=100)  < 12 && !shield_active {
+                                items.push( Item{
+                                    pos: Vector2 { x: (enemy.pos.x), y: (enemy.pos.y) },
+//                                    poswh: Vector2 { x: (28.0), y: (28.0) },
+//                                    poslt: Vector2 { x: (0.0), y: (0.0) },
+                                    timer: 280.0,
+                                    types: 2,
+                                    active: true,
+                                });                                
+                            }
+                            if rl.get_random_value::<i32>(0..=100)  < 10 {
+                                items.push( Item{
+                                    pos: Vector2 { x: (enemy.pos.x), y: (enemy.pos.y) },
+//                                    poswh: Vector2 { x: (28.0), y: (28.0) },
+//                                    poslt: Vector2 { x: (0.0), y: (0.0) },
+                                    timer: 270.0,
+                                    types: 3,
+                                    active: true,
+                                });                                
+                            }
+                            if rl.get_random_value::<i32>(0..=100)  < 40 {
+                                chain_items.push( ChainItem{
+                                    pos: Vector2 { x: (enemy.pos.x), y: (enemy.pos.y) },
+//                                    poswh: Vector2 { x: (28.0), y: (28.0) },
+//                                    poslt: Vector2 { x: (0.0), y: (0.0) },
+                                    timer: 240.0,
+                                    active: true,
+                                });                                
+                            }
+
                             enemy.active = false;
                             score += 100;
                             explosion_sound.play();
@@ -507,8 +596,8 @@ fn main() {
             for enemy in &mut enemies {
                 if enemy.active && check_collision(player.pos, player.poswh, player.poslt, enemy.pos, enemy.poswh, enemy.poslt) {
                     enemy.active = false;
-        			if shield_active {
-		        		shield_active = false;                                    // シールド消費
+                    if shield_active {
+                        shield_active = false;                                    // シールド消費
                         create_particles(&mut particles, &rl, player.pos.x, player.pos.y, 8);
                     } else {
                         lives -= 1;
@@ -523,6 +612,52 @@ fn main() {
             bullets.retain(|b| b.active);
             enemies.retain(|e| e.active);
 
+            // アイテム更新
+            for it in &mut items {
+                match it.types {
+                    1 => {
+                        it.pos.x -= 2.0 * rate;
+                    },
+                    2 => {
+                        it.pos.x -= 4.0 * rate;
+                    },
+                    3 => {
+                        it.pos.x -= 4.0 * rate;
+                    },
+                    _ => {
+                    },
+                }
+                it.timer -= delta;       
+                // 自機との当たり判定
+                if (it.pos.x - player.pos.x.abs() < 44.0-16.0) && ((it.pos.y - player.pos.y).abs() < 44.0-16.0) {
+                    match it.types {
+                        1 => {
+                            if options.len() < 2 {
+                                let mut offset = -25;
+                                if options.len() < 1  {
+                                    offset = 25;
+                                }
+                                options.push( Option{
+                                    pos: Vector2 {x:0.0, y:0.0},
+                                    offset_y: offset as f32 * 2.0 as f32,
+                                });
+                            }
+                        },
+                        2 => {
+                            shield_active = true;
+                        },
+                        3 => {
+                            bomb_stock = (bomb_stock + 1).min(3);
+                        },
+                        _ => {
+                        },
+                    }        
+                    laser_sound.play();
+                    it.active = false;
+                }
+            }
+            items.retain(|it| it.active);
+
             // ボムタイマー
             if bomb_active {
                 bomb_timer -= delta;
@@ -530,6 +665,34 @@ fn main() {
                     bomb_active = false;
                 }
             }
+
+        	// チェインアイテム更新
+            for it in &mut chain_items {
+                it.pos.x -= 4.0 * rate;
+                it.timer -= delta;
+                if (it.pos.x - player.pos.x.abs() < 44.0-16.0) && ((it.pos.y - player.pos.y).abs() < 44.0-16.0) {
+                    chain_count += 1;
+                    chain_timer = 240.0;
+                    score += chain_count * 100;
+                    it.active = false;
+                    laser_sound.play();
+                    continue;
+                }
+                if (it.timer <= 0.0) || (it.pos.x < -20.0) {
+                    chain_count = 0;
+                    it.active = false;    
+                }
+            }
+            chain_items.retain(|it| it.active);
+
+            // チェインタイマー減少
+            if chain_timer > 0.0{
+                chain_timer -= delta;
+                if chain_timer <= 0.0 {
+                    chain_count = 0; 
+                }
+            }
+
 
             for particle in &mut particles {
                 particle.pos.x += particle.vpos.x * rate;
@@ -547,21 +710,32 @@ fn main() {
             }
         } else {
             // ゲームオーバー
-            if rl.is_key_pressed(KeyboardKey::KEY_R) || rl.is_key_pressed(KeyboardKey::KEY_Z) || rl.is_key_pressed(KeyboardKey::KEY_SPACE) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
-                lives = 1;
-                easy_mode = false;
-                game_over = 2;
-            } else if rl.is_key_pressed(KeyboardKey::KEY_X) || rl.is_key_pressed(KeyboardKey::KEY_B)  || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)){
-                lives = 3;
-                easy_mode = true;
-                game_over = 2;
+            if game_over == 1 {
+                if !(rl.is_key_down(KeyboardKey::KEY_R) || rl.is_key_down(KeyboardKey::KEY_Z) || rl.is_key_down(KeyboardKey::KEY_SPACE) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) ||
+                    rl.is_key_down(KeyboardKey::KEY_X) || rl.is_key_down(KeyboardKey::KEY_B)  || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_down(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))){
+                    game_over = 2;
+                }
             }
             if game_over == 2 {
+                if rl.is_key_pressed(KeyboardKey::KEY_R) || rl.is_key_pressed(KeyboardKey::KEY_Z) || rl.is_key_pressed(KeyboardKey::KEY_SPACE) || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_pressed(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
+                    lives = 1;
+                    easy_mode = false;
+                    game_over = 3;
+                } else if rl.is_key_pressed(KeyboardKey::KEY_X) || rl.is_key_pressed(KeyboardKey::KEY_B)  || (rl.is_gamepad_available(gamepad) && rl.is_gamepad_button_pressed(gamepad, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)){
+                    lives = 3;
+                    easy_mode = true;
+                    game_over = 3;
+                }
+            }
+            if game_over == 3 {
                 player.pos.x = 60.0;
                 player.pos.y = 160.0;
                 bullets.clear();
                 enemies.clear();
                 enemy_bullets.clear();
+                options.clear();
+                items.clear();
+                chain_items.clear();
                 particles.clear();
                 score = 0;
                 bomb_stock = 0;
@@ -570,6 +744,8 @@ fn main() {
                 bgm.play_stream();
                 game_over = 0;
                 shield_active = false;
+                option_cooldown = 10;
+                chain_timer = 0.0;
             }
         }
 
@@ -592,6 +768,32 @@ fn main() {
             d.draw_circle(particle.pos.x as i32 * X_SCALE, particle.pos.y as i32 * Y_SCALE, 1.5 * 2.0, Color::YELLOW);
         }
 
+        for chainitem in &chain_items {
+            put_sprite(&chr_tex, &mut d, chainitem.pos.x, chainitem.pos.y, 3);
+        }
+
+        for i in &items {
+            let mut pat_no = 0;
+            match i.types {
+                1 => {
+                    pat_no = 8;
+                },
+                2 => {
+                    pat_no = 7;
+                },
+                3 => {
+                    pat_no = 9;
+                },
+                _=> {
+                },
+            }
+            put_sprite(&chr_tex, &mut d, i.pos.x, i.pos.y, pat_no);
+        }
+
+        for option in &options {
+            put_sprite(&chr_tex, &mut d, option.pos.x, option.pos.y, 10);
+        }
+
         for enemy_bullets in &enemy_bullets {
             if enemy_bullets.active {
                 put_sprite(&chr_tex, &mut d, enemy_bullets.pos.x, enemy_bullets.pos.y, 0);
@@ -610,8 +812,13 @@ fn main() {
             }
         }
 
+        if shield_active {
+            put_sprite(&chr_tex, &mut d, player.pos.x, player.pos.y, 6);
+        }
+
         put_sprite(&chr_tex, &mut d, player.pos.x, player.pos.y, 1);
 
+        // UI
         if score >= high_score {
             put_strings_num(&font_tex, &mut d, 0, 0, "HIGH  ", score, 7);
         } else {
