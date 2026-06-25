@@ -666,13 +666,13 @@ fn main() {
                 }
             }
 
-        	// チェインアイテム更新
+            // チェインアイテム更新
             for it in &mut chain_items {
                 it.pos.x -= 4.0 * rate;
                 it.timer -= delta;
                 if (it.pos.x - player.pos.x.abs() < 44.0-16.0) && ((it.pos.y - player.pos.y).abs() < 44.0-16.0) {
                     chain_count += 1;
-                    chain_timer = 240.0;
+                    chain_timer = 240.0 / COUNT1S;
                     score += chain_count * 100;
                     it.active = false;
                     laser_sound.play();
@@ -833,6 +833,8 @@ fn main() {
         if chain_count > 0 {
             put_strings_num(&font_tex, &mut d, 16 * FONT_SIZE, 1 * FONT_SIZE, "CHAIN ", chain_count, 3);
         }
+
+//        put_strings_num(&font_tex, &mut d, 0, 10 * FONT_SIZE, "CHAINTIMER ", chain_timer as i32, 3);
 
         if game_over != 0 {
             put_strings(&font_tex, &mut d, 11 * FONT_SIZE, 12 * FONT_SIZE, "GAME OVER");
