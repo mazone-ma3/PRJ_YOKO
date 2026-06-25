@@ -1319,6 +1319,7 @@ class Game
 		Textures::UnloadTexture($this->chrTex);
 
 		Audio::UnloadSound($this->se);
+		Audio::UnloadSound($this->laser);
 		Audio::UnloadMusicStream($this->bgm);
 		Audio::CloseAudioDevice();
 		Core::closeWindow();
