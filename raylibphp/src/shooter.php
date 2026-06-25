@@ -1032,7 +1032,7 @@ class Game
 
 					if ($this->shield_active) {
 						$this->shield_active = false;									// シールド消費
-						CreateParticles($this->player->x+16, $this->player->y+16, 18, 1); // 大きな爆発
+						$this->createParticles($this->player->x+16, $this->player->y+16, 18, 1); // 大きな爆発
 					}else{
 						$this->player->lives--;
 						if ($this->player->lives <= 0) {
