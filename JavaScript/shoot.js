@@ -56,6 +56,7 @@
 
 	const FONT_SIZE = 16;
 	const COUNT1S = 60;
+	const MAXOPTIONS = 2;
 
 	const canvas = document.getElementById('game');
 	const ctx = canvas.getContext('2d');
@@ -66,6 +67,7 @@
 	audio.loop = true;
 //	audio.mute = false;
 	const wav = new Audio('explosion.wav');
+	const laser = new Audio('laser.wav');
 
 	sourceImage = document.getElementById("yokosht");
 	fontImage = document.getElementById("fontyoko");
@@ -81,6 +83,7 @@
 	let bomb_active = true;
 	let gameTime = 0;
 	let chain_count = 0;
+	let chain_timer = 0;
 
 	let shield_active = false;
 
@@ -91,7 +94,8 @@
 	let etype = 0;
 	let ejp = 1;
 	let rand_num = 0;
-
+	let option_cooldown = 10;
+	let optionnum = 0;
 
 	// プレイヤー
 	const player = {
@@ -207,10 +211,11 @@
 	}
 
 	function drawChainItem(i) {
-		put_sprite(i.x, i.y, 2);
+		put_sprite(i.x, i.y, 3);
 	}
 
 	function drawItem(i) {
+		pat_no = 0;
 		switch(i.types){
 			case 1:
 				pat_no = 8;
@@ -230,7 +235,7 @@
 	}
 
 	function drawShield() {
-		put_sprite(e.x, e.y, 6);
+		put_sprite(player.x, player.y, 6);
 	}
 
 	function use_bomb() {
@@ -330,6 +335,15 @@
 		player.x = Math.max(0, Math.min(canvas.width - player.width - 8, player.x));
 		player.y = Math.max(0, Math.min(canvas.height - player.height - 6, player.y));
 
+
+		// オプション更新
+		for (let i = options.length - 1; i >= 0; i--) {
+			const opt = options[i];
+			// 滑らかに追従
+			opt.x += ((player.x + 16) - opt.x) / 4 * rate;
+			opt.y += ((player.y + opt.offset_y) - opt.y) / 4 * rate;
+		}
+
 		// 自動射撃（連射）
 		const now = Date.now();
 		if ((keys[' '] || keys['z'] || (key & 0x01)) && now - lastShot > 150) {
@@ -341,6 +355,18 @@
 				left: 0,
 				top: 0,
 			});
+			for (let i = options.length - 1; i >= 0; i--) {
+				const opt = options[i];
+				bullets.push({
+					x: opt.x + 8,
+					y: opt.y + 12,
+					width: 16,
+					height: 8,
+					left: 0,
+					top: 0,
+				});
+			}
+
 			lastShot = now;
 		}
 
@@ -506,6 +532,49 @@
 					createExplosion(e.x, e.y);
 					bullets.splice(i, 1);
 					if(e.life <= 0){
+
+						// オプションアイテム出現
+						if (option_cooldown <= 0) {
+							items.push({
+								x: e.x,
+								y: e.y,
+								timer: 300, // 約5秒で消える
+								types: 1,   // 1 = オプションアイテム
+							});
+							option_cooldown = 10;
+						} else {
+							option_cooldown--
+						}
+
+						// シールドアイテム出現（確率12%程度）
+						if (Math.random() * 100 < 12 && !shield_active) {
+							items.push({
+								x: e.x,
+								y: e.y,
+								timer: 280.0,
+								types: 2, // 2 = シールド
+							});
+						}
+
+						// ボムアイテム出現
+						if (Math.random() * 100 < 10) { // 約10%の確率
+							items.push({
+								x: e.x,
+								y: e.y,
+								timer: 270.0,
+								types: 3, // 3 = ボム
+							});
+						}
+
+						// === チェインアイテム出現 ===
+						if (Math.random() * 100 < 40) { // 40%くらいの確率で落とす
+							chain_items.push({
+								x: e.x,
+								y: e.y,
+								timer: 240.0,
+							});
+						}
+
 						score += 100;
 						scoreEl.textContent = score;
 						enemies.splice(j, 1);
@@ -525,7 +594,7 @@
 			if (checkCollision(player, it)) {
 				if (shield_active) {
 					shield_active = false; // シールド消費
-					createExplosion(player.x+16, player.Pos.y+16); // 大きな爆発
+					createExplosion(player.x+16, player.y+16); // 大きな爆発
 				} else {
 					life--;
 					lifeEl.textContent = life;
@@ -551,6 +620,63 @@
 			}
 		}
 
+		// アイテム更新
+		for (let i = items.length - 1; i >= 0; i--) {
+			const it = items[i];
+
+		switch(it.types) {
+		case 1:
+			it.x -= 2.0 * rate; // 左に流れる
+			break;
+
+		case 2:
+			it.x -= 4.0 * rate; // 左に流れる
+			break;
+
+		case 3:
+			it.x -= 4.0 * rate; // 左に流れる
+			break;
+		}
+		it.timer -= game.delta;
+
+
+		// 自機とアイテムの当たり判定
+		if (Math.abs(it.x-player.x) < 44-16 && Math.abs(it.y-player.y) < 44-16) {
+
+			if (it.types == 1 && optionnum < MAXOPTIONS) { // オプションアイテム
+				offset = 25;
+				if (optionnum == 0) {
+					offset = 25.0;
+				} else {
+					offset = -25.0;
+				}
+				options.push({
+					offset_y: offset * 2,
+					x: 0, //playerX + 20
+					y: 0, //playerY + 16 + offset
+				//                opt.angle = 0.0
+				});
+				optionnum++;
+			} else if (it.types == 2) { // シールド
+				shield_active = true;
+				//                shield_timer = SHIELD_DURATION
+			} else if (it.types == 3) { // 3 = ボムアイテム
+				bomb_stock = Math.min(3, bomb_stock+1);
+			}
+
+			laser.pause();
+			laser.currentTime = 0;
+			laser.play();
+
+			items.splice(i, 1);
+			continue;
+		}
+
+		// 画面外 or 時間切れ
+		if (it.x < -40 || it.timer <= 0) {
+			items.splice(i, 1);
+		}
+	}
 
 		// パーティクル更新
 		for (let i = particles.length - 1; i >= 0; i--) {
@@ -567,6 +693,44 @@
 			if (bomb_timer <= 0.0) {
 				bomb_active = false;
 			}
+		}
+
+		// チェインアイテム更新
+		for (let i = chain_items.length - 1; i >= 0; i--) {
+			const it = chain_items[i];
+			it.x -= 4.0 * rate; // 左に流れる
+			it.timer -= deltaTime;
+
+			// 自機取得判定
+			if (Math.abs(it.x-player.x) < 44-16 && Math.abs(it.y-player.y) < 44-16) {
+				chain_count++;
+				chain_timer = 240 / COUNT1S; // チェイン持続時間リセット
+				score += chain_count * 100;  // チェイン数に応じたボーナス
+
+				chain_items.splice(i, 1);
+				laser.pause();
+				laser.currentTime = 0;
+				laser.play();
+				continue;
+			}
+
+			// 時間切れ or 画面外
+			if (it.timer <= 0.0 || it.x < -20) {
+				chain_count = 0;
+				chain_items.splice(i, 1);
+			}
+		}
+
+		// チェインタイマー減少
+		if (chain_timer > 0.0) {
+			chain_timer -= deltaTime;
+			if (chain_timer <= 0.0) {
+				chain_count = 0;
+			}
+		}
+
+		if (gameOver != 0 && score > high_score) {
+			high_score = score;
 		}
 
 	}
@@ -639,7 +803,7 @@
 		bullets.forEach(drawBullet);
 		enemies.forEach(drawEnemy);
 		if(shield_active) {
-			drawShiend();
+			drawShield();
 		}
 		drawPlayer();
 
@@ -698,6 +862,9 @@
 		bomb_active = true;
 		gameTime = 0;
 		chain_count = 0;
+		chain_timer = 0;
+		option_cooldown = 10;
+		optionnum = 0;
 
 		lastTime = Date.now();
 
