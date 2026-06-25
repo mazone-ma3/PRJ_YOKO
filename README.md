@@ -32,13 +32,13 @@ raylibpy Pyxel版をraylib-python-cffiに移植。
 
 raylibgo gcc版をGo+raylib-goに移植。
 
-raylibrust raylib-rsへの移植、作りかけ/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
+raylibrust raylib-rsへの移植/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
 
-raylibphp php-raylib(composerで入れてください)への移植、作りかけ/exe化の予定なし
+raylibphp php-raylib(composerで入れてください)への移植/exe化の予定なし
 
-JavaScript 作りかけ
+JavaScript 試作
 
-作りかけ3種は各.png/.mp3/.wavを他フォルダからコピーしてください。
+各.png/.mp3/.wavが無い物は他フォルダからコピーしてください。
 
 ↓Pyxel版を実行
 
