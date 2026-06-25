@@ -29,6 +29,7 @@ const SCROLL_SPEED = -3;
 
 const FIRE_RATE = 8;		 // 値が小さいほど連射が速くなる
 const ENEMY_SPAWN_RATE = 25; // ★値を25にして敵を多く出やすくしました
+const MAXOPTIONS = 2;
 
 const FLAG_WINDOW_RESIZABLE  = 0x4;
 const FLAG_WINDOW_UNDECORATED = 0x08;
@@ -206,14 +207,14 @@ class EnemyBullet
 
 class Option
 {
+	public $offset_y;
 	public $x;
 	public $y;
-	public $offset_y;
 
-	public function __construct($x, $y, $offset_y) {
+	public function __construct($offset_y, $x, $y) {
+		$this->offset_y = $offset_y;
 		$this->x = $x;
 		$this->y = $y;
-		$this->offset_y = $offset_y;
 	}
 }
 
@@ -221,22 +222,23 @@ class Item
 {
 	public $x;
 	public $y;
-	public $width;
-	public $height;
-	public $top;
-	public $left;
-	public $types;
+//	public $width;
+//	public $height;
+//	public $top;
+//	public $left;
 	public $timer;
+	public $types;
 
-	public function __construct($x, $y, $width, $height, $left, $top, $types, $timer) {
+	public function __construct($x, $y,// $width, $height, $left, $top, 
+		$timer, $types) {
 		$this->x = $x;
 		$this->y = $y;
-		$this->width = $width;
-		$this->height = $height;
-		$this->left = $left;
-		$this->top = $top;
-		$this->types = $types;
+//		$this->width = $width;
+//		$this->height = $height;
+//		$this->left = $left;
+//		$this->top = $top;
 		$this->timer = $timer;
+		$this->types = $types;
 	}
 }
 
@@ -244,19 +246,20 @@ class ChainItem
 {
 	public $x;
 	public $y;
-	public $width;
-	public $height;
-	public $top;
-	public $left;
+//	public $width;
+//	public $height;
+//	public $top;
+//	public $left;
 	public $timer;
 
-	public function __construct($x, $y, $width, $height, $left, $top, $timer) {
+	public function __construct($x, $y, //$width, $height, $left, $top, 
+		$timer) {
 		$this->x = $x;
 		$this->y = $y;
-		$this->width = $width;
-		$this->height = $height;
-		$this->left = $left;
-		$this->top = $top;
+//		$this->width = $width;
+//		$this->height = $height;
+//		$this->left = $left;
+//		$this->top = $top;
 		$this->timer = $timer;
 	}
 }
@@ -284,6 +287,7 @@ class Particle
 class Game
 {
 	public $se;
+	public $laser;
 	public $bgm;
 	public $target;
 	public $chrTex;
@@ -318,7 +322,7 @@ class Game
 
 	public $gameTime;
 	public $chain_count;
-
+	public $chain_timer;
 
 	public $scrollOffset;
 	public $stars;
@@ -329,6 +333,9 @@ class Game
 
 	public $isFullscreen;
 
+	public $option_cooldown;
+	public $option_num;
+	public $pat_no;
 
 	public function __construct() {
 
@@ -348,6 +355,7 @@ class Game
 
 
 		$this->se = Audio::LoadSound(__DIR__ . "/explosion.wav");
+		$this->laser = Audio::LoadSound(__DIR__ . "/laser.wav");
 		$this->bgm = Audio::LoadMusicStream(__DIR__ . "/bgm.mp3");
 
 		$this->bgColor = Utils::color(5, 5, 25, 255);
@@ -429,10 +437,14 @@ class Game
 
 		$this->gameTime = 0;
 		$this->chain_count = 0;
+		$this->chain_timer = 0;
 
 		$this->shootTimer = 0;
 		$this->spawnTimer = 0; // ★ staticをやめて、ここで通常の変数として管理します
-		$this->gameOver = true; // 起動時はゲームオーバー（タイトル画面代わり）
+		$this->gameOver = 1; // 起動時はゲームオーバー（タイトル画面代わり）
+
+		$this->option_cooldown = 10;
+		$this->optionnum = 0;
 	}
 
 	public function main() {
@@ -727,6 +739,14 @@ class Game
 			$this->player->x = max(0, min($this->player->x, SCREEN_WIDTH / X_SCALE - 40));
 			$this->player->y = max(0, min($this->player->y, SCREEN_HEIGHT / Y_SCALE  - 32));
 
+			// オプション更新
+			foreach ($this->options as $i => $opt) {
+				$opt->x += (($this->player->x + 16) - $opt->x) / 4 * $rate;
+				$opt->y += (($this->player->y + $opt->offset_y) - $opt->y) / 4 * $rate;
+//				var_dump($opt->x);
+//				var_dump($opt->y);
+			}
+
 			// --- 射撃（連射） ---
 			$this->shootTimer += $rate;
 			if ((Core::isKeyDown(KEY_SPACE) || Core::isKeyDown(KEY_Z) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_DOWN->value))) && $this->shootTimer > FIRE_RATE) {
@@ -737,7 +757,7 @@ class Game
 					'width' => BULLET_SIZE * 2,
 					'height' => BULLET_SIZE
 				];*/
-			   $this->bullets[] = new Bullet(
+				$this->bullets[] = new Bullet(
 					$this->player->x + 32, 
 					$this->player->y + 12, 
 					BULLET_WIDTH,
@@ -750,7 +770,17 @@ class Game
 					'height' => BULLET_SIZE
 				];*/
 
-			   $this->shootTimer = 0;
+				foreach ($this->options as $i => $o) {
+					$this->bullets[] = new Bullet(
+						$o->x + 8, 
+						$o->y + 12, 
+						BULLET_WIDTH,
+						BULLET_HEIGHT,
+						0, 0
+					);
+				}
+
+				$this->shootTimer = 0;
 			}
 
 			if ((Core::isKeyPressed(KEY_X) || Core::isKeyPressed(KEY_B) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT->value))) && $this->bomb_stock > 0 && !$this->bomb_active) {
@@ -827,8 +857,7 @@ class Game
 					$e->y = ($e->count2 + sin($e->count * 0.12) * 55 * 2);
 					break;
 				}
-//			  $e->x -= $e->speed * $rate;
-
+//				$e->x -= $e->speed * $rate;
 
 				// 敵弾発射処理
 				$e->shootTimer += $delta;
@@ -839,7 +868,7 @@ class Game
 
 				if ($e->shootTimer >= $e->nextShootTime) {
 
-//			  var_dump("生成");
+//				var_dump("生成");
 
 					$dx = $this->player->x - $e->x;
 					$dy = $this->player->y - $e->y;
@@ -865,10 +894,7 @@ class Game
 					$dy = max(-4*2.0, $dy);
 					$dy = min($dy, 4*2.0);
 
-//				  for j := range game.enemybullets {
-//					  if game.enemybullets[j].Active == false {
 
-//				  game.enemybullets[j] = EnemyBullet{
 					$this->enemybullets[] = new EnemyBullet(
 						$e->x+16,
 						$e->y+16,
@@ -876,10 +902,6 @@ class Game
 						$dy, // * bulletSpeed	 // vy
 						8, 8, 0, 0
 					);
-//				  var_dump($e->x+16);
-//				  break
-//			  }
-//		  }
 
 					// 次回の発射間隔を設定
 					$e->nextShootTime = $shoot_interval;
@@ -911,6 +933,48 @@ class Game
 						$hitBullets[] = $bi;
 						$this->createParticles($e->x+16, $e->y+16, 8, 0); // 通常爆発
 						if($e->lives <= 0) {
+							// オプションアイテム出現
+							if ($this->option_cooldown <= 0) {
+								$this->items[] = new Item(
+									$e->x,
+									$e->y,
+									300, // 約5秒で消える
+									1   // 1 = オプションアイテム
+								);
+								$this->option_cooldown = 10;
+							} else {
+								$this->option_cooldown--;
+							}
+
+							// シールドアイテム出現
+							if(rand(0,100) < 12 && !$this->shield_active) {
+								$this->items[] = new Item(
+									$e->x,
+									$e->y,
+									280,
+									2
+								);
+							}
+
+							// ボムアイテム出現
+							if(rand(0,100) < 10) {
+								$this->items[] = new Item(
+									$e->x,
+									$e->y,
+									270,
+									3
+								);
+							}
+
+							// チェインアイテム出現
+							if(rand(0,100) < 40) {
+								$this->chain_items[] = new ChainItem(
+									$e->x,
+									$e->y,
+									240
+								);
+							}
+
 							$hitEnemies[] = $ei;
 							$this->score += 100;	
 							Audio::PlaySound($this->se);
@@ -931,12 +995,12 @@ class Game
 				if ($this->checkCollision($this->player, $it)) {
 
 					if ($this->shield_active) {
-						$this->shield_active = false;									// シールド消費
-						CreateParticles($this->player->x+16, $this->player->y+16, 18, 1); // 大きな爆発
+						$this->shield_active = false;													// シールド消費
+						$this->createParticles($this->player->x+16, $this->player->y+16, 18, 1); // 大きな爆発
 					} else {
 						$this->player->lives--;
 						if ($this->player->lives <= 0) {
-							$this->gameOver = true;
+							$this->gameOver = 1;
 							Audio::StopMusicStream($this->bgm);
 						}
 					}
@@ -952,8 +1016,8 @@ class Game
 				$it->y += $it->vy * $rate;
 
 				if (($it->x < -32) || ($it->x > SCREEN_WIDTH/X_SCALE+10) || ($it->y < 32) || ($it->y > SCREEN_HEIGHT/Y_SCALE)) {
-//				  var_dump("削除");
-//				  var_dump($it->x);
+//				var_dump("削除");
+//				var_dump($it->x);
 					unset($this->enemybullets[$i]);
 				}
 			}
@@ -972,7 +1036,7 @@ class Game
 					}else{
 						$this->player->lives--;
 						if ($this->player->lives <= 0) {
-							$this->gameOver = true;
+							$this->gameOver = 1;
 							Audio::StopMusicStream($this->bgm);
 						}
 					}
@@ -980,6 +1044,61 @@ class Game
 				}
 			}
 			$this->enemies = array_values($this->enemies);
+
+
+			// アイテム更新
+			foreach ($this->items as $i => $it) {
+				switch($it->types) {
+				case 1:
+					$it->x -= 2.0 * $rate; // 左に流れる
+					break;
+
+				case 2:
+					$it->x -= 4.0 * $rate; // 左に流れる
+					break;
+
+				case 3:
+					$it->x -= 4.0 * $rate; // 左に流れる
+					break;
+				}
+				$it->timer -= $delta;
+
+				// 自機との当たり判定
+				if (abs($it->x - $this->player->x) < 44-16 && abs($it->y - $this->player->y) < 44-16) {
+
+					if ($it->types == 1 && $this->optionnum < MAXOPTIONS) { // オプションアイテム
+						if ($this->optionnum == 0) {
+							$this->offset = 25.0;
+						} else {
+							$this->offset = -25.0;
+						}
+						$this->options[] = new Option(
+							$this->offset * 2,
+							0, //playerX + 20
+							0 //playerY + 16 + offset
+							//                opt.angle = 0.0
+						);
+						$this->optionnum++;
+//						var_dump("オプション");
+					} else if ($it->types == 2) { // シールド
+						$this->shield_active = true;
+						//                shield_timer = SHIELD_DURATION
+					} else if ($it->types == 3) { // 3 = ボムアイテム
+						$this->bomb_stock = min(3, $this->bomb_stock+1);
+					}
+
+					unset($this->items[$i]);
+					Audio::PlaySound($this->laser);
+
+					continue;
+				}
+
+				// 画面外 or 時間切れ
+				if ($it->x < -40 || $it->timer <= 0) {
+					unset($this->itmes[$i]);
+				}
+			}
+			$this->items = array_values($this->items);
 
 			// パーティクル更新
 			foreach ($this->particles as $i => $p) {
@@ -1004,24 +1123,64 @@ class Game
 				}
 			}
 
+
+			// チェインアイテム更新
+			foreach ($this->chain_items as $i => $it) {
+				$it->x -= 4.0 * $rate; // 左に流れる
+				$it->timer -= $delta;
+
+				// 自機取得判定
+				if (abs($it->x - $this->player->x) < 44-16 && abs($it->y - $this->player->y) < 44-16) {
+					$this->chain_count++;
+					$this->chain_timer = 240 / COUNT1S; // チェイン持続時間リセット
+					$this->score += $this->chain_count * 100;  // チェイン数に応じたボーナス
+					unset($this->chain_items[$i]);
+					Audio::PlaySound($this->laser);
+					continue;
+				}
+
+				// 時間切れ or 画面外
+				if ($it->timer <= 0.0 || $it->x < -20) {
+					$this->chain_count = 0;
+					unset($this->chain_items[$i]);
+				}
+			}
+			$this->chain_items = array_values($this->chain_items);
+
+			// チェインタイマー減少
+			if ($this->chain_timer > 0.0) {
+				$this->chain_timer -= $delta;
+				if ($this->chain_timer <= 0.0) {
+					$this->chain_count = 0;
+				}
+			}
+
+
 			if ($this->gameOver != 0 && $this->score > $this->high_score) {
 				$this->high_score = $this->score;
 			}
 
 		} else {
-			// --- ゲームオーバー状態（Rキーでリセット） ---
-			if (Core::isKeyPressed(KEY_R) || Core::isKeyPressed(KEY_Z) || Core::isKeyPressed(KEY_SPACE) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_DOWN->value))) {
-				$this->reset();
-				$this->player->lives = 1;
-				$this->easy_mode = false;
-				$this->gameOver = false;
-				Audio::PlayMusicStream($this->bgm);
-			} else if (Core::isKeyPressed(KEY_X) || Core::isKeyPressed(KEY_B) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT->value))) {
-				$this->reset();
-				$this->player->lives = 3;
-				$this->easy_mode = true;
-				$this->gameOver = false;
-				Audio::PlayMusicStream($this->bgm);
+			if($this->gameOver == 1){
+				if (!(Core::isKeyDown(KEY_R) || Core::isKeyDown(KEY_Z) || Core::isKeyDown(KEY_SPACE) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_DOWN->value)) || Core::isKeyDown(KEY_X) || Core::isKeyDown(KEY_B) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonDown($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT->value)))) {
+					$this->gameOver = 2;
+				}
+			}
+			if($this->gameOver == 2){
+				// --- ゲームオーバー状態（Rキーでリセット） ---
+				if (Core::isKeyPressed(KEY_R) || Core::isKeyPressed(KEY_Z) || Core::isKeyPressed(KEY_SPACE) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_DOWN->value))) {
+					$this->reset();
+					$this->player->lives = 1;
+					$this->easy_mode = false;
+					$this->gameOver = 0;
+					Audio::PlayMusicStream($this->bgm);
+				} else if (Core::isKeyPressed(KEY_X) || Core::isKeyPressed(KEY_B) || (Core::isGamepadAvailable($gamepad) && Core::isGamepadButtonPressed($gamepad, GamePad::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT->value))) {
+					$this->reset();
+					$this->player->lives = 3;
+					$this->easy_mode = true;
+					$this->gameOver = 0;
+					Audio::PlayMusicStream($this->bgm);
+				}
 			}
 		}
 	}
@@ -1058,23 +1217,23 @@ class Game
 
 		// チェインアイテム描画
 		foreach ($this->chain_items as $i) {
-			$this->put_sprite($i->x, $i->y, 10);
+			$this->put_sprite($i->x, $i->y, 3);
 		}
 
 		// アイテム描画
 		foreach ($this->items as $i) {
 			switch($i->types) {
 				case 1:
-					$pat_no = 8;
+					$this->pat_no = 8;
 					break;
 				case 2:
-					$pat_no = 7;
+					$this->pat_no = 7;
 					break;
 				case 3:
-					$pat_no = 9;
+					$this->pat_no = 9;
 					break;
 			}
-			$this->put_sprite($i->x, $i->y, $pat_no);
+			$this->put_sprite($i->x, $i->y, $this->pat_no);
 		}
 
 		// オプション描画
