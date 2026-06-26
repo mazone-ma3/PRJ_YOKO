@@ -166,17 +166,16 @@ class Enemy
 		$this->type = $etype;
 		$this->lives = $lives;
 
-		$this->$count = $count;
-		$this->$count2 = $count2;
-		$this->$shootTimer = $shootTimer;
-		$this->$nextShootTime = $nextShootTime;
-		$this->$speed = $speed;
+		$this->count = $count;
+		$this->count2 = $count2;
+		$this->shootTimer = $shootTimer;
+		$this->nextShootTime = $nextShootTime;
+		$this->speed = $speed;
 
 		$this->width = $width;
 		$this->height = $height;
 		$this->left = $left;
 		$this->top = $top;
-		$this->speed = $speed;
 	}
 }
 
@@ -334,8 +333,11 @@ class Game
 	public $isFullscreen;
 
 	public $option_cooldown;
-	public $option_num;
 	public $pat_no;
+
+	public $shield_active = false;
+	public $offset = 0;
+	public $optionnum = 0; 
 
 	public function __construct() {
 
@@ -635,7 +637,7 @@ class Game
 				0,
 				rand(0, 30*2+SCREEN_HEIGHT/Y_SCALE-40*2) - 30*2,
 				0,
-				(int)(5.0 / COUNT1S),
+				(5.0 / COUNT1S),
 				ENEMY_SPEED + rand(-1, 3),
 				ENEMY_WIDTH,
 				ENEMY_HEIGHT,
@@ -693,13 +695,13 @@ class Game
 		$this->enemybullets = [];
 
 	// 大量の破片を発生
-		$this->CreateParticles($this->player->x + 16, $this->player->y + 16, 45, 1); // 大爆発
+		$this->createParticles($this->player->x + 16, $this->player->y + 16, 45); // 大爆発
 
 	// 画面全体に破片を散らす
 		for($i = 0; $i < 60; $i++) {
 			$rx = rand(0, SCREEN_WIDTH / X_SCALE);
 			$ry = rand(0, SCREEN_HEIGHT / Y_SCALE);
-			$this->CreateParticles($rx, $ry, 6, 1);
+			$this->createParticles($rx, $ry, 6);
 		}
 
 		$this->score += 200;
@@ -1095,7 +1097,7 @@ class Game
 
 				// 画面外 or 時間切れ
 				if ($it->x < -40 || $it->timer <= 0) {
-					unset($this->itmes[$i]);
+					unset($this->items[$i]);
 				}
 			}
 			$this->items = array_values($this->items);
@@ -1113,7 +1115,7 @@ class Game
 					$p->lives -= $rate;
 				}
 			}
-			$this->particlees = array_values($this->particles);
+			$this->particles = array_values($this->particles);
 
 			// ボム更新
 			if ($this->bomb_active) {
