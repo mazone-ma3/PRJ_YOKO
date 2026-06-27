@@ -332,8 +332,8 @@
 
 
 		// 画面端制限
-		player.x = Math.max(0, Math.min(canvas.width - player.width - 8, player.x));
-		player.y = Math.max(0, Math.min(canvas.height - player.height - 6, player.y));
+		player.x = Math.max(0, Math.min(canvas.width - 40, player.x));
+		player.y = Math.max(0, Math.min(canvas.height - 32, player.y));
 
 
 		// オプション更新
