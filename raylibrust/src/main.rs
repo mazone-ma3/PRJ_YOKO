@@ -430,9 +430,9 @@ fn main() {
                     // 敵弾発射処理
                     e.shoot_timer += delta;
 
-                    let difficulty = (game_time/180.0).min(1.0); // * COUNT1S)))
-                    let enemy_bullet_speed = 4.0 + difficulty*2.0;
-                    let shoot_interval = ((82.0 - difficulty*36.0) - 5.0) as f32 / COUNT1S;
+                    let difficulty = ((game_time/180.0).min(1.0) as i32) as f32; // * COUNT1S)))
+                    let enemy_bullet_speed = 4.0 + difficulty * 2.0;
+                    let shoot_interval = ((82.0 - difficulty * 36.0) - 5.0) / COUNT1S;
 
                     if e.shoot_timer >= e.next_shoot_time {
 

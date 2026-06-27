@@ -540,7 +540,7 @@ func (game *Game) Update() {
 		// 敵弾発射処理
 		e.shootTimer += game.delta
 
-		difficulty := min(1, game.gameTime/180) // * COUNT1S)))
+		difficulty := float32(int(min(1, game.gameTime/180))) // * COUNT1S)))
 		enemy_bullet_speed := (4 + difficulty*2)
 		shoot_interval := ((82 - difficulty*36) - 5) / COUNT1S
 

@@ -251,18 +251,14 @@ namespace RaylibSideScrollerShooter
                 }
             }
 
-	            if (gameOver == 1)
-	            {
-//	                if (Raylib.IsKeyPressed(KeyboardKey.R))
-//	                {
-//	                    ResetGame();
-//	                }
-//	            }
-//	                if(!Raylib.IsKeyDown(KeyboardKey.Space) && !Raylib.IsKeyDown(KeyboardKey.Z) && !Raylib.IsKeyDown(KeyboardKey.R) && !Raylib.IsKeyDown(KeyboardKey.X) && !Raylib.IsKeyDown(KeyboardKey.B))
-	                {
-	                    gameOver = 2;
-	                }
-	            }
+            if (gameOver == 1)
+            {
+                if (!(Raylib.IsKeyDown(KeyboardKey.Space) || Raylib.IsKeyDown(KeyboardKey.Z) || Raylib.IsKeyDown(KeyboardKey.R) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.RightFaceDown))
+                    || Raylib.IsKeyDown(KeyboardKey.X) || Raylib.IsKeyDown(KeyboardKey.B) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonDown(gamepad, GamepadButton.RightFaceRight))))
+                {
+                    gameOver = 2;
+                }
+            }
 
             if (gameOver != 0)
                 return;
@@ -291,8 +287,8 @@ namespace RaylibSideScrollerShooter
                 player.X += playerSpeed * delta; // * 0.7f;
 
             // 画面内制限
-            player.Y = Math.Clamp(player.Y, 0, GameConfig.ScreenHeight / GameConfig.X_SCALE - player.Height * 2);
-            player.X = Math.Clamp(player.X, 0, GameConfig.ScreenWidth / GameConfig.Y_SCALE - player.Width * 2); // 左側に留める
+            player.X = Math.Clamp(player.X, 0, GameConfig.ScreenWidth / GameConfig.X_SCALE - 40); // 左側に留める
+            player.Y = Math.Clamp(player.Y, 0, GameConfig.ScreenHeight / GameConfig.Y_SCALE - 32);
 
 
             // オプション更新
@@ -1098,7 +1094,7 @@ namespace RaylibSideScrollerShooter
 
                 int gamepad = 0;
 
-	            if (game.gameOver == 2){
+                if (game.gameOver == 2){
 					bool shouldReset = false;
 			        bool useEasyMode = false;
 	                if (Raylib.IsKeyPressed(KeyboardKey.Space) || Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.R) || (Raylib.IsGamepadAvailable(gamepad) && Raylib.IsGamepadButtonPressed(gamepad, GamepadButton.RightFaceDown)))

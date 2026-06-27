@@ -454,9 +454,10 @@
 			// 敵弾発射処理
 			e.shootTimer += deltaTime;
 
-			let difficulty = Math.min(1, gameTime/180); // * COUNT1S)))
+			let difficulty = Math.min(1, Math.floor(gameTime/180)); // * COUNT1S)))
 			let enemy_bullet_speed = (4 + difficulty*2);
 			let shoot_interval = ((82 - difficulty*36) - 5) / COUNT1S;
+//			console.log(`難易度 ${difficulty}`);
 
 			if (e.shootTimer >= e.nextShootTime) {
 
@@ -505,7 +506,7 @@
 			if (checkCollision(player, e)) {
 				if (shield_active) {
 					shield_active = false; // シールド消費
-					createExplosion(player.x+16, player.Pos.y+16); // 大きな爆発
+					createExplosion(player.x+16, player.y+16); // 大きな爆発
 				}else{
 					life--;
 					lifeEl.textContent = life;
@@ -879,6 +880,10 @@
 		gameRunning = 1;
 		audio.pause();			// ① 止める
 		audio.currentTime = 0;	// ② 頭出し（0秒に戻す）
+		laser.pause();
+		laser.currentTime = 0;
+		wav.pause();
+		wav.currentTime = 0;
 
 //		alert(`ゲームオーバー！\n最終スコア:	 ${score}`);
 //		document.getElementById('start-screen').style.display = 'block';

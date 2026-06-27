@@ -864,7 +864,7 @@ class Game
 				// 敵弾発射処理
 				$e->shootTimer += $delta;
 
-				$difficulty = min(1, ($this->gameTime/180)); // * COUNT1S)))
+				$difficulty = (int)min(1, ($this->gameTime/180)); // * COUNT1S)))
 				$enemy_bullet_speed = (4 + $difficulty*2);
 				$shoot_interval = (((82 - $difficulty*36) - 5) / COUNT1S);
 
