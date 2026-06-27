@@ -304,8 +304,8 @@ fn main() {
                 player.pos.x += PLAYER_SPEED * rate;
             }
 
-            player.pos.y = player.pos.y.clamp(0.0, (SCREEN_HEIGHT / X_SCALE - 32) as f32);
-            player.pos.x = player.pos.x.clamp(0.0, (SCREEN_WIDTH / Y_SCALE - 40) as f32);
+            player.pos.x = player.pos.x.clamp(0.0, (SCREEN_WIDTH / X_SCALE - 40) as f32);
+            player.pos.y = player.pos.y.clamp(0.0, (SCREEN_HEIGHT / Y_SCALE - 32) as f32);
 
             // オプション更新
             for opt in &mut options {
