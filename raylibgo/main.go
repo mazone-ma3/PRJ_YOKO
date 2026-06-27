@@ -326,7 +326,9 @@ func (game *Game) Update() {
 	rate := COUNT1S * game.delta
 
 	if game.gameOver == 1 {
-		game.gameOver = 2
+		if !(rl.IsKeyDown(rl.KeySpace) || rl.IsKeyDown(rl.KeyZ) || rl.IsKeyDown(rl.KeyR) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonRightFaceDown)) || rl.IsKeyDown(rl.KeySpace) || rl.IsKeyDown(rl.KeyZ) || rl.IsKeyDown(rl.KeyR) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonRightFaceDown))) {
+			game.gameOver = 2
+		}
 	}
 	if game.gameOver == 2 {
 		if rl.IsKeyPressed(rl.KeySpace) || rl.IsKeyPressed(rl.KeyZ) || rl.IsKeyPressed(rl.KeyR) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonPressed(gamepad, rl.GamepadButtonRightFaceDown)) {
