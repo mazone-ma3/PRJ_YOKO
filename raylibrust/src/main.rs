@@ -363,7 +363,7 @@ fn main() {
                 enemies.push(Enemy {
                     pos: Vector2::new(
                         (SCREEN_WIDTH / X_SCALE) as f32,
-                        rl.get_random_value::<i32>(30..=(SCREEN_HEIGHT / Y_SCALE - 32)) as f32),
+                        rl.get_random_value::<i32>(32..=(SCREEN_HEIGHT / Y_SCALE - 64)) as f32),
                     poswh: Vector2::new(32.0, 32.0),
                     poslt: Vector2::new(0.0, 0.0),
                     lives: ehp,

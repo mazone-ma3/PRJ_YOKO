@@ -289,7 +289,7 @@ class App:
 				raylib.PlayMusicStream(self.bgm)
 			return
 
-		self.play_time += rate
+		self.play_time += self.delta #rate
 
 		# 1. ゲームパッドが接続されているかチェック
 		axisX = 0
@@ -316,7 +316,7 @@ class App:
 		self.player_y = max(0, min(self.player_y, screenheight / Y_SCALE - 16*2))
 
 		# 自機射撃
-		self.shoot_timer += 1
+		self.shoot_timer += rate
 		if (raylib.IsKeyDown(raylib.KEY_SPACE) or raylib.IsKeyDown(raylib.KEY_Z) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) and self.shoot_timer > 8:
 			self.bullets.append([self.player_x + 16*2, self.player_y + 6*2])
 			for opt in self.options:
@@ -334,17 +334,19 @@ class App:
 				self.bullets.remove(b)
 
 		# 敵出現
-		self.enemy_spawn_timer += 1
-		if self.enemy_spawn_timer > max(18, 50 - (self.score // 250)):
+		self.enemy_spawn_timer += self.delta
+		baseinterval = (50 - (self.score / 250))
+		spawninterval = max(18 / COUNT1S, baseinterval / COUNT1S)
+
+		if self.enemy_spawn_timer >= spawninterval:
 			rand = random.randint(0,100) #random()
 			if rand < 60: enemy_type = 0
 			elif rand < 85: enemy_type = 1
 			else: enemy_type = 2
 
-			base_y = random.randint(30*2, 192*2 - 40*2)
 			hp = 1 if enemy_type == 0 else 3
-			self.enemies.append([screenwidth / X_SCALE, base_y, enemy_type, 0, base_y, hp, False])
-#			self.enemies.append([256*2, base_y, enemy_type, 0, base_y, hp, False])
+			self.enemies.append([screenwidth / X_SCALE, random.randint(32, screenheight // Y_SCALE - 64), enemy_type, 0, random.randint(0, 30*2 + screenheight // Y_SCALE - 40 * 2) - 30 * 2, hp, 0, 5 / COUNT1S])
+
 			self.enemy_spawn_timer = 0
 
 		# 敵更新
@@ -374,37 +376,15 @@ class App:
 				e[1] = e[4] + int(math.sin(e[3] * 0.12) * 55)*2
 
 			# 難易度計算（時間経過）
-			difficulty = int(min(1, self.play_time / 10800))
+			e[6] += self.delta
+
+			difficulty = int(min(1, self.play_time / 180)) # * COUNT1S))) # 10800))
 #			enemy_bullet_speed = 2.4 + difficulty * 1.2
-			enemy_bullet_speed = (2 + difficulty)*2
-			shoot_interval = int(82 - difficulty * 36) #/ COUNT1S
+			enemy_bullet_speed = (4 + difficulty * 2)
+			shoot_interval = ((82 - difficulty * 36) - 5) / COUNT1S
 
 			# 敵射撃
-			if not e[6] and 18 <= e[3] <= 40:
-				sx = e[0] + 8*2
-				sy = e[1] + 8*2
-				dx = self.player_x + 8*2 - sx
-				dy = self.player_y + 8*2 - sy
-#				dist = math.hypot(dx, dy) or 1
-
-#				dist = int(abs(dx + dy))
-				if abs(dx) > abs(dy):
-					dist = abs(dx)
-				else:
-					dist = abs(dy)
-
-				if dist == 0 : dist = 1
-				speed = enemy_bullet_speed
-				dx = int(dx * 1024 * speed/dist)
-				dy = int(dy * 1024 * speed/dist)
-				dx = max(-3*2 * 1024, dx)
-				dx = min(dx, 4*2 * 1024)
-				dy = max(-4*2 * 1024, dy)
-				dy = min(dy, 4*2 * 1024)
-				self.enemy_bullets.append([sx * 1024, sy * 1024, dx, dy])
-				e[6] = True
-
-			elif e[6] and int(e[3]) % shoot_interval == 0 and random.randint(0,100) < 60:
+			if e[6] >= e[7]: # and random.randint(0,100) < 60:
 				sx = e[0] + 8*2
 				sy = e[1] + 8*2
 				dx = self.player_x + 8*2 - sx
@@ -428,6 +408,8 @@ class App:
 				dy = max(-4*2 * 1024, dy)
 				dy = min(dy, 1024 * 4*2)
 				self.enemy_bullets.append([sx * 1024, sy * 1024, dx, dy])
+				e[6] = 0
+				e[7] = shoot_interval
 
 			if e[0] < -40 or e[0] > screenwidth / X_SCALE + 60:
 				self.enemies.remove(e)
@@ -497,7 +479,7 @@ class App:
 				self.chain_items.remove(item)
 
 		if self.chain_count > 0:
-			self.chain_timer -= 1
+			self.chain_timer -= rate
 			if self.chain_timer <= 0:
 				self.chain_count = 0
 
@@ -641,7 +623,7 @@ class App:
 			self.put_strings(0, 0, "SCORE:")
 
 		self.put_numd(7, 1, self.bomb_stock, 1)
-		self.put_numd(7+16, 0, self.play_time // 60, 7)
+		self.put_numd(7+16, 0, self.play_time // 1, 7)
 
 		if self.chain_count > 0:
 			self.put_strings(16, 1, "CHAIN")
