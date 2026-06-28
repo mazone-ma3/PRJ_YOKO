@@ -11,7 +11,7 @@ from binascii import unhexlify
 X_SCALE = 2
 Y_SCALE = 2
 screenwidth = 256*2*X_SCALE
-screenheight = 212*2*X_SCALE
+screenheight = 192*2*X_SCALE
 COUNT1S = 60
 
 class Particle:
