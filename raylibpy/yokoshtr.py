@@ -316,8 +316,8 @@ class App:
 		self.player_y = max(0, min(self.player_y, screenheight / Y_SCALE - 16*2))
 
 		# 自機射撃
-		self.shoot_timer += rate
-		if (raylib.IsKeyDown(raylib.KEY_SPACE) or raylib.IsKeyDown(raylib.KEY_Z) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) and self.shoot_timer > 8:
+		self.shoot_timer += self.delta
+		if (raylib.IsKeyDown(raylib.KEY_SPACE) or raylib.IsKeyDown(raylib.KEY_Z) or (raylib.IsGamepadAvailable(gamepad) and raylib.IsGamepadButtonDown(gamepad, raylib.GAMEPAD_BUTTON_RIGHT_FACE_DOWN))) and self.shoot_timer >= (8 / COUNT1S):
 			self.bullets.append([self.player_x + 16*2, self.player_y + 6*2])
 			for opt in self.options:
 				self.bullets.append([opt.x + 4*2, opt.y + 6*2])
