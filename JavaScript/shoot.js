@@ -1,4 +1,4 @@
-﻿	function setfullscreen() {
+	function setfullscreen() {
 
 		// Chrome & Firefox v64以降
 		if( canvas.requestFullscreen ) {
