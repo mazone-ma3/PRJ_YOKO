@@ -357,9 +357,9 @@ func (game *Game) Update() {
 
 	game.gameTime += game.delta
 
-	//movespeed := 4.0 * rate
-	enemyspeed := 4.0 * rate
-	//enemyspeed2 := 5.0 * rate
+	//moveSpeed := 4.0 * rate
+	enemySpeed := 4.0 * rate
+	//enemySpeed2 := 5.0 * rate
 
 	// 1. ゲームパッドが接続されているかチェック
 	axisX := float32(0)
@@ -521,7 +521,7 @@ func (game *Game) Update() {
 
 		switch {
 		case e.types == 0: // 通常敵
-			e.pos.X -= enemyspeed
+			e.pos.X -= enemySpeed
 
 		case e.types == 1: // ヘリザコ - 勢いよく突っ込む
 			//				static float dist_x = e.x - player_x
@@ -535,7 +535,7 @@ func (game *Game) Update() {
 			}
 
 		case e.types == 2: // サインカーブ
-			e.pos.X -= enemyspeed
+			e.pos.X -= enemySpeed
 			e.pos.Y = (e.count2 + float32(math.Sin(float64(e.count*0.12)))*55*2)
 		}
 
@@ -564,10 +564,10 @@ func (game *Game) Update() {
 			}
 
 			// 弾を発射
-			bulletspeed := float32(enemy_bullet_speed)
+			bulletSpeed := float32(enemy_bullet_speed)
 
-			dx = (dx * bulletspeed / dist)
-			dy = (dy * bulletspeed / dist)
+			dx = (dx * bulletSpeed / dist)
+			dy = (dy * bulletSpeed / dist)
 			dx = max(-3*2.0, dx)
 			dx = min(dx, 4*2.0)
 			dy = max(-4*2.0, dy)
@@ -579,8 +579,8 @@ func (game *Game) Update() {
 					game.enemybullets[j] = EnemyBullet{
 						pos: rl.NewVector2(e.pos.X+16,
 							e.pos.Y+16),
-						vx:     dx, // * bulletspeed - 1.0f*1,   // vx
-						vy:     dy, // * bulletspeed     // vy
+						vx:     dx, // * bulletSpeed - 1.0f*1,   // vx
+						vy:     dy, // * bulletSpeed     // vy
 						active: true,
 					}
 					break
