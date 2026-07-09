@@ -87,7 +87,7 @@
 
 	let shield_active = false;
 
-	let lastTime = 0;
+	let lastTime = Date.now();
 	let rate = 0;
 
 	let spawnTimer = 0;
@@ -268,6 +268,16 @@
 	}
 
 	function update() {
+
+		timestamp = Date.now();
+		deltaTime = (timestamp - lastTime) / 1000;
+		lastTime = timestamp;
+		rate = deltaTime * COUNT1S;
+		for (let star of stars) {
+			star.x -= star.speed * rate;
+			if (star.x < 0) star.x = canvas.width;
+		}
+
 		key = 0;
 		const gamepads = navigator.getGamepads();
 		if(gamepads[0]) {
@@ -317,14 +327,9 @@
 			}
 		}
 
-		timestamp = Date.now();
-		deltaTime = (timestamp - lastTime) / 1000;
-		lastTime = timestamp;
 		gameTime += deltaTime;
-		rate = deltaTime * COUNT1S;
 
-
-			// プレイヤー移動
+		// プレイヤー移動
 		if (keys['ArrowLeft'] || keys['a'] || keys['A'] || (key & 0x40)) player.x -= player.speed * rate;
 		if (keys['ArrowRight'] || keys['d'] || keys['D'] || (key & 0x80)) player.x += player.speed * rate;
 		if (keys['ArrowUp'] || keys['w'] || keys['W'] || (key & 0x10)) player.y -= player.speed * rate;
@@ -782,9 +787,8 @@
 		for (let star of stars) {
 			ctx.globalAlpha = 0.3 + Math.random() * 0.7;
 			ctx.fillRect(star.x, star.y, star.size, star.size);
-			star.x -= star.speed;
-			if (star.x < 0) star.x = canvas.width;
 		}
+
 		ctx.globalAlpha = 1;
 
 		// パーティクル
