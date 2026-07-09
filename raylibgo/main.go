@@ -4,6 +4,7 @@ import (
 	//	"fmt"
 	"math"
 	"math/rand"
+
 	//	"time"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -12,75 +13,75 @@ import (
 // シンプルな横スクロールシューティング
 
 const (
-	X_SCALE      = 2
-	Y_SCALE      = 2
-	screenWidth  = 256 * 2 * X_SCALE
-	screenHeight = 192 * 2 * Y_SCALE
-	MAXOPTIONS   = 2
-	COUNT1S      = 60
-	MAXSTARS     = 80
-	FONT_SIZE    = 16 * X_SCALE
+	XScale       = 2
+	YScale       = 2
+	ScreenWidth  = 256 * 2 * XScale
+	ScreenHeight = 192 * 2 * YScale
+	MaxOptions   = 2
+	Count1S      = 60
+	MaxStars     = 80
+	FontSize     = 16 * XScale
 )
 
 type Player struct {
-	pos   rl.Vector2
-	speed float32
+	Pos   rl.Vector2
+	Speed float32
 }
 
 type Bullet struct {
-	pos    rl.Vector2
-	active bool
-	speed  float32
+	Pos    rl.Vector2
+	Active bool
+	Speed  float32
 }
 
 type EnemyBullet struct {
-	pos    rl.Vector2
-	vx     float32
-	vy     float32
-	active bool
+	Pos    rl.Vector2
+	Vx     float32
+	Vy     float32
+	Active bool
 }
 
 type Enemy struct {
-	pos rl.Vector2
+	Pos rl.Vector2
 	//	speed  float32
-	active        bool
-	types         int
-	hp            int
-	count         float32
-	count2        float32
-	shootTimer    float32
-	nextShootTime float32
-	speed         float32
+	Active        bool
+	Types         int
+	HP            int
+	Count         float32
+	Count2        float32
+	ShootTimer    float32
+	NextShootTime float32
+	Speed         float32
 }
 
 type Option struct {
-	pos      rl.Vector2
-	offset_y float32
+	Pos     rl.Vector2
+	OffsetY float32
 	//	active   bool
 }
 
 type Item struct {
-	pos    rl.Vector2
-	timer  float32
-	types  int
-	active bool
+	Pos    rl.Vector2
+	Timer  float32
+	Types  int
+	Active bool
 }
 
 type ChainItem struct {
-	pos    rl.Vector2
-	timer  float32
-	active bool
+	Pos    rl.Vector2
+	Timer  float32
+	Active bool
 }
 
 type Particle struct {
-	pos  rl.Vector2
-	vx   float32
-	vy   float32
-	life float32
+	Pos  rl.Vector2
+	Vx   float32
+	Vy   float32
+	Life float32
 }
 
 type Star struct {
-	x, y, basespeed, speed, size float32
+	X, Y, Basespeed, Speed, Size float32
 }
 
 type Game struct {
@@ -97,21 +98,21 @@ type Game struct {
 
 	particles [2000]Particle
 
-	score     int
-	gameOver  int
-	easy_mode bool
+	score    int
+	gameOver int
+	easyMode bool
 
-	bomb_active bool
-	bomb_stock  int
-	bomb_timer  float32
+	bombActive bool
+	bombStock  int
+	bombTimer  float32
 
-	chain_timer float32
+	chainTimer float32
 
 	enemySpawnTimer float32
 
-	high_score  int
-	lives       int
-	chain_count int
+	highScore  int
+	lives      int
+	chainCount int
 
 	chrTex  rl.Texture2D
 	fontTex rl.Texture2D
@@ -124,24 +125,23 @@ type Game struct {
 	shootCooldown float32
 	gameTime      float32
 
-	shield_active   bool
-	option_cooldown float32
+	shieldActive   bool
+	optionCooldown float32
 
 	star []Star
 }
 
-
 func NewGame() *Game {
 	game := &Game{
-		high_score : 5000,
+		highScore: 5000,
 	}
 
-//	rand.Seed(time.Now().UnixNano())
+	//	rand.Seed(time.Now().UnixNano())
 
 	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagVsyncHint)
 
-	rl.InitWindow(screenWidth, screenHeight, "raylib-Go 横スクロールシューティング")
-//	defer rl.CloseWindow()
+	rl.InitWindow(ScreenWidth, ScreenHeight, "raylib-Go 横スクロールシューティング")
+	//	defer rl.CloseWindow()
 
 	game.chrTex = rl.LoadTexture("yokosht.png") // 画像がなければ後で矩形で代用
 	game.fontTex = rl.LoadTexture("FONTYOKO.png")
@@ -155,14 +155,14 @@ func NewGame() *Game {
 
 	for i := 0; i < 80; i++ {
 		game.star = append(game.star, Star{
-			x:     float32(rl.GetRandomValue(0, screenWidth/X_SCALE-1)),
-			y:     float32(rl.GetRandomValue(0, screenHeight/Y_SCALE-1)),
-			speed: 0.5 + float32(rl.GetRandomValue(0, 99)/30), // static_cast<float>(rand() % 100) / 30.0f
+			X:     float32(rl.GetRandomValue(0, ScreenWidth/XScale-1)),
+			Y:     float32(rl.GetRandomValue(0, ScreenHeight/YScale-1)),
+			Speed: 0.5 + float32(rl.GetRandomValue(0, 99)/30), // static_cast<float>(rand() % 100) / 30.0f
 		}) //    speed : basespeed   // もし個別速度も欲しい場合
-		if game.star[i].speed > 2 {
-			game.star[i].size = 2
+		if game.star[i].Speed > 2 {
+			game.star[i].Size = 2
 		} else {
-			game.star[i].size = 1
+			game.star[i].Size = 1
 		}
 		//        star[i] = s//.Add(new s)
 	}
@@ -188,7 +188,7 @@ func main() {
 	game := NewGame()
 	defer game.Close()
 
-	target := rl.LoadRenderTexture(screenWidth, screenHeight)
+	target := rl.LoadRenderTexture(ScreenWidth, ScreenHeight)
 	rl.SetTextureFilter(target.Texture, rl.FilterPoint)
 
 	game.Reset()
@@ -203,9 +203,9 @@ func main() {
 			rl.ToggleFullscreen()
 		}
 
-		scale := float32(min(float32(rl.GetScreenWidth())/screenWidth, float32(rl.GetScreenHeight())/screenHeight))
+		scale := float32(min(float32(rl.GetScreenWidth())/ScreenWidth, float32(rl.GetScreenHeight())/ScreenHeight))
 
-		destRec := rl.NewRectangle((float32(rl.GetScreenWidth())-(screenWidth*scale))*0.5, (float32(rl.GetScreenHeight())-(screenHeight*scale))*0.5, screenWidth*scale, screenHeight*scale)
+		destRec := rl.NewRectangle((float32(rl.GetScreenWidth())-(ScreenWidth*scale))*0.5, (float32(rl.GetScreenHeight())-(ScreenHeight*scale))*0.5, ScreenWidth*scale, ScreenHeight*scale)
 
 		game.delta = rl.GetFrameTime()
 		//		if game.gameOver != 0 {
@@ -230,38 +230,38 @@ func main() {
 		//            DrawText("F: Toggle Fullscreen", 10, 30, 20, GREEN)
 		rl.EndDrawing()
 	}
-//	game.Close()
+	//	game.Close()
 }
 
 func (game *Game) Reset() {
 	// プレイヤー初期化
 	game.player = Player{
-		pos:   rl.NewVector2(60, 160), //float32(screenHeight)/2),
-		speed: 4,
+		Pos:   rl.NewVector2(60, 160), //float32(screenHeight)/2),
+		Speed: 4,
 	}
 	for i := range game.bullets {
-		game.bullets[i].active = false
+		game.bullets[i].Active = false
 	}
 	for i := range game.enemies {
-		game.enemies[i].active = false
+		game.enemies[i].Active = false
 	}
 
 	for i := range game.enemybullets {
-		game.enemybullets[i].active = false
+		game.enemybullets[i].Active = false
 	}
 
 	/*	for i := range game.options {
 		options[i].active = false
 	}*/
 	for i := range game.particles {
-		game.particles[i].life = 0
+		game.particles[i].Life = 0
 	}
 
 	for i := range game.items {
-		game.items[i].active = false
+		game.items[i].Active = false
 	}
 	for i := range game.chainitems {
-		game.chainitems[i].active = false
+		game.chainitems[i].Active = false
 	}
 
 	game.optionnum = 0
@@ -271,48 +271,48 @@ func (game *Game) Reset() {
 
 	game.enemySpawnTimer = 0.0
 	game.gameOver = 0
-	game.shield_active = false
+	game.shieldActive = false
 
 	//	high_score = 5000
 	game.lives = 0
 	game.gameTime = 0
-	game.chain_count = 0
+	game.chainCount = 0
 
-	game.bomb_timer = 0
-	game.option_cooldown = 10
+	game.bombTimer = 0
+	game.optionCooldown = 10
 
-	if game.easy_mode {
+	if game.easyMode {
 		game.lives = 3
 	} else {
 		game.lives = 1
 	}
-	game.bomb_stock = 0
+	game.bombStock = 0
 }
 
 func (game *Game) UseBomb() {
-	if game.bomb_stock <= 0 || game.bomb_active {
+	if game.bombStock <= 0 || game.bombActive {
 		return
 	}
 
-	game.bomb_stock--
-	game.bomb_active = true
+	game.bombStock--
+	game.bombActive = true
 	//   game. bomb_timer = BOMB_DURATION
 
 	// 敵と敵弾を全滅
 	for i := range game.enemies {
-		game.enemies[i].active = false
+		game.enemies[i].Active = false
 	}
 	for i := range game.enemybullets {
-		game.enemybullets[i].active = false
+		game.enemybullets[i].Active = false
 	}
 
 	// 大量の破片を発生
-	game.CreateParticles(game.player.pos.X+16, game.player.pos.Y+16, 45, 1) // 大爆発
+	game.CreateParticles(game.player.Pos.X+16, game.player.Pos.Y+16, 45, 1) // 大爆発
 
 	// 画面全体に破片を散らす
 	for i := 0; i < 60; i++ {
-		rx := float32(rand.Intn(screenWidth/X_SCALE))
-		ry := float32(rand.Intn(screenHeight/Y_SCALE))
+		rx := float32(rand.Intn(ScreenWidth / XScale))
+		ry := float32(rand.Intn(ScreenHeight / YScale))
 		game.CreateParticles(rx, ry, 6, 1)
 	}
 
@@ -323,7 +323,7 @@ func (game *Game) UseBomb() {
 func (game *Game) Update() {
 
 	gamepad := int32(0)
-	rate := COUNT1S * game.delta
+	rate := Count1S * game.delta
 
 	if game.gameOver == 1 {
 		if !(rl.IsKeyDown(rl.KeySpace) || rl.IsKeyDown(rl.KeyZ) || rl.IsKeyDown(rl.KeyR) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonRightFaceDown)) || rl.IsKeyDown(rl.KeySpace) || rl.IsKeyDown(rl.KeyZ) || rl.IsKeyDown(rl.KeyR) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonRightFaceDown))) {
@@ -332,11 +332,11 @@ func (game *Game) Update() {
 	}
 	if game.gameOver == 2 {
 		if rl.IsKeyPressed(rl.KeySpace) || rl.IsKeyPressed(rl.KeyZ) || rl.IsKeyPressed(rl.KeyR) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonPressed(gamepad, rl.GamepadButtonRightFaceDown)) {
-			game.easy_mode = false
+			game.easyMode = false
 			rl.PlayMusicStream(game.bgm)
 			game.Reset()
 		} else if rl.IsKeyPressed(rl.KeyX) || rl.IsKeyPressed(rl.KeyB) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonPressed(gamepad, rl.GamepadButtonRightFaceRight)) {
-			game.easy_mode = true
+			game.easyMode = true
 			rl.PlayMusicStream(game.bgm)
 			game.Reset()
 		}
@@ -345,9 +345,9 @@ func (game *Game) Update() {
 	// 星移動
 	for i := range game.star {
 		s := &game.star[i]
-		s.x -= s.speed * rate // これでFPSが60の時に元の速度と同じになる
-		if s.x < 0 {
-			s.x = screenWidth / X_SCALE
+		s.X -= s.Speed * rate // これでFPSが60の時に元の速度と同じになる
+		if s.X < 0 {
+			s.X = ScreenWidth / XScale
 		}
 	}
 
@@ -373,30 +373,30 @@ func (game *Game) Update() {
 
 	// プレイヤー移動 (WASD or Arrow keys)
 	if rl.IsKeyDown(rl.KeyUp) || rl.IsKeyDown(rl.KeyW) || (axisY < -0.2) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonLeftFaceUp)) {
-		game.player.pos.Y -= game.player.speed * rate
+		game.player.Pos.Y -= game.player.Speed * rate
 	}
 	if rl.IsKeyDown(rl.KeyDown) || rl.IsKeyDown(rl.KeyS) || (axisY > 0.2) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonLeftFaceDown)) {
-		game.player.pos.Y += game.player.speed * rate
+		game.player.Pos.Y += game.player.Speed * rate
 	}
 	if rl.IsKeyDown(rl.KeyLeft) || rl.IsKeyDown(rl.KeyA) || (axisX < -0.2) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonLeftFaceLeft)) {
-		game.player.pos.X -= game.player.speed * rate
+		game.player.Pos.X -= game.player.Speed * rate
 	}
 	if rl.IsKeyDown(rl.KeyRight) || rl.IsKeyDown(rl.KeyD) || (axisX > 0.2) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonLeftFaceRight)) {
-		game.player.pos.X += game.player.speed * rate
+		game.player.Pos.X += game.player.Speed * rate
 	}
 
 	// 画面端制限
-	if game.player.pos.X < 0 {
-		game.player.pos.X = 0
+	if game.player.Pos.X < 0 {
+		game.player.Pos.X = 0
 	}
-	if game.player.pos.X > screenWidth/X_SCALE-40 {
-		game.player.pos.X = screenWidth/X_SCALE - 40
+	if game.player.Pos.X > ScreenWidth/XScale-40 {
+		game.player.Pos.X = ScreenWidth/XScale - 40
 	}
-	if game.player.pos.Y < 0 {
-		game.player.pos.Y = 0
+	if game.player.Pos.Y < 0 {
+		game.player.Pos.Y = 0
 	}
-	if game.player.pos.Y > screenHeight/Y_SCALE-32 {
-		game.player.pos.Y = screenHeight/Y_SCALE - 32
+	if game.player.Pos.Y > ScreenHeight/YScale-32 {
+		game.player.Pos.Y = ScreenHeight/YScale - 32
 	}
 
 	// オプション更新
@@ -404,8 +404,8 @@ func (game *Game) Update() {
 		//        game.opt.angle += 0.08f * rate;   // 回転速度
 		opt := &game.options[i]
 		// 滑らかに追従
-		opt.pos.X += ((game.player.pos.X + 16) - opt.pos.X) / 4 * rate
-		opt.pos.Y += ((game.player.pos.Y + opt.offset_y) - opt.pos.Y) / 4 * rate
+		opt.Pos.X += ((game.player.Pos.X + 16) - opt.Pos.X) / 4 * rate
+		opt.Pos.Y += ((game.player.Pos.Y + opt.OffsetY) - opt.Pos.Y) / 4 * rate
 		//		float t = 1.0f - pow(1.0f - 0.25f, m_deltaTime * COUNT1S)
 		//		opt.x = std::lerp(opt.x, playerX + 16, t)
 		//		opt.y = std::lerp(opt.y, playerY + opt.offset_y, t)
@@ -413,29 +413,29 @@ func (game *Game) Update() {
 
 	// 射撃 (Spaceキー)
 	game.shootCooldown += game.delta
-	if (rl.IsKeyDown(rl.KeySpace) || rl.IsKeyDown(rl.KeyZ) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonRightFaceDown))) && (game.shootCooldown >= float32(8)/COUNT1S) {
+	if (rl.IsKeyDown(rl.KeySpace) || rl.IsKeyDown(rl.KeyZ) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonDown(gamepad, rl.GamepadButtonRightFaceDown))) && (game.shootCooldown >= float32(8)/Count1S) {
 		/*		bullets = append(bullets, Bullet{
 				pos:    rl.NewVector2(player.pos.X+32, player.pos.Y+12),
 				speed:  12,
 				active: true,
 			})*/
 		for i := range game.bullets {
-			if game.bullets[i].active == false {
+			if game.bullets[i].Active == false {
 				game.bullets[i] = Bullet{
-					pos:    rl.NewVector2(game.player.pos.X+32, game.player.pos.Y+12),
-					speed:  12,
-					active: true,
+					Pos:    rl.NewVector2(game.player.Pos.X+32, game.player.Pos.Y+12),
+					Speed:  12,
+					Active: true,
 				}
 				break
 			}
 		}
 		for j := 0; j < game.optionnum; j++ {
 			for i := range game.bullets {
-				if game.bullets[i].active == false {
+				if game.bullets[i].Active == false {
 					game.bullets[i] = Bullet{
-						pos:    rl.NewVector2(game.options[j].pos.X+8, game.options[j].pos.Y+12),
-						speed:  12,
-						active: true,
+						Pos:    rl.NewVector2(game.options[j].Pos.X+8, game.options[j].Pos.Y+12),
+						Speed:  12,
+						Active: true,
 					}
 					break
 				}
@@ -444,23 +444,23 @@ func (game *Game) Update() {
 		game.shootCooldown = 0 //(8 / COUNT1S) // 連射速度
 	}
 
-	if (rl.IsKeyPressed(rl.KeyX) || rl.IsKeyPressed(rl.KeyB) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonPressed(gamepad, rl.GamepadButtonRightFaceRight))) && game.bomb_stock > 0 && !game.bomb_active {
+	if (rl.IsKeyPressed(rl.KeyX) || rl.IsKeyPressed(rl.KeyB) || (rl.IsGamepadAvailable(gamepad) && rl.IsGamepadButtonPressed(gamepad, rl.GamepadButtonRightFaceRight))) && game.bombStock > 0 && !game.bombActive {
 		game.UseBomb()
 	}
 
 	// 自機弾更新
 	for i := range game.bullets {
-		if game.bullets[i].active {
-			game.bullets[i].pos.X += game.bullets[i].speed * rate
-			if game.bullets[i].pos.X > screenWidth/X_SCALE {
-				game.bullets[i].active = false
+		if game.bullets[i].Active {
+			game.bullets[i].Pos.X += game.bullets[i].Speed * rate
+			if game.bullets[i].Pos.X > ScreenWidth/XScale {
+				game.bullets[i].Active = false
 			}
 		}
 	}
 
 	game.enemySpawnTimer += game.delta
-	baseInterval := float32(50.0 - (game.score / 250.0))                   // scoreが増えるほど短く
-	spawnInterval := max(float32(18.0)/COUNT1S, baseInterval/COUNT1S) // フレーム→秒に変換
+	baseInterval := float32(50.0 - (game.score / 250.0))              // scoreが増えるほど短く
+	spawnInterval := max(float32(18.0)/Count1S, baseInterval/Count1S) // フレーム→秒に変換
 
 	// 敵生成(スポーン) (ランダム)
 	//	if rand.Intn(40) == 0 { // 調整可能
@@ -475,7 +475,7 @@ func (game *Game) Update() {
 		game.enemySpawnTimer = 0
 
 		for i := range game.enemies {
-			if game.enemies[i].active == false {
+			if game.enemies[i].Active == false {
 
 				rand_num := rand.Intn(100)
 				var etype int
@@ -494,15 +494,15 @@ func (game *Game) Update() {
 				}
 
 				game.enemies[i] = Enemy{
-					pos:           rl.NewVector2(screenWidth/X_SCALE, 32+float32(rand.Intn(screenHeight/Y_SCALE-32-32-32))),
-					speed:         -4 - float32(rand.Intn(3)),
-					active:        true,
-					types:         etype,
-					hp:            ehp,
-					count:         0,
-					count2:        float32(rand.Intn(30*2+screenHeight/Y_SCALE-40*2) - 30*2),
-					shootTimer:    0,
-					nextShootTime: 5.0 / COUNT1S,
+					Pos:           rl.NewVector2(ScreenWidth/XScale, 32+float32(rand.Intn(ScreenHeight/YScale-32-32-32))),
+					Speed:         -4 - float32(rand.Intn(3)),
+					Active:        true,
+					Types:         etype,
+					HP:            ehp,
+					Count:         0,
+					Count2:        float32(rand.Intn(30*2+ScreenHeight/YScale-40*2) - 30*2),
+					ShootTimer:    0,
+					NextShootTime: 5.0 / Count1S,
 				}
 				break
 			}
@@ -512,44 +512,44 @@ func (game *Game) Update() {
 
 	// 敵更新
 	for i := range game.enemies {
-		if !game.enemies[i].active {
+		if !game.enemies[i].Active {
 			continue
 		}
 		//			var e Enemy
 		e := &game.enemies[i]
-		e.count += rate
+		e.Count += rate
 
 		switch {
-		case e.types == 0: // 通常敵
-			e.pos.X -= enemySpeed
+		case e.Types == 0: // 通常敵
+			e.Pos.X -= enemySpeed
 
-		case e.types == 1: // ヘリザコ - 勢いよく突っ込む
+		case e.Types == 1: // ヘリザコ - 勢いよく突っ込む
 			//				static float dist_x = e.x - player_x
-			if e.count < 24 { // 1段階：超急接近
-				e.pos.X -= 6 * 2 * rate
-				e.pos.Y += ((game.player.pos.Y + 8 - e.pos.Y) / 8) / 2 * rate
-			} else if e.count < 49 { // 2段階：短くホバリング
-				e.pos.X -= 0
+			if e.Count < 24 { // 1段階：超急接近
+				e.Pos.X -= 6 * 2 * rate
+				e.Pos.Y += ((game.player.Pos.Y + 8 - e.Pos.Y) / 8) / 2 * rate
+			} else if e.Count < 49 { // 2段階：短くホバリング
+				e.Pos.X -= 0
 			} else { // 3段階：右へ全力逃走
-				e.pos.X += 6 * 2 * rate
+				e.Pos.X += 6 * 2 * rate
 			}
 
-		case e.types == 2: // サインカーブ
-			e.pos.X -= enemySpeed
-			e.pos.Y = (e.count2 + float32(math.Sin(float64(e.count*0.12)))*55*2)
+		case e.Types == 2: // サインカーブ
+			e.Pos.X -= enemySpeed
+			e.Pos.Y = (e.Count2 + float32(math.Sin(float64(e.Count*0.12)))*55*2)
 		}
 
 		// 敵弾発射処理
-		e.shootTimer += game.delta
+		e.ShootTimer += game.delta
 
 		difficulty := float32(int(min(1, game.gameTime/180))) // * COUNT1S)))
 		enemy_bullet_speed := (4 + difficulty*2)
-		shoot_interval := ((82 - difficulty*36) - 5) / COUNT1S
+		shoot_interval := ((82 - difficulty*36) - 5) / Count1S
 
-		if e.shootTimer >= e.nextShootTime {
+		if e.ShootTimer >= e.NextShootTime {
 
-			dx := game.player.pos.X - e.pos.X
-			dy := game.player.pos.Y - e.pos.Y
+			dx := game.player.Pos.X - e.Pos.X
+			dy := game.player.Pos.Y - e.Pos.Y
 
 			//	            dx -= 4.0f
 
@@ -574,85 +574,85 @@ func (game *Game) Update() {
 			dy = min(dy, 4*2.0)
 
 			for j := range game.enemybullets {
-				if game.enemybullets[j].active == false {
+				if game.enemybullets[j].Active == false {
 
 					game.enemybullets[j] = EnemyBullet{
-						pos: rl.NewVector2(e.pos.X+16,
-							e.pos.Y+16),
-						vx:     dx, // * bulletSpeed - 1.0f*1,   // vx
-						vy:     dy, // * bulletSpeed     // vy
-						active: true,
+						Pos: rl.NewVector2(e.Pos.X+16,
+							e.Pos.Y+16),
+						Vx:     dx, // * bulletSpeed - 1.0f*1,   // vx
+						Vy:     dy, // * bulletSpeed     // vy
+						Active: true,
 					}
 					break
 				}
 			}
 
 			// 次回の発射間隔を設定
-			e.nextShootTime = float32(shoot_interval)
+			e.NextShootTime = float32(shoot_interval)
 
-			e.shootTimer = 0.0
+			e.ShootTimer = 0.0
 			//				e.count += rate
 			//	            e.count++
 		}
 
 		//			e.pos.X += e.speed * rate
-		if (e.pos.X < -32) || (e.pos.X > screenWidth/X_SCALE) {
-			e.active = false
+		if (e.Pos.X < -32) || (e.Pos.X > ScreenWidth/XScale) {
+			e.Active = false
 		}
 	}
 
 	// 自機弾・敵 衝突判定
 	for i := range game.bullets {
-		if !game.bullets[i].active {
+		if !game.bullets[i].Active {
 			continue
 		}
-		bRect := rl.NewRectangle(game.bullets[i].pos.X, game.bullets[i].pos.Y, 16, 8)
+		bRect := rl.NewRectangle(game.bullets[i].Pos.X, game.bullets[i].Pos.Y, 16, 8)
 		for j := range game.enemies {
 			e := &game.enemies[j]
-			if !e.active {
+			if !e.Active {
 				continue
 			}
-			eRect := rl.NewRectangle(e.pos.X, e.pos.Y, 32, 32)
+			eRect := rl.NewRectangle(e.Pos.X, e.Pos.Y, 32, 32)
 			if rl.CheckCollisionRecs(bRect, eRect) {
-				game.bullets[i].active = false
+				game.bullets[i].Active = false
 
-				game.CreateParticles(e.pos.X+16, e.pos.Y+16, 8, 0) // 通常爆発
+				game.CreateParticles(e.Pos.X+16, e.Pos.Y+16, 8, 0) // 通常爆発
 
-				e.hp--
-				if e.hp <= 0 {
+				e.HP--
+				if e.HP <= 0 {
 
 					// オプションアイテム出現（確率20%くらい）
 					//				    if (rand.Intn(100) < 22 && Options.size() < MAX_OPTIONS) {
-					if game.option_cooldown <= 0 {
+					if game.optionCooldown <= 0 {
 						for i := range game.items {
 							item := &game.items[i]
-							if item.active {
+							if item.Active {
 								continue
 							}
-							item.pos.X = e.pos.X
-							item.pos.Y = e.pos.Y
-							item.timer = 300 // 約5秒で消える
-							item.types = 1   // 1 = オプションアイテム
-							item.active = true
-							game.option_cooldown = 10
+							item.Pos.X = e.Pos.X
+							item.Pos.Y = e.Pos.Y
+							item.Timer = 300 // 約5秒で消える
+							item.Types = 1   // 1 = オプションアイテム
+							item.Active = true
+							game.optionCooldown = 10
 							break
 						}
 					} else {
-						game.option_cooldown--
+						game.optionCooldown--
 					}
 
 					// シールドアイテム出現（確率12%程度）
-					if rand.Intn(100) < 12 && !game.shield_active {
+					if rand.Intn(100) < 12 && !game.shieldActive {
 						for i := range game.items {
 							item := &game.items[i]
-							if item.active {
+							if item.Active {
 								continue
 							}
-							item.pos.X = e.pos.X
-							item.pos.Y = e.pos.Y
-							item.timer = 280.0
-							item.types = 2 // 2 = シールド
-							item.active = true
+							item.Pos.X = e.Pos.X
+							item.Pos.Y = e.Pos.Y
+							item.Timer = 280.0
+							item.Types = 2 // 2 = シールド
+							item.Active = true
 							break
 						}
 					}
@@ -661,14 +661,14 @@ func (game *Game) Update() {
 					if rand.Intn(100) < 10 { // 約10%の確率
 						for i := range game.items {
 							item := &game.items[i]
-							if item.active {
+							if item.Active {
 								continue
 							}
-							item.pos.X = e.pos.X
-							item.pos.Y = e.pos.Y
-							item.timer = 270.0
-							item.types = 3 // 3 = ボム
-							item.active = true
+							item.Pos.X = e.Pos.X
+							item.Pos.Y = e.Pos.Y
+							item.Timer = 270.0
+							item.Types = 3 // 3 = ボム
+							item.Active = true
 							break
 						}
 					}
@@ -676,18 +676,18 @@ func (game *Game) Update() {
 					if rand.Intn(100) < 40 { // 40%くらいの確率で落とす
 						for i := range game.chainitems {
 							item := &game.chainitems[i]
-							if item.active {
+							if item.Active {
 								continue
 							}
-							item.pos.X = e.pos.X
-							item.pos.Y = e.pos.Y
-							item.timer = 240.0
-							item.active = true
+							item.Pos.X = e.Pos.X
+							item.Pos.Y = e.Pos.Y
+							item.Timer = 240.0
+							item.Active = true
 							break
 						}
 					}
 
-					e.active = false
+					e.Active = false
 					rl.PlaySound(game.explosionSound)
 					game.score += 100
 				}
@@ -697,21 +697,21 @@ func (game *Game) Update() {
 	}
 
 	// 敵弾 vs 自機
-	pRect := rl.NewRectangle(game.player.pos.X, game.player.pos.Y+6, 32, 32-6*2)
+	pRect := rl.NewRectangle(game.player.Pos.X, game.player.Pos.Y+6, 32, 32-6*2)
 	for i := range game.enemybullets {
 		it := &game.enemybullets[i]
-		if !it.active {
+		if !it.Active {
 			continue
 		}
-		eRect := rl.NewRectangle(it.pos.X, it.pos.Y, 8, 8)
+		eRect := rl.NewRectangle(it.Pos.X, it.Pos.Y, 8, 8)
 
 		if rl.CheckCollisionRecs(pRect, eRect) {
 			//        if (it.pos.X > player.pos.X && it.pos.X + 8 < player.pos.X + 32 &&
 			//            it.pos.Y > player.pos.Y + 6 && it.pos.Y + 8 < player.pos.Y + 6 + 20) {
 
-			if game.shield_active {
-				game.shield_active = false                                    // シールド消費
-				game.CreateParticles(game.player.pos.X+16, game.player.pos.Y+16, 18, 1) // 大きな爆発
+			if game.shieldActive {
+				game.shieldActive = false                                               // シールド消費
+				game.CreateParticles(game.player.Pos.X+16, game.player.Pos.Y+16, 18, 1) // 大きな爆発
 			} else {
 				game.lives--
 				if game.lives <= 0 {
@@ -719,7 +719,7 @@ func (game *Game) Update() {
 					rl.StopMusicStream(game.bgm)
 				}
 			}
-			it.active = false
+			it.Active = false
 			break
 		}
 	}
@@ -727,27 +727,27 @@ func (game *Game) Update() {
 	// 敵弾移動&画面範囲外判定
 	for i := range game.enemybullets {
 		it := &game.enemybullets[i]
-		if it.active {
-			it.pos.X += it.vx * rate
-			it.pos.Y += it.vy * rate
+		if it.Active {
+			it.Pos.X += it.Vx * rate
+			it.Pos.Y += it.Vy * rate
 
-			if (it.pos.X < -32) || (it.pos.X > screenWidth/X_SCALE) || (it.pos.Y < 32) || (it.pos.Y > screenHeight/Y_SCALE) {
-				it.active = false
+			if (it.Pos.X < -32) || (it.Pos.X > ScreenWidth/XScale) || (it.Pos.Y < 32) || (it.Pos.Y > ScreenHeight/YScale) {
+				it.Active = false
 			}
 		}
 	}
 
 	// プレイヤーと敵の衝突
-	pRect = rl.NewRectangle(game.player.pos.X, game.player.pos.Y+6, 32, 32-6*2)
+	pRect = rl.NewRectangle(game.player.Pos.X, game.player.Pos.Y+6, 32, 32-6*2)
 	for j := range game.enemies {
-		if !game.enemies[j].active {
+		if !game.enemies[j].Active {
 			continue
 		}
-		eRect := rl.NewRectangle(game.enemies[j].pos.X, game.enemies[j].pos.Y, 32, 32)
+		eRect := rl.NewRectangle(game.enemies[j].Pos.X, game.enemies[j].Pos.Y, 32, 32)
 		if rl.CheckCollisionRecs(pRect, eRect) {
-			if game.shield_active {
-				game.shield_active = false                                    // シールド消費
-				game.CreateParticles(game.player.pos.X+16, game.player.pos.Y+16, 18, 1) // 大きな爆発
+			if game.shieldActive {
+				game.shieldActive = false                                               // シールド消費
+				game.CreateParticles(game.player.Pos.X+16, game.player.Pos.Y+16, 18, 1) // 大きな爆発
 			} else {
 				game.lives--
 				if game.lives <= 0 {
@@ -755,7 +755,7 @@ func (game *Game) Update() {
 					rl.StopMusicStream(game.bgm)
 				}
 			}
-			game.enemies[j].active = false
+			game.enemies[j].Active = false
 		}
 		break
 	}
@@ -763,25 +763,25 @@ func (game *Game) Update() {
 	// アイテム更新
 	for i := range game.items {
 		it := &game.items[i]
-		if !it.active {
+		if !it.Active {
 			continue
 		}
 		switch {
-		case it.types == 1:
-			it.pos.X -= 2.0 * rate // 左に流れる
+		case it.Types == 1:
+			it.Pos.X -= 2.0 * rate // 左に流れる
 
-		case it.types == 2:
-			it.pos.X -= 4.0 * rate // 左に流れる
+		case it.Types == 2:
+			it.Pos.X -= 4.0 * rate // 左に流れる
 
-		case it.types == 3:
-			it.pos.X -= 4.0 * rate // 左に流れる
+		case it.Types == 3:
+			it.Pos.X -= 4.0 * rate // 左に流れる
 		}
-		it.timer -= game.delta
+		it.Timer -= game.delta
 
 		// 自機との当たり判定
-		if math.Abs(float64(it.pos.X-game.player.pos.X)) < 44-16 && math.Abs(float64(it.pos.Y-game.player.pos.Y)) < 44-16 {
+		if math.Abs(float64(it.Pos.X-game.player.Pos.X)) < 44-16 && math.Abs(float64(it.Pos.Y-game.player.Pos.Y)) < 44-16 {
 
-			if it.types == 1 && game.optionnum < MAXOPTIONS { // オプションアイテム
+			if it.Types == 1 && game.optionnum < MaxOptions { // オプションアイテム
 				var offset float32
 				if game.optionnum == 0 {
 					offset = 25.0
@@ -789,93 +789,93 @@ func (game *Game) Update() {
 					offset = -25.0
 				}
 				opt := &game.options[game.optionnum]
-				opt.offset_y = offset * 2
-				opt.pos.X = 0 //playerX + 20
-				opt.pos.Y = 0 //playerY + 16 + offset
+				opt.OffsetY = offset * 2
+				opt.Pos.X = 0 //playerX + 20
+				opt.Pos.Y = 0 //playerY + 16 + offset
 				//                opt.angle = 0.0
 				game.optionnum++
-			} else if it.types == 2 { // シールド
-				game.shield_active = true
+			} else if it.Types == 2 { // シールド
+				game.shieldActive = true
 				//                shield_timer = SHIELD_DURATION
-			} else if it.types == 3 { // 3 = ボムアイテム
-				game.bomb_stock = min(3, game.bomb_stock+1)
+			} else if it.Types == 3 { // 3 = ボムアイテム
+				game.bombStock = min(3, game.bombStock+1)
 			}
 
 			rl.PlaySound(game.laserSound)
 
-			it.active = false
+			it.Active = false
 			continue
 		}
 
 		// 画面外 or 時間切れ
-		if it.pos.X < -40 || it.timer <= 0 {
-			it.active = false
+		if it.Pos.X < -40 || it.Timer <= 0 {
+			it.Active = false
 		}
 	}
 
 	// パーティクル更新
 	for i := range game.particles {
 		it := &game.particles[i]
-		if it.life <= 0 {
+		if it.Life <= 0 {
 			continue
 		}
-		it.pos.X += it.vx * rate
-		it.pos.Y += it.vy * rate
+		it.Pos.X += it.Vx * rate
+		it.Pos.Y += it.Vy * rate
 		//        it->vx *= 0.96f      // 少し減速（空気抵抗）
 		//        it->vy *= 0.96f
 
 		damping := float32(math.Pow(0.96, float64(rate)))
-		it.vx *= damping
-		it.vy *= damping
+		it.Vx *= damping
+		it.Vy *= damping
 
-		it.life = it.life - rate
+		it.Life = it.Life - rate
 	}
 
 	// ボム更新
-	if game.bomb_active {
-		game.bomb_timer -= game.delta
-		if game.bomb_timer <= 0.0 {
-			game.bomb_active = false
+	if game.bombActive {
+		game.bombTimer -= game.delta
+		if game.bombTimer <= 0.0 {
+			game.bombActive = false
 		}
 	}
 
 	// チェインアイテム更新
 	for i := range game.chainitems {
 		it := &game.chainitems[i]
-		if !it.active {
+		if !it.Active {
 			continue
 		}
-		it.pos.X -= 4.0 * rate // 左に流れる
-		it.timer -= game.delta
+		it.Pos.X -= 4.0 * rate // 左に流れる
+		it.Timer -= game.delta
 
 		// 自機取得判定
-		if math.Abs(float64(it.pos.X-game.player.pos.X)) < 44-16 && math.Abs(float64(it.pos.Y-game.player.pos.Y)) < 44-16 {
-			game.chain_count++
-			game.chain_timer = 240 / COUNT1S // チェイン持続時間リセット
-			game.score += game.chain_count * 100  // チェイン数に応じたボーナス
+		if math.Abs(float64(it.Pos.X-game.player.Pos.X)) < 44-16 && math.Abs(float64(it.Pos.Y-game.player.Pos.Y)) < 44-16 {
+			game.chainCount++
+			game.chainTimer = 240 / Count1S     // チェイン持続時間リセット
+			game.score += game.chainCount * 100 // チェイン数に応じたボーナス
 
-			it.active = false
+			it.Active = false
 			rl.PlaySound(game.laserSound)
 			continue
 		}
 
 		// 時間切れ or 画面外
-		if it.timer <= 0.0 || it.pos.X < -20 {
-			game.chain_count = 0
-			it.active = false
+		if it.Timer <= 0.0 || it.Pos.X < -20 {
+			game.chainCount = 0
+			it.Active = false
 		}
 	}
 
 	// チェインタイマー減少
-	if game.chain_timer > 0.0 {
-		game.chain_timer -= game.delta
-		if game.chain_timer <= 0.0 {
-			game.chain_count = 0
+	if game.chainTimer > 0.0 {
+		game.chainTimer -= game.delta
+		if game.chainTimer <= 0.0 {
+			game.chainCount = 0
 		}
 	}
 
-	if game.gameOver != 0 && game.score > game.high_score {
-		game.high_score = game.score
+	if game.gameOver != 0 && game.score > game.highScore {
+		game.highScore = game.score
 	}
 	// 不要なオブジェクトを削除 (リストをクリーンアップ)
 	//	bullets = removeInactiveBullets(bullets)
@@ -904,7 +904,7 @@ func removeInactiveEnemies(list []Enemy) []Enemy {
 	return newList
 }*/
 
-func (game *Game) put_strings(x float32, y float32, text string) {
+func (game *Game) PutStrings(x float32, y float32, text string) {
 	len := len(text)
 	for i := 0; i < len; i++ {
 		if text[i] != ' ' {
@@ -912,22 +912,22 @@ func (game *Game) put_strings(x float32, y float32, text string) {
 
 			rotation := float32(0)
 
-			destRect := rl.NewRectangle(x, y, 16*X_SCALE-1, 16*Y_SCALE-1)
+			destRect := rl.NewRectangle(x, y, 16*XScale-1, 16*YScale-1)
 			sourceRect := rl.NewRectangle(16.0*float32(pat_no%16), 16.0*float32(pat_no/16), 16.0, 16.0)
 			origin := rl.NewVector2(0, 0)
 
 			rl.DrawTexturePro(game.fontTex, sourceRect, destRect, origin, rotation, rl.White)
 		}
-		x += FONT_SIZE
+		x += FontSize
 	}
 }
 
-func (game *Game) put_strings_num(x float32, y float32, str string, num int, digit int) {
+func (game *Game) PutStringsNum(x float32, y float32, str string, num int, digit int) {
 	var text string
 	len := len(str)
 	i := digit
 	j := num
-	game.put_strings(x, y, str)
+	game.PutStrings(x, y, str)
 
 	for i > 0 {
 		i--
@@ -935,32 +935,32 @@ func (game *Game) put_strings_num(x float32, y float32, str string, num int, dig
 		j /= 10
 	}
 	//    text[digit] = null
-	game.put_strings(x+float32(len*FONT_SIZE), y, text)
+	game.PutStrings(x+float32(len*FontSize), y, text)
 }
 
 func (game *Game) CreateParticles(x float32, y float32, count int, types int) {
 	for i := 0; i < count; i++ {
 		for j := range game.particles {
 			p := &game.particles[j]
-			if p.life > 0 {
+			if p.Life > 0 {
 				continue
 			}
-			p.pos.X = x
-			p.pos.Y = y
-			p.vx = float32(rand.Intn(100)-50) * 0.12 // -6.0 ~ +6.0
-			p.vy = float32(rand.Intn(100)-50) * 0.12
-			p.life = 20.0 + float32(rand.Intn(25))
+			p.Pos.X = x
+			p.Pos.Y = y
+			p.Vx = float32(rand.Intn(100)-50) * 0.12 // -6.0 ~ +6.0
+			p.Vy = float32(rand.Intn(100)-50) * 0.12
+			p.Life = 20.0 + float32(rand.Intn(25))
 			//        p.color_index = rand.Intn(5)
 			break
 		}
 	}
 }
 
-func (game *Game) put_sprite(x float32, y float32, pat_no float32) {
+func (game *Game) PutSprite(x float32, y float32, pat_no float32) {
 	var rotation float32 = 0.0
 	//    var destRect rl.Rectangle
 
-	destRect := rl.NewRectangle(x*X_SCALE, y*Y_SCALE, 32*X_SCALE-1, 32*Y_SCALE-1)
+	destRect := rl.NewRectangle(x*XScale, y*YScale, 32*XScale-1, 32*YScale-1)
 	sourceRect := rl.NewRectangle(32*pat_no, 0, 32, 32)
 	origin := rl.NewVector2(0, 0) //destRect.width/2, destRect.height/2 }
 
@@ -979,36 +979,36 @@ func (game *Game) Draw() {
 	}*/
 
 	for i := range game.star {
-		rl.DrawCircle(int32(game.star[i].x)*X_SCALE, int32(game.star[i].y)*Y_SCALE, 1.5, rl.White)
+		rl.DrawCircle(int32(game.star[i].X)*XScale, int32(game.star[i].Y)*YScale, 1.5, rl.White)
 	}
 
 	// パーティクル描画
 	for i := range game.particles {
 		p := &game.particles[i]
-		if p.life > 0 {
-			rl.DrawCircle(int32(p.pos.X*X_SCALE), int32(p.pos.Y*Y_SCALE), 1.5*2, rl.Yellow)
+		if p.Life > 0 {
+			rl.DrawCircle(int32(p.Pos.X*XScale), int32(p.Pos.Y*YScale), 1.5*2, rl.Yellow)
 			//            game.put_sprite(p.pos.X, p.pos.Y, 5)
 		}
 	}
 
 	// チェインアイテム描画
 	for i := range game.chainitems {
-		if game.chainitems[i].active {
-			game.put_sprite(game.chainitems[i].pos.X, game.chainitems[i].pos.Y, 3) // 3番パターンにチェインアイテムの画像を入れる
+		if game.chainitems[i].Active {
+			game.PutSprite(game.chainitems[i].Pos.X, game.chainitems[i].Pos.Y, 3) // 3番パターンにチェインアイテムの画像を入れる
 		}
 	}
 
 	for i := range game.items {
-		if !game.items[i].active {
+		if !game.items[i].Active {
 			continue
 		}
 		switch {
-		case game.items[i].types == 1:
-			game.put_sprite(game.items[i].pos.X, game.items[i].pos.Y, 8)
-		case game.items[i].types == 2:
-			game.put_sprite(game.items[i].pos.X, game.items[i].pos.Y, 7)
-		case game.items[i].types == 3:
-			game.put_sprite(game.items[i].pos.X, game.items[i].pos.Y, 9)
+		case game.items[i].Types == 1:
+			game.PutSprite(game.items[i].Pos.X, game.items[i].Pos.Y, 8)
+		case game.items[i].Types == 2:
+			game.PutSprite(game.items[i].Pos.X, game.items[i].Pos.Y, 7)
+		case game.items[i].Types == 3:
+			game.PutSprite(game.items[i].Pos.X, game.items[i].Pos.Y, 9)
 		}
 	}
 
@@ -1016,38 +1016,38 @@ func (game *Game) Draw() {
 	for i := 0; i < game.optionnum; i++ { //range game.options {
 		opt := &game.options[i]
 		//		if opt.active {
-		game.put_sprite(opt.pos.X, opt.pos.Y, 10) // 10 = オプションのパターン番号
+		game.PutSprite(opt.Pos.X, opt.Pos.Y, 10) // 10 = オプションのパターン番号
 		//		}
 	}
 
 	// 敵弾
 	for _, b := range game.enemybullets {
-		if b.active {
-			game.put_sprite(b.pos.X, b.pos.Y, 0)
+		if b.Active {
+			game.PutSprite(b.Pos.X, b.Pos.Y, 0)
 		}
 	}
 
 	// 敵
 	for _, e := range game.enemies {
-		if e.active {
+		if e.Active {
 			//			rl.DrawRectangleV(e.pos, rl.NewVector2(50, 30), rl.Red)
 			//			rl.DrawRectangle(int32(e.pos.X+10), int32(e.pos.Y+8), 30, 14, rl.Maroon)
-			game.put_sprite(e.pos.X, e.pos.Y, 2)
+			game.PutSprite(e.Pos.X, e.Pos.Y, 2)
 		}
 	}
 
 	// 自機弾
 	for _, b := range game.bullets {
-		if b.active {
+		if b.Active {
 			//			rl.DrawRectangleV(b.pos, rl.NewVector2(22, 6), rl.Yellow)
 			//			rl.DrawRectangle(int32(b.pos.X+18), int32(b.pos.Y-2), 8, 10, rl.Orange)
-			game.put_sprite(b.pos.X, b.pos.Y, 4)
+			game.PutSprite(b.Pos.X, b.Pos.Y, 4)
 		}
 	}
 
 	// シールド描画
-	if game.shield_active {
-		game.put_sprite(game.player.pos.X, game.player.pos.Y, 6)
+	if game.shieldActive {
+		game.PutSprite(game.player.Pos.X, game.player.Pos.Y, 6)
 	}
 
 	// プレイヤー (三角形っぽく)
@@ -1058,35 +1058,35 @@ func (game *Game) Draw() {
 			rl.SkyBlue,
 		)
 		rl.DrawRectangle(int32(player.pos.X+10), int32(player.pos.Y+10), 30, 10, rl.Blue) // 本体*/
-	game.put_sprite(game.player.pos.X, game.player.pos.Y, 1)
+	game.PutSprite(game.player.Pos.X, game.player.Pos.Y, 1)
 
 	// UI
 	//	rl.DrawText(fmt.Sprintf("SCORE: %d", score), 20, 20, 30, rl.White)
 	//	rl.DrawText("WASD / Arrow: Move    Space: Shoot", 20, screenHeight-40, 20, rl.LightGray)
 
-	if game.score >= game.high_score {
-		game.put_strings_num( 0, 0, "HIGH  ", game.score, 7)
+	if game.score >= game.highScore {
+		game.PutStringsNum(0, 0, "HIGH  ", game.score, 7)
 	} else {
-		game.put_strings_num( 0, 0, "SCORE ", game.score, 7)
+		game.PutStringsNum(0, 0, "SCORE ", game.score, 7)
 	}
-	if game.easy_mode == true {
-		game.put_strings_num( 0, 2*FONT_SIZE, "LIVES ", game.lives, 1)
+	if game.easyMode == true {
+		game.PutStringsNum(0, 2*FontSize, "LIVES ", game.lives, 1)
 	}
-	game.put_strings_num( 0, 1*FONT_SIZE, "BOMB  ", game.bomb_stock, 1)
+	game.PutStringsNum(0, 1*FontSize, "BOMB  ", game.bombStock, 1)
 
-	game.put_strings_num( 16*FONT_SIZE, 0, "COUNT ", int(game.gameTime), 7)
+	game.PutStringsNum(16*FontSize, 0, "COUNT ", int(game.gameTime), 7)
 
-	if game.chain_count > 0 {
-		game.put_strings_num( 16*FONT_SIZE, 1*FONT_SIZE, "CHAIN ", game.chain_count, 3)
+	if game.chainCount > 0 {
+		game.PutStringsNum(16*FontSize, 1*FontSize, "CHAIN ", game.chainCount, 3)
 	}
 
 	if game.gameOver != 0 {
 		//		rl.DrawText("GAME OVER", screenWidth/2-150, screenHeight/2-50, 60, rl.Red)
 		//		rl.DrawText("ESC to End", screenWidth/2-80, screenHeight/2+20, 30, rl.White)
-		game.put_strings(11*FONT_SIZE, 12*FONT_SIZE, "GAME OVER")
-		game.put_strings_num( 7*FONT_SIZE, 15*FONT_SIZE, "HIGH SCORE ",game. high_score, 7)
+		game.PutStrings(11*FontSize, 12*FontSize, "GAME OVER")
+		game.PutStringsNum(7*FontSize, 15*FontSize, "HIGH SCORE ", game.highScore, 7)
 
-		game.put_strings(7*FONT_SIZE, 18*FONT_SIZE, "PRESS A TO RESTART")
+		game.PutStrings(7*FontSize, 18*FontSize, "PRESS A TO RESTART")
 	}
 
 	//	rl.EndDrawing()
