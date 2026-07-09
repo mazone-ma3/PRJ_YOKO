@@ -245,7 +245,7 @@ function useBomb() {
 
 	bombStock--;
 	bombActive = true;
-	bombTimer = 1;//BOMB_DURATION;
+	bombTimer = 1;//bombDuration;
 
 	// 敵と敵弾を全滅
 	enemies = [];
@@ -460,8 +460,8 @@ function update() {
 		e.shootTimer += deltaTime;
 
 		let difficulty = Math.min(1, Math.floor(gameTime / 180)); // * COUNT1S)))
-		let enemy_bullet_speed = (4 + difficulty * 2);
-		let shoot_interval = ((82 - difficulty * 36) - 5) / count1S;
+		let enemyBulletSpeed = (4 + difficulty * 2);
+		let shootInterval = ((82 - difficulty * 36) - 5) / count1S;
 		//			console.log(`難易度 ${difficulty}`);
 
 		if (e.shootTimer >= e.nextShootTime) {
@@ -480,7 +480,7 @@ function update() {
 			}
 
 			// 弾を発射
-			let bulletSpeed = enemy_bullet_speed;
+			let bulletSpeed = enemyBulletSpeed;
 
 			dx = (dx * bulletSpeed / dist);
 			dy = (dy * bulletSpeed / dist);
@@ -501,7 +501,7 @@ function update() {
 			});
 
 			// 次回の発射間隔を設定
-			e.nextShootTime = shoot_interval;
+			e.nextShootTime = shootInterval;
 
 			e.shootTimer = 0.0;
 		}
@@ -665,7 +665,7 @@ function update() {
 				optionNum++;
 			} else if (it.types == 2) { // シールド
 				shieldActive = true;
-				//                shield_timer = SHIELD_DURATION
+				//                shieldTimer = shieldDuration
 			} else if (it.types == 3) { // 3 = ボムアイテム
 				bombStock = Math.min(3, bombStock + 1);
 			}

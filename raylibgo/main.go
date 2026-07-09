@@ -273,7 +273,7 @@ func (game *Game) Reset() {
 	game.gameOver = 0
 	game.shieldActive = false
 
-	//	high_score = 5000
+	//	highScore = 5000
 	game.lives = 0
 	game.gameTime = 0
 	game.chainCount = 0
@@ -296,7 +296,7 @@ func (game *Game) UseBomb() {
 
 	game.bombStock--
 	game.bombActive = true
-	//   game. bomb_timer = BOMB_DURATION
+	//   game. bombTimer = BombDuration
 
 	// 敵と敵弾を全滅
 	for i := range game.enemies {
@@ -408,7 +408,7 @@ func (game *Game) Update() {
 		opt.Pos.Y += ((game.player.Pos.Y + opt.OffsetY) - opt.Pos.Y) / 4 * rate
 		//		float t = 1.0f - pow(1.0f - 0.25f, m_deltaTime * COUNT1S)
 		//		opt.x = std::lerp(opt.x, playerX + 16, t)
-		//		opt.y = std::lerp(opt.y, playerY + opt.offset_y, t)
+		//		opt.y = std::lerp(opt.y, playerY + opt.offsetY, t)
 	}
 
 	// 射撃 (Spaceキー)
@@ -477,11 +477,11 @@ func (game *Game) Update() {
 		for i := range game.enemies {
 			if game.enemies[i].Active == false {
 
-				rand_num := rand.Intn(100)
+				randNum := rand.Intn(100)
 				var etype int
-				if rand_num < 60 {
+				if randNum < 60 {
 					etype = 0
-				} else if rand_num < 85 {
+				} else if randNum < 85 {
 					etype = 1
 				} else {
 					etype = 2
@@ -543,8 +543,8 @@ func (game *Game) Update() {
 		e.ShootTimer += game.delta
 
 		difficulty := float32(int(min(1, game.gameTime/180))) // * COUNT1S)))
-		enemy_bullet_speed := (4 + difficulty*2)
-		shoot_interval := ((82 - difficulty*36) - 5) / Count1S
+		enemyBulletSpeed := (4 + difficulty*2)
+		shootInterval := ((82 - difficulty*36) - 5) / Count1S
 
 		if e.ShootTimer >= e.NextShootTime {
 
@@ -564,7 +564,7 @@ func (game *Game) Update() {
 			}
 
 			// 弾を発射
-			bulletSpeed := float32(enemy_bullet_speed)
+			bulletSpeed := float32(enemyBulletSpeed)
 
 			dx = (dx * bulletSpeed / dist)
 			dy = (dy * bulletSpeed / dist)
@@ -588,7 +588,7 @@ func (game *Game) Update() {
 			}
 
 			// 次回の発射間隔を設定
-			e.NextShootTime = float32(shoot_interval)
+			e.NextShootTime = float32(shootInterval)
 
 			e.ShootTimer = 0.0
 			//				e.count += rate
@@ -622,7 +622,7 @@ func (game *Game) Update() {
 				if e.HP <= 0 {
 
 					// オプションアイテム出現（確率20%くらい）
-					//				    if (rand.Intn(100) < 22 && Options.size() < MAX_OPTIONS) {
+					//				    if (rand.Intn(100) < 22 && Options.size() < MaxOptions) {
 					if game.optionCooldown <= 0 {
 						for i := range game.items {
 							item := &game.items[i]
@@ -796,7 +796,7 @@ func (game *Game) Update() {
 				game.optionnum++
 			} else if it.Types == 2 { // シールド
 				game.shieldActive = true
-				//                shield_timer = SHIELD_DURATION
+				//                shieldTimer = SheldDuration
 			} else if it.Types == 3 { // 3 = ボムアイテム
 				game.bombStock = min(3, game.bombStock+1)
 			}
@@ -908,12 +908,12 @@ func (game *Game) PutStrings(x float32, y float32, text string) {
 	len := len(text)
 	for i := 0; i < len; i++ {
 		if text[i] != ' ' {
-			pat_no := text[i] - '0'
+			patNo := text[i] - '0'
 
 			rotation := float32(0)
 
 			destRect := rl.NewRectangle(x, y, 16*XScale-1, 16*YScale-1)
-			sourceRect := rl.NewRectangle(16.0*float32(pat_no%16), 16.0*float32(pat_no/16), 16.0, 16.0)
+			sourceRect := rl.NewRectangle(16.0*float32(patNo%16), 16.0*float32(patNo/16), 16.0, 16.0)
 			origin := rl.NewVector2(0, 0)
 
 			rl.DrawTexturePro(game.fontTex, sourceRect, destRect, origin, rotation, rl.White)
@@ -950,18 +950,18 @@ func (game *Game) CreateParticles(x float32, y float32, count int, types int) {
 			p.Vx = float32(rand.Intn(100)-50) * 0.12 // -6.0 ~ +6.0
 			p.Vy = float32(rand.Intn(100)-50) * 0.12
 			p.Life = 20.0 + float32(rand.Intn(25))
-			//        p.color_index = rand.Intn(5)
+			//        p.colorIndex = rand.Intn(5)
 			break
 		}
 	}
 }
 
-func (game *Game) PutSprite(x float32, y float32, pat_no float32) {
+func (game *Game) PutSprite(x float32, y float32, patNo float32) {
 	var rotation float32 = 0.0
 	//    var destRect rl.Rectangle
 
 	destRect := rl.NewRectangle(x*XScale, y*YScale, 32*XScale-1, 32*YScale-1)
-	sourceRect := rl.NewRectangle(32*pat_no, 0, 32, 32)
+	sourceRect := rl.NewRectangle(32*patNo, 0, 32, 32)
 	origin := rl.NewVector2(0, 0) //destRect.width/2, destRect.height/2 }
 
 	rl.DrawTexturePro(game.chrTex, sourceRect, destRect, origin, rotation, rl.White)
@@ -987,7 +987,7 @@ func (game *Game) Draw() {
 		p := &game.particles[i]
 		if p.Life > 0 {
 			rl.DrawCircle(int32(p.Pos.X*XScale), int32(p.Pos.Y*YScale), 1.5*2, rl.Yellow)
-			//            game.put_sprite(p.pos.X, p.pos.Y, 5)
+			//            game.PutSprite(p.pos.X, p.pos.Y, 5)
 		}
 	}
 
