@@ -198,7 +198,7 @@ fn main() {
 
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH as i32, SCREEN_HEIGHT as i32)
-        .title("Rust 横スクロールシューティング")
+        .title("raylib Rust 横スクロールシューティング")
         .build();
 
     let mut target = rl.load_render_texture(&thread, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32).unwrap();
@@ -278,6 +278,13 @@ fn main() {
         let now = rl.get_time();
         let rate = delta * COUNT1S;
         let gamepad: i32 = 0;
+
+        for star in &mut stars {
+            star.pos.x -= star.speed * rate;
+            if star.pos.x < 0.0 {
+                star.pos.x = SCREEN_WIDTH as f32;
+            }
+        }
 
         if game_over == 0 {
             // 通常更新
@@ -755,10 +762,6 @@ fn main() {
 
         for star in &mut stars {
             d.draw_circle(star.pos.x as i32, star.pos.y as i32, 1.5, Color::WHITE);
-            star.pos.x -= star.speed * rate;
-            if star.pos.x < 0.0 {
-                star.pos.x = SCREEN_WIDTH as f32;
-            }
         }
 
         for particle in &mut particles {

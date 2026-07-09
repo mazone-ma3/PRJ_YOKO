@@ -717,6 +717,12 @@ class Game
 
         // 背景スクロール
 //      $this->scrollOffset = ($this->scrollOffset + SCROLL_SPEED) % SCREEN_WIDTH;
+        foreach ($this->stars as $star) {
+            $star->x -= $star->speed * $rate;
+            if ($star->x < 0) {
+                $star->x = SCREEN_WIDTH;
+            }
+        }
 
         if (!$this->gameOver) {
             $this->gameTime += $delta;
@@ -1194,10 +1200,6 @@ class Game
         // 星空背景
         foreach ($this->stars as $star) {
             Shapes::drawCircle($star->x, $star->y, 1.5, Utils::color(255, 255, 255, 255));
-            $star->x -= $star->speed;
-            if ($star->x < 0) {
-                $star->x = SCREEN_WIDTH;
-            }
         }
 
 /*
