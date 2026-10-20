@@ -1026,9 +1026,11 @@ void init_star(void)
 	i = STAR_NUM;
 	while(i--){
 //		_FP_OFF(vram) = (((star[0][i] + (256 / STAR_NUM)) % 256 + 32 + star[1][i] * 1024) / 2);
-		vram = (((star[0][i] + ((512 / STAR_NUM)) % 512) + star[1][i] * 512) * 2);
+//		vram = (((star[0][i] + ((512 / STAR_NUM)) % 512) + star[1][i] * 512) * 2);
+		vram = (star[0][i] * 4 + (rand() % (STAR_NUM * 4) * 512) * 2);
 //		*vram |= star[4][i];
-		VRAM_putPixelW(vram, VRAM_getPixelW(vram) | star[4][i]);
+		VRAM_putPixelW(vram, //VRAM_getPixelW(vram) | 
+			star[4][i]);
 	}
 
 }
@@ -1036,6 +1038,8 @@ void init_star(void)
 void bg_roll(void)
 {
 	int i;
+
+//	return;
 
 	HAJ0 = 0x82;
 	Scroll(1);
