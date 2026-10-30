@@ -56,6 +56,10 @@ https://webmsx.org/cbios/?MACHINE=MSX2J&rom=https://github.com/mazone-ma3/PRJ_YO
 
 https://mazone-ma3.github.io/github.io/PRJYOKO/
 
+↓JavaScript版を実行
+
+https://mazone-ma3.github.io/github.io/JavaScript/shoot.html
+
 ↓元のPyxel版のコード
 
 https://github.com/mazone-ma3/py/blob/main/yokosht.py
