@@ -58,6 +58,8 @@ https://mazone-ma3.github.io/github.io/PRJYOKO/
 
 ↓JavaScript版を実行
 
+https://mazone-ma3.github.io/github.io/JavaScript/shoot.html
+
 https://htmlpreview.github.io/?https://github.com/mazone-ma3/PRJ_YOKO/blob/main/JavaScript/shoot.html
 
 ↓元のPyxel版のコード
