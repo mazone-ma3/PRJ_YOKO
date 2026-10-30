@@ -4,39 +4,39 @@ PyxelでGrokに作成させた横スクロールシューティングをレト�
 
 キーボード操作の場合 X68K/TOWNS/Windows ZショットXボム MSX1/V9968/MSX2 XショットCボム
 
-MSX1 z88dkで作成。→部分アセンブラ化しました。(2026/5/5)
+[MSX1](MSX1) z88dkで作成。→部分アセンブラ化しました。(2026/5/5)
 
-X68K_MPY　Pyxel版を整数化してmicroPythonにテスト移植。(MPUノーウェイト推奨)。放棄。
+[X68K_MPY](X68K_MPY)　Pyxel版を整数化してmicroPythonにテスト移植。(MPUノーウェイト推奨)。放棄。
 
-X68K クラス化をやめて、elf2x68kへ移植。
+[X68K](X68K) クラス化をやめて、elf2x68kへ移植。
 
-TOWNS FM TOWNS-gccクロスコンパイル開発環境+DJGPP12.2.0への移植。横長画面にしてるため、実機で液晶だと縞が出ます。CRTの場合は不明です。
+[TOWNS](TOWNS) FM TOWNS-gccクロスコンパイル開発環境+DJGPP12.2.0への移植。横長画面にしてるため、実機で液晶だと縞が出ます。CRTの場合は不明です。
 
-PYXEL 逆にグラフィックを寄せた物。
+[PYXEL](PYXEL) 逆にグラフィックを寄せた物。
 
-V9968 (MSX2++)X68K版のz88dk(2025/1/26以前の版)縮小移植。改造OpenMSX用。※ハードの仕様変更により動かなくなることがあります。
+[V9968](V9968) (MSX2++)X68K版のz88dk(2025/1/26以前の版)縮小移植。改造OpenMSX用。※ハードの仕様変更により動かなくなることがあります。
 
-BMP 旧版の画像データファイル
+[BMP](BMP) 旧版の画像データファイル
 
-MSX2 MSX1版の移植。
+[MSX2](MSX2) MSX1版の移植。
 
-MSX2ROM MSX2版をROM化。
+[MSX2ROM](MSX2ROM) MSX2版をROM化。
 
-Direct2D Windows(x64)版。VS2022→2026で作成。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
+[Direct2D](Direct2D) Windows(x64)版。VS2022→2026で作成。(XInputのみ対応) F11でフルスクリーン F12でFPS表示 Bボタン/Xキー開始でライフ付きモード
 
-raylib gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb版。F11でフルスクリーン。
+[raylib](raylib) gcc(MINGW)+raylibによるWindows(x64)版およびEmscriptenによるWeb版。F11でフルスクリーン。
 
-raylibcs VC#+raylib-csによるWindows(x64)版。gcc版の移植。(要.NET SDK 10 & raylib.dll) 
+[raylibcs](raylibcs) VC#+raylib-csによるWindows(x64)版。gcc版の移植。(要.NET SDK 10 & raylib.dll) 
 
-raylibpy Pyxel版をraylib-python-cffiに移植。
+[raylibpy](raylibpy) Pyxel版をraylib-python-cffiに移植。
 
-raylibgo gcc版をGo+raylib-goに移植。
+[raylibgo](raylibgo) gcc版をGo+raylib-goに移植。
 
-raylibrust raylib-rsへの移植/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
+[raylibrust](raylibrust) raylib-rsへの移植/環境変数INCLUDEにVS2026のINCLUDEパスを追加してください。
 
-raylibphp php-raylib(composerで入れてください)への移植/exe化の予定なし
+[raylibphp](raylibphp) php-raylib(composerで入れてください)への移植/exe化の予定なし
 
-JavaScript 試作
+[JavaScript](JavaScript) 試作
 
 各.png/.mp3/.wavが無い物は他フォルダからコピーしてください。
 
