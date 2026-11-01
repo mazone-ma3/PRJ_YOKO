@@ -38,6 +38,8 @@ PyxelでGrokに作成させた横スクロールシューティングをレト�
 
 [JavaScript](JavaScript) 試作
 
+[MSX1LLVM](MSX1LLVM) MSX1版をllvm-z80に移植、試作
+
 各.png/.mp3/.wavが無い物は他フォルダからコピーしてください。
 
 ↓Pyxel版を実行
