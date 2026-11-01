@@ -38,7 +38,7 @@ PyxelでGrokに作成させた横スクロールシューティングをレト�
 
 [JavaScript](JavaScript) 試作
 
-[MSX1LLVM](MSX1LLVM) MSX1版をllvm-z80に移植、試作
+[MSX1_LLVM](MSX1_LLVM) MSX1版をllvm-z80に移植、試作
 
 各.png/.mp3/.wavが無い物は他フォルダからコピーしてください。
 
@@ -63,6 +63,10 @@ https://mazone-ma3.github.io/github.io/PRJYOKO/
 https://mazone-ma3.github.io/github.io/JavaScript/shoot.html
 
 https://htmlpreview.github.io/?https://github.com/mazone-ma3/PRJ_YOKO/blob/main/JavaScript/shoot.html
+
+↓WebMSXでMSX1_LLVM版を実行
+
+https://webmsx.org/cbios/?MACHINE=MSX1J&rom=https://github.com/mazone-ma3/PRJ_YOKO/raw/refs/heads/main/MSX1_LLVM/BIN/yokosht.rom
 
 ↓元のPyxel版のコード
 
