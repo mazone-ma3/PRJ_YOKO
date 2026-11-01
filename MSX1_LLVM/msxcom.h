@@ -1,0 +1,107 @@
+#ifndef MSX_COM_H_INCLUDE
+#define MSX_COM_H_INCLUDE
+
+//#include <video/tms99x8.h>
+//#include <msx\gfx.h>
+
+#include "inkey.h"
+#include "mode.h"
+
+//#define __sdcccall(a)
+
+#define DI() asm volatile("di\n")
+#define EI() asm volatile("ei\n")
+
+#define NOERROR		0
+#define ERROR		-1
+
+typedef struct {
+	unsigned char y, x, no, color;
+}SPR;
+
+extern SPR spr_chr[32];
+
+
+extern unsigned char VDP_writeadr;
+extern unsigned char VDP_readadr;
+extern unsigned char vdp_readport[4], vdp_writeport[4];
+
+#define msx_set_sprite_pattern(A,B) VDP_set_sprite_16(A,B)
+
+extern unsigned char *pdata;
+extern unsigned char *padr;
+
+//#define VPOKE vpoke
+void VPOKE(unsigned char data, unsigned short lowadr);
+
+void VDP_set_sprite_16(unsigned char chr, unsigned char *data);
+
+#define jiffy ((volatile unsigned char *)0xfc9e)
+extern unsigned char old_jiffy;
+
+void msx_wait_vsync(void);
+
+extern unsigned char spr_x[32];
+extern unsigned char spr_y[32];
+extern unsigned char spr_no[32];
+extern unsigned char spr_color[32];
+
+//#define msx_set_sprite VDP_put_sprite_16
+void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
+
+extern unsigned char spr_page;
+
+void set_sprite_all(unsigned char start, unsigned char end);
+
+
+#define clicksw ((volatile unsigned char *)0xf3db)
+
+#define msx_set_color vdp_color
+#define msx_screen(A) {\
+	*clicksw = 0;\
+	vdp_set_mode(A);\
+	vdp_set_sprite_mode(sprite_large);\
+}
+
+void msx_print(unsigned char x, unsigned char y, char *str);
+
+extern char str_temp[9];
+
+void msx_print_num(unsigned char x, unsigned char y, unsigned short number, unsigned char digits);
+
+void msx_print_num_l(unsigned char x, unsigned char y, unsigned long number, unsigned char digits);
+
+void msx_cls(void);
+
+#define msx_initpsg()
+
+void msx_sound(unsigned char no, unsigned char dummy);
+
+unsigned char get_key(unsigned char matrix);
+
+unsigned char get_stick1(unsigned char trigno);
+
+unsigned char get_trigger1(unsigned char trigno);
+
+extern unsigned char keycode;
+
+unsigned char keyscan(void);
+
+extern unsigned char bgmmode;
+
+char checkbgm(void);
+void play_bgm(unsigned char mode);
+void playbgm(void);
+void stopbgm(void);
+
+
+void set_int(void);
+void reset_int(void);
+
+extern unsigned char vdps0;
+unsigned char simple_rnd(void) ;
+
+extern void vdp_set_sprite_mode(unsigned char mode);
+#define sprite_large 2
+
+#endif
