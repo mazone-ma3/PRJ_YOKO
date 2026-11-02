@@ -33,7 +33,7 @@ unsigned char old_jiffy;
 unsigned char old_jiffy2=0;
 unsigned char total_count=0;
 #endif
-inline void msx_wait_vsync(void)
+void msx_wait_vsync(void)
 {
 //	while(((old_jiffy - *jiffy + 256) % 256) < 1);
 //	old_jiffy = *jiffy;
@@ -63,7 +63,7 @@ unsigned char spr_color[32];
 SPR spr_chr[32];
 
 
-inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
+void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
 	if(spr_count < 32){
 //	y-=1;

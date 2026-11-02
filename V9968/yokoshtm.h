@@ -63,7 +63,7 @@ void se(void);
 unsigned char play_fmdbgm(void) __sdcccall(1);
 void stop_fmdbgm(void) __sdcccall(1);
 void wait_vsync(void);
-void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str, unsigned char pal);
+void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str, unsigned char pal) __sdcccall(1);
 void put_numd(long j, unsigned char digit) __sdcccall(1);
 
 void set_sprite_all(void);

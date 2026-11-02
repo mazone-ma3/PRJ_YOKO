@@ -6,7 +6,8 @@ CC       = zcc
 
 # コンパイルオプション（SDCCを使用）
 #CFLAGS   = +msx -compiler sdcc --opt-code-speed --sdcccall0
-CFLAGS   = +cpm -compiler sdcc --opt-code-size --sdcccall0
+CFLAGS   = +cpm -compiler sdcc --opt-code-size
+# --sdcccall0
 # リンクオプション（subtypeで切り替え）
 #LDFLAGS  = +msx -create-app -lmsxbios
 LDFLAGS = +cpm -create-app

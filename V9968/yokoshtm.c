@@ -25,7 +25,7 @@ enum {
 };
 
 void wait_vsync(void);
-void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str, unsigned char pal);
+void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str, unsigned char pal) __sdcccall(1);
 void put_numd(long j, unsigned char digit) __sdcccall(1);
 
 #ifdef SINGLEMODE
@@ -860,6 +860,8 @@ __asm
 ;	ld	(_YSIZE),a
 ;	exx
 
+	push	hl
+
 __endasm;
 	wait_VDP();
 /*
@@ -888,6 +890,8 @@ __endasm;
 //	outp(port3, VDPcommand);
 __asm
 ;	exx
+	pop	hl
+
 	ld	a,(_port4)
 	ld	c,a
 	ld	a,32
@@ -1309,7 +1313,7 @@ void put_strings_sprite(unsigned char x, unsigned char y, unsigned char pat, uns
 	}
 }
 
-void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str, unsigned char pal)
+void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str, unsigned char pal) __sdcccall(1)
 {
 //	y = 28-y;
 
@@ -1317,8 +1321,8 @@ void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str
 	XSIZA = 0;
 	YSIZE = 8;
 	APAGE = 2; //map_page;
-	if(scr != SCREEN2)
-		VPAGE = 3;
+//	if(scr != SCREEN2)
+//		VPAGE = 3;
 
 //	if(pal == CHRPAL_NO)
 		VDPcommand = HMMM;
@@ -1341,8 +1345,8 @@ void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str
 			dst_y = y * 8;
 			VDPsetAREA2();
 		}else*/
-		if(scr != SCREEN2)
-		{
+//		if(scr != SCREEN2)
+//		{
 			APAGE = 2;
 			src_x = (chr & 0x0f) * 8;
 			src_y = (chr / 16) * 8;
@@ -1350,7 +1354,7 @@ void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str
 			dst_x = x * 8;
 			dst_y = y * 8;
 			VDPsetAREA2();
-		}else{
+/*		}else{
 			VDPcommand = HMMM;
 			APAGE = 4;
 			src_x = x * 8;
@@ -1378,7 +1382,7 @@ void put_strings(unsigned char scr, unsigned char x, unsigned char y,  char *str
 			dst_y = y * 8;
 			VDPsetAREA2();
 
-		}
+		}*/
 		++x;
 	}
 }

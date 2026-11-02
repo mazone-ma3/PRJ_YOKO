@@ -46,7 +46,7 @@ void VDP_set_sprite_16(unsigned char chr, unsigned char *data);
 #define jiffy ((volatile unsigned char *)0xfc9e)
 extern unsigned char old_jiffy;
 
-inline void msx_wait_vsync(void);
+void msx_wait_vsync(void);
 
 extern unsigned char spr_x[32];
 extern unsigned char spr_y[32];
@@ -54,7 +54,7 @@ extern unsigned char spr_no[32];
 extern unsigned char spr_color[32];
 
 //#define msx_set_sprite VDP_put_sprite_16
-inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
+void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
 
 extern unsigned char spr_page;
 

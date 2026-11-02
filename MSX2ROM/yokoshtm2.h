@@ -64,7 +64,7 @@ extern CHR_PARA3 *pchr_data;
 //	NO++;\
 //}
 
-inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
+void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color);
 
 //#define sprite_set(NO, X, Y, PAT, PAL, VS) DEF_SP_SINGLE(NO, X, Y, PAT, 0, VS)
 

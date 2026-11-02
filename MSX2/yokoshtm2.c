@@ -113,7 +113,7 @@ unsigned char org_pal[MAXCOLOR][3] = {
 CHR_PARA3 spr_chr[MAX_SPRITE * 2];
 CHR_PARA3 *pspr_chr;
 
-inline void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
+void msx_set_sprite(unsigned char spr_count, unsigned char x, unsigned char y, unsigned char no, unsigned char color)
 {
 	if(spr_count < 32){
 //	y-=1;
@@ -643,6 +643,7 @@ __asm
 ;	ld	a,(_vdpdata+0xa)
 ;	ld	(_YSIZE),a
 ;	exx
+	push	hl
 
 __endasm;
 	wait_VDP();
@@ -672,6 +673,7 @@ __endasm;
 //	outp(port3, VDPcommand);
 __asm
 ;	exx
+	pop	hl
 	ld	a,(_port4)
 	ld	c,a
 	ld	a,32
