@@ -60,7 +60,7 @@ unsigned char old_jiffy;
 unsigned char old_jiffy2=0;
 unsigned char total_count=0;
 #endif
-void msx_wait_vsync(void)
+__attribute__((optnone)) void msx_wait_vsync(void)
 {
 //	while(((old_jiffy - *jiffy + 256) % 256) < 1);
 //	old_jiffy = *jiffy;
