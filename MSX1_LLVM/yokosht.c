@@ -1390,7 +1390,6 @@ __asm__ volatile(
 	"ld	b,0\n"
 	//";ld	hl,_bullets_active+MAX_BULLETS-1\n"
 	"ld	hl,_bullets_active+%0\n"
-	"ld	hl,#%0\n"
 	"ld	a,c\n"
 	"ld	(_b),a\n"
 	"ld	d,0\n"
